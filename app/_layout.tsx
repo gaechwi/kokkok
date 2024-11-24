@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
-import { View, Text } from 'react-native';
+
+import '../global.css';
 
 const _layout = () => {
   return <Stack />;
