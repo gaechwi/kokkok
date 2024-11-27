@@ -28,7 +28,11 @@ const _layout = () => {
 
 	if (!loaded && !error) return null;
 
-	return <Stack />;
+	return (
+		<Stack>
+			<Stack.Screen name="(auth)" options={{ headerShown: false }} />
+		</Stack>
+	);
 };
 
 export default _layout;
