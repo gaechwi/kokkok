@@ -1,9 +1,19 @@
 import { Tabs } from "expo-router";
-import { SafeAreaView, Text, View, TouchableOpacity } from "react-native";
+import {
+	SafeAreaView,
+	Text,
+	View,
+	TouchableOpacity,
+	Platform,
+	StatusBar,
+} from "react-native";
 import HomeIcon from "../../assets/icons/Home.svg";
 import BellIcon from "../../assets/icons/bell.svg";
 
 export default function TabsLayout() {
+	const statusBarHeight =
+		Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0;
+
 	return (
 		<Tabs
 			screenOptions={{
@@ -22,7 +32,10 @@ export default function TabsLayout() {
 				name="home"
 				options={{
 					header: () => (
-						<SafeAreaView className="border-gray-25 border-b bg-white">
+						<SafeAreaView
+							className="border-gray-25 border-b bg-white"
+							style={{ paddingTop: statusBarHeight }}
+						>
 							<View className="h-14 flex-row items-center justify-between px-4">
 								<Text className="font-bold text-xl">Home</Text>
 								<TouchableOpacity>
