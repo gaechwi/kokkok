@@ -28,7 +28,19 @@ module.exports = {
 				100: "#2B2B2B",
 			},
 		},
-		extend: {},
+		extend: {
+			fontFamily: {
+				pblack: ["Pretendard-Black"],
+				pbold: ["Pretendard-Bold"],
+				pextrabold: ["Pretendard-ExtraBold"],
+				pextralight: ["Pretendard-ExtraLight"],
+				plight: ["Pretendard-Light"],
+				pmedium: ["Pretendard-Medium"],
+				pregular: ["Pretendard-Regular"],
+				psemibold: ["Pretendard-SemiBold"],
+				pthin: ["Pretendard-Thin"],
+			},
+		},
 	},
 	plugins: [],
 };
