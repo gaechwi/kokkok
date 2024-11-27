@@ -21,6 +21,9 @@
     .title-4 {
         @apply text-[16px] font-pmedium leading-[150%]
     }
+    .title-5 {
+        @apply text-[15px] font-pmedium leading-[150%]
+    }
     .body-1 {
         @apply text-[16px] font-pregular leading-[150%]
     }
