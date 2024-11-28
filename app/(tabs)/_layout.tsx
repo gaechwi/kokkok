@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Text, View, TouchableOpacity } from "react-native";
-import HomeIcon from "../../assets/icons/Home.svg";
-import BellIcon from "../../assets/icons/bell.svg";
+import HomeIcon from "@assets/icons/Home.svg";
+import BellIcon from "@assets/icons/bell.svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
@@ -15,7 +15,7 @@ export default function TabsLayout() {
           backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
           borderTopColor: "#E1E1E1",
-          height: 70,
+          height: 64,
         },
       }}
     >
