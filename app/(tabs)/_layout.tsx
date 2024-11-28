@@ -48,7 +48,7 @@ const TabIcon = ({
 }) => (
   <View className="w-fit items-center justify-center gap-0">
     {TAP_ICONS[name](color)}
-    <Text className="font-pbold text-xs" style={{ color }}>
+    <Text className="caption-1" style={{ color }}>
       {TAP_NAME[name]}
     </Text>
   </View>
@@ -57,7 +57,7 @@ const TabIcon = ({
 const Header = ({ name }: { name: TAP_TYPE }) => (
   <SafeAreaView className="border-gray-25 border-b bg-white">
     <View className="h-14 flex-row items-center justify-between px-4">
-      <Text className="font-pbold text-xl">{HEADER_TITLE[name]}</Text>
+      <Text className="heading-2">{HEADER_TITLE[name]}</Text>
       {/* 마이페이지는 설정 버튼 추가 */}
       <TouchableOpacity>
         <icons.BellIcon width={24} height={24} />
