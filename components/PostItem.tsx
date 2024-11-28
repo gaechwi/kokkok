@@ -10,6 +10,7 @@ import Carousel from "./Carousel";
 import { diffDate } from "./FormatDate";
 import { useMemo, useState } from "react";
 import icons from "../constants/icons";
+import BottomModal from "./BottomModal";
 interface PostItemProps {
 	author: {
 		name: string;
@@ -43,6 +44,7 @@ export default function PostItem({
 	const diff = diffDate(new Date(createdAt));
 	const [isLiked, setIsLiked] = useState(liked);
 	const [isMore, setIsMore] = useState(false);
+	const [isModalVisible, setIsModalVisible] = useState(false);
 
 	const screenWidth = Dimensions.get("window").width;
 
@@ -75,6 +77,14 @@ export default function PostItem({
 		return truncated;
 	};
 
+	const onOpenModal = () => {
+		setIsModalVisible(true);
+	};
+
+	const onCloseModal = () => {
+		setIsModalVisible(false);
+	};
+
 	return (
 		<View className="grow bg-gray-10 pb-[10px]">
 			{/* header */}
@@ -90,8 +100,19 @@ export default function PostItem({
 					</View>
 				</TouchableOpacity>
 
-				<TouchableOpacity>
+				<TouchableOpacity onPress={onOpenModal}>
 					<icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
+
+					<BottomModal visible={isModalVisible} onClose={onCloseModal}>
+						<View className="items-center">
+							<TouchableOpacity className="h-[82px] w-full items-center justify-center border-gray-20 border-b">
+								<Text className="title-2 text-gray-90">수정하기</Text>
+							</TouchableOpacity>
+							<TouchableOpacity className="h-[82px] w-full items-center justify-center">
+								<Text className="title-2 text-gray-90">삭제하기</Text>
+							</TouchableOpacity>
+						</View>
+					</BottomModal>
 				</TouchableOpacity>
 			</View>
 
