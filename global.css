@@ -49,32 +49,3 @@
         @apply text-[10px] font-pregular leading-[150%]
     }
 }
-
-:root {
-    /* Primary Colors */
-    --color-primary: #8356F5;
-    
-    /* Secondary Colors */
-    --color-secondary-yellow: #FCEC5B;
-    --color-secondary-red: #FF7A7A;
-    
-    /* Base Colors */
-    --color-white: #FFFFFF;
-    --color-black: #2B2B2B;
-    
-    /* Gray Scale */
-    --color-gray-5: #F8F8F8;
-    --color-gray-10: #F2F2F2;
-    --color-gray-20: #E1E1E1;
-    --color-gray-25: #DDDDDD;
-    --color-gray-30: #CECECE;
-    --color-gray-40: #9A9A9A;
-    --color-gray-45: #969696;
-    --color-gray-50: #868686;
-    --color-gray-55: #828282;
-    --color-gray-60: #727272;
-    --color-gray-65: #666666;
-    --color-gray-70: #5D5D5D;
-    --color-gray-80: #404040;
-    --color-gray-90: #333333;
-}
