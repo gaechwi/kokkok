@@ -5,6 +5,8 @@ import {
 	Image,
 	TouchableOpacity,
 	TextInput,
+	KeyboardAvoidingView,
+	Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -14,7 +16,10 @@ const Step1 = () => {
 	const router = useRouter();
 
 	return (
-		<View className="h-full bg-white">
+		<KeyboardAvoidingView
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			className="h-full flex-1 bg-white"
+		>
 			<ScrollView>
 				<View className="mt-10 flex items-center justify-center px-6">
 					<Image
@@ -58,7 +63,7 @@ const Step1 = () => {
 					</TouchableOpacity>
 				</View>
 			</ScrollView>
-		</View>
+		</KeyboardAvoidingView>
 	);
 };
 

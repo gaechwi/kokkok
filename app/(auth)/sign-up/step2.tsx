@@ -5,12 +5,17 @@ import {
 	Image,
 	TouchableOpacity,
 	TextInput,
+	KeyboardAvoidingView,
+	Platform,
 } from "react-native";
 import images from "../../../constants/images";
 
 const Step2 = () => {
 	return (
-		<View className="h-full bg-white">
+		<KeyboardAvoidingView
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			className="h-full flex-1 bg-white"
+		>
 			<ScrollView>
 				<View className="mt-12 flex items-center justify-center px-6">
 					<TouchableOpacity>
@@ -43,7 +48,7 @@ const Step2 = () => {
 					</TouchableOpacity>
 				</View>
 			</ScrollView>
-		</View>
+		</KeyboardAvoidingView>
 	);
 };
 
