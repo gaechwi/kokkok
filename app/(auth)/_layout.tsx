@@ -11,8 +11,8 @@ const AuthLayout = () => {
 					name="sign-in"
 					options={{
 						header: () => (
-							<SafeAreaView className="border-gray-25 border-b bg-white">
-								<View className="flex h-14 items-center justify-center">
+							<SafeAreaView edges={["top"]} className="bg-white">
+								<View className="flex size-full h-14 items-center justify-center border-gray-25 border-b ">
 									<Text className="heading-2">로그인</Text>
 								</View>
 							</SafeAreaView>

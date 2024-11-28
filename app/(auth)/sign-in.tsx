@@ -6,14 +6,13 @@ import {
 	TextInput,
 	TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../../constants/images";
 
 const SignIn = () => {
 	return (
-		<SafeAreaView className="h-full bg-white pt-10">
+		<View className="h-full bg-white">
 			<ScrollView>
-				<View className="flex items-center justify-center px-6">
+				<View className="mt-10 flex items-center justify-center px-6">
 					<Image
 						source={images.authLogo}
 						className="h-[90px] w-[328px]"
@@ -39,7 +38,7 @@ const SignIn = () => {
 					</TouchableOpacity>
 				</View>
 			</ScrollView>
-		</SafeAreaView>
+		</View>
 	);
 };
 
