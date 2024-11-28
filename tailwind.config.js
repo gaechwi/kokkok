@@ -16,6 +16,8 @@ module.exports = {
 				yellow: "#FCEC5B",
 				red: "#FF7A7A",
 			},
+			white: "#FFFFFF",
+			black: "#2B2B2B",
 			gray: {
 				5: "#F8F8F8",
 				10: "#F2F2F2",
@@ -31,10 +33,21 @@ module.exports = {
 				70: "#5D5D5D",
 				80: "#404040",
 				90: "#333333",
-				100: "#2B2B2B",
 			},
 		},
-		extend: {},
+		extend: {
+			fontFamily: {
+				pblack: ["Pretendard-Black"],
+				pbold: ["Pretendard-Bold"],
+				pextrabold: ["Pretendard-ExtraBold"],
+				pextralight: ["Pretendard-ExtraLight"],
+				plight: ["Pretendard-Light"],
+				pmedium: ["Pretendard-Medium"],
+				pregular: ["Pretendard-Regular"],
+				psemibold: ["Pretendard-SemiBold"],
+				pthin: ["Pretendard-Thin"],
+			},
+		},
 	},
 	plugins: [],
 };

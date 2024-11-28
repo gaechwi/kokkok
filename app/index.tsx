@@ -5,7 +5,7 @@ import { Text, View } from "react-native";
 
 export default function App() {
 	return (
-		<View className="flex-1 items-center justify-center">
+		<View className="flex-1 text-white items-center justify-center">
 			{/* useSortedClasses 확인 */}
 			<Text className="font-bold text-3xl">여러분들 진짜 대단해요</Text>
 			<View className="flex-row gap-2">
