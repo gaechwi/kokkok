@@ -18,7 +18,7 @@ const Step1 = () => {
 			<ScrollView>
 				<View className="mt-10 flex items-center justify-center px-6">
 					<Image
-						source={images.authLogo}
+						source={images.AuthLogo}
 						className="h-[90px] w-[328px]"
 						resizeMode="contain"
 					/>
