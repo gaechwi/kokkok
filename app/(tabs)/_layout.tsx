@@ -4,6 +4,7 @@ import { Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@/constants/icons";
+import colors from "@/constants/colors";
 
 /* constants */
 
@@ -72,12 +73,12 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
-          tabBarActiveTintColor: "#333333",
-          tabBarInactiveTintColor: "#828282",
+          tabBarActiveTintColor: colors.gray[90],
+          tabBarInactiveTintColor: colors.gray[55],
           tabBarStyle: {
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
             borderTopWidth: 1,
-            borderTopColor: "#E1E1E1",
+            borderTopColor: colors.gray[20],
             height: 64,
             justifyContent: "center",
             alignItems: "center",
