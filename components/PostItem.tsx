@@ -173,7 +173,7 @@ export default function PostItem({
 									onPress={() => setIsMore(!isMore)}
 									className="flex-row items-start justify-center"
 								>
-									<Text className="h-[16px] text-gray-45 leading-[150%]">
+									<Text className="body-2 -mt-[10px] h-[17px] text-gray-45">
 										{isMore ? "  접기" : "더보기"}
 									</Text>
 								</TouchableOpacity>
