@@ -42,9 +42,9 @@ const SignIn = () => {
 								onPress={() => setShowPassword((prev) => !prev)}
 							>
 								{showPassword ? (
-									<icons.EyeOffIcon width={24} height={24} />
+									<icons.EyeOffIcon width={24} height={24} color="#828282" />
 								) : (
-									<icons.EyeIcon width={24} height={24} />
+									<icons.EyeIcon width={24} height={24} color="#828282" />
 								)}
 							</TouchableOpacity>
 						</View>
