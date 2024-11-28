@@ -103,6 +103,21 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="upload"
+          options={{
+            title: "인증하기",
+            tabBarIcon: () => (
+              <View>
+                <icons.PlusFilledIcon
+                  width={48}
+                  height={48}
+                  color={colors.primary}
+                />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="history"
           options={{
             header: () => <Header name="history" />,
