@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
 	// NOTE: Update this to include the paths to all of your component files.
-	content: ["./app/**/*.{js,jsx,ts,tsx}"],
+	content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
 	presets: [require("nativewind/preset")],
 	theme: {
 		colors: {
@@ -10,6 +10,8 @@ module.exports = {
 				yellow: "#FCEC5B",
 				red: "#FF7A7A",
 			},
+			white: "#FFFFFF",
+			black: "#2B2B2B",
 			gray: {
 				5: "#F8F8F8",
 				10: "#F2F2F2",
@@ -25,10 +27,22 @@ module.exports = {
 				70: "#5D5D5D",
 				80: "#404040",
 				90: "#333333",
-				100: "#2B2B2B",
+			},
+			white: "#FFFFFF",
+		},
+		extend: {
+			fontFamily: {
+				pblack: ["Pretendard-Black"],
+				pbold: ["Pretendard-Bold"],
+				pextrabold: ["Pretendard-ExtraBold"],
+				pextralight: ["Pretendard-ExtraLight"],
+				plight: ["Pretendard-Light"],
+				pmedium: ["Pretendard-Medium"],
+				pregular: ["Pretendard-Regular"],
+				psemibold: ["Pretendard-SemiBold"],
+				pthin: ["Pretendard-Thin"],
 			},
 		},
-		extend: {},
 	},
 	plugins: [],
 };
