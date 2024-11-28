@@ -4,11 +4,11 @@
  * @returns YYYY-MM-DD 형식의 날짜 문자열 (예: "2024-01-01")
  */
 export const formatDate = (dateString: Date) => {
-	const date = new Date(dateString);
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 /**
@@ -17,13 +17,13 @@ export const formatDate = (dateString: Date) => {
  * @returns 한국어 형식의 날짜 문자열 (예: "2024년 1월 1일")
  */
 export const formatKoreanDate = (dateString: Date) => {
-	const date = new Date(dateString);
-	return date.toLocaleDateString("ko-KR", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-		timeZone: "Asia/Seoul",
-	});
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "Asia/Seoul",
+  });
 };
 
 /**
@@ -33,31 +33,31 @@ export const formatKoreanDate = (dateString: Date) => {
  *          7일 이상 차이나는 경우 한국어 날짜 형식으로 반환 (예: "2024년 1월 1일")
  */
 export const diffDate = (dateString: Date) => {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diff = now.getTime() - date.getTime();
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
 
-	const sec = Math.floor(diff / 1000);
-	const min = Math.floor(sec / 60);
-	const hour = Math.floor(min / 60);
-	const day = Math.floor(hour / 24);
-	const month = Math.floor(day / 30);
-	const year = Math.floor(month / 12);
+  const sec = Math.floor(diff / 1000);
+  const min = Math.floor(sec / 60);
+  const hour = Math.floor(min / 60);
+  const day = Math.floor(hour / 24);
+  const month = Math.floor(day / 30);
+  const year = Math.floor(month / 12);
 
-	if (year >= 1) {
-		return `${year}년 전`;
-	}
-	if (month >= 1) {
-		return `${month}달 전`;
-	}
-	if (day > 0) {
-		return `${day}일 전`;
-	}
-	if (hour > 0) {
-		return `${hour}시간 전`;
-	}
-	if (min > 0) {
-		return `${min}분 전`;
-	}
-	return `${sec}초 전`;
+  if (year >= 1) {
+    return `${year}년 전`;
+  }
+  if (month >= 1) {
+    return `${month}달 전`;
+  }
+  if (day > 0) {
+    return `${day}일 전`;
+  }
+  if (hour > 0) {
+    return `${hour}시간 전`;
+  }
+  if (min > 0) {
+    return `${min}분 전`;
+  }
+  return `${sec}초 전`;
 };
