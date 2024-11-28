@@ -6,10 +6,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 interface CarouselProps {
-	images: string[]; // 캐러셀에 표시할 이미지 URL 배열
+	images: string[];
 }
 
-// 현재 보이는 아이템의 정보를 담는 타입
 type ViewToken = {
 	item: string;
 	key: string;
@@ -17,28 +16,44 @@ type ViewToken = {
 	isViewable: boolean;
 };
 
-// 캐러셀 하단의 인디케이터 점을 표시하는 컴포넌트
-const Dot = ({ isActive }: { isActive: boolean }) => {
+const COLORS = {
+	ACTIVE: "#8356F5",
+	INACTIVE: "#BEBEBE",
+};
+
+interface DotProps {
+	isActive: boolean;
+	activeWidth?: number;
+	inactiveWidth?: number;
+	height?: number;
+	activeColor?: string;
+	inactiveColor?: string;
+}
+
+const Dot = ({
+	isActive,
+	activeWidth = 24,
+	inactiveWidth = 8,
+	height = 8,
+	activeColor = COLORS.ACTIVE,
+	inactiveColor = COLORS.INACTIVE,
+}: DotProps) => {
 	const animatedStyle = useAnimatedStyle(() => ({
-		// 점의 너비가 부드럽게 변화하도록 애니메이션 적용
-		width: withSpring(isActive ? 24 : 8),
-		height: 8,
+		width: withSpring(isActive ? activeWidth : inactiveWidth),
+		height,
 		borderRadius: 4,
 		marginHorizontal: 4,
-		backgroundColor: isActive ? "#8356F5" : "#BEBEBE",
+		backgroundColor: isActive ? activeColor : inactiveColor,
 	}));
 
 	return <Animated.View style={animatedStyle} />;
 };
 
 export default function Carousel({ images }: CarouselProps) {
-	// 현재 활성화된 이미지의 인덱스
 	const [activeIndex, setActiveIndex] = useState(0);
-	// 화면 너비에 맞춰 이미지 크기 계산
 	const screenWidth = Dimensions.get("window").width;
-	const imageHeight = screenWidth * (1 / 1); // 1:1 비율 유지
+	const imageHeight = screenWidth * (1 / 1); // n:n 비율 유지
 
-	// 현재 보이는 아이템이 변경될 때 호출되는 콜백
 	const onViewableItemsChanged = useCallback(
 		({ viewableItems }: { viewableItems: ViewToken[] }) => {
 			if (viewableItems.length > 0 && viewableItems[0].index !== null) {
@@ -48,37 +63,41 @@ export default function Carousel({ images }: CarouselProps) {
 		[],
 	);
 
-	// 아이템이 얼마나 보여야 '보이는 상태'로 간주할지 설정
 	const viewabilityConfig = useMemo(
 		() => ({
-			viewAreaCoveragePercentThreshold: 50, // 50% 이상 보일 때 viewable로 간주
+			viewAreaCoveragePercentThreshold: 50,
 		}),
 		[],
 	);
 
 	return (
 		<View>
-			{/* 이미지를 가로로 스크롤 가능한 리스트로 표시 */}
 			<FlatList
 				data={images}
+				keyExtractor={(index) => `carousel-image-${index}`}
 				renderItem={({ item }) => (
-					<Image
-						source={{ uri: item }}
-						style={{
-							width: screenWidth,
-							height: imageHeight,
-						}}
-						resizeMode="cover"
-					/>
+					<View style={{ width: screenWidth, height: imageHeight }}>
+						<Image
+							source={{ uri: item }}
+							style={{ width: "100%", height: "100%" }}
+							resizeMode="cover"
+							onError={(e) =>
+								console.error("Image loading error:", e.nativeEvent.error)
+							}
+						/>
+					</View>
 				)}
 				horizontal
-				pagingEnabled // 한 페이지씩 스크롤되도록 설정
+				pagingEnabled
 				showsHorizontalScrollIndicator={false}
 				onViewableItemsChanged={onViewableItemsChanged}
 				viewabilityConfig={viewabilityConfig}
+				removeClippedSubviews={true}
+				initialNumToRender={1}
+				maxToRenderPerBatch={2}
+				windowSize={3}
 			/>
 
-			{/* 하단의 인디케이터 점들을 표시 */}
 			<View className="flex-row justify-center py-[10px]">
 				{images.map((image, index) => (
 					<Dot key={`carousel-dot-${image}`} isActive={index === activeIndex} />

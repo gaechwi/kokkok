@@ -23,7 +23,8 @@ export default function Home() {
 					}}
 					images={IMAGE_URL}
 					content="이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건"
-					likes={10}
+					liked={false}
+					likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL]}
 					createdAt="2024-11-26"
 					commentsCount={10}
 					comment={{
@@ -31,7 +32,8 @@ export default function Home() {
 							name: "John Doe",
 							avatar: AVATAR_URL,
 						},
-						content: "이건 테스트 내용입니다.",
+						content:
+							"이건 테스트용 댓글입니다. 이건 테스트용 댓글입니다. 이건 테스트용 댓글 입니다.",
 					}}
 				/>
 				<PostItem
@@ -40,7 +42,8 @@ export default function Home() {
 						avatar: AVATAR_URL,
 					}}
 					images={IMAGE_URL}
-					likes={10}
+					liked={false}
+					likedAuthorAvatar={[AVATAR_URL, AVATAR_URL]}
 					createdAt="2021-01-01"
 					commentsCount={10}
 				/>
@@ -51,7 +54,8 @@ export default function Home() {
 					}}
 					images={IMAGE_URL}
 					content="이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건"
-					likes={10}
+					liked={false}
+					likedAuthorAvatar={[AVATAR_URL]}
 					createdAt="2024-01-01"
 					commentsCount={10}
 				/>
