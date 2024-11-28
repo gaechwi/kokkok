@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import Carousel from "./Carousel";
 import { diffDate } from "./FormatDate";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import icons from "../constants/icons";
 interface PostItemProps {
 	author: {
@@ -46,18 +46,16 @@ export default function PostItem({
 
 	const screenWidth = Dimensions.get("window").width;
 
-	const calculateMaxChars = () => {
+	const calculateMaxChars = useMemo(() => {
 		const fontScale = PixelRatio.getFontScale();
 		const baseCharsPerLine = Math.floor(screenWidth / (11 * fontScale));
 		return baseCharsPerLine * 2;
-	};
-
-	const maxChars = calculateMaxChars();
+	}, [screenWidth]);
 
 	const truncateText = (text: string) => {
-		if (!text || text.length <= maxChars) return text;
+		if (!text || text.length <= calculateMaxChars) return text;
 
-		let truncated = text.slice(0, maxChars);
+		let truncated = text.slice(0, calculateMaxChars);
 
 		const lastSentence = truncated.match(/[^.!?]*[.!?]+/g);
 		if (lastSentence && lastSentence.length > 0) {
@@ -70,7 +68,7 @@ export default function PostItem({
 			if (lastSpace > 0) {
 				truncated = truncated.slice(0, lastSpace);
 			} else {
-				truncated = text.slice(0, maxChars);
+				truncated = text.slice(0, calculateMaxChars);
 			}
 		}
 
@@ -151,8 +149,10 @@ export default function PostItem({
 					<View className="flex-row flex-wrap">
 						<Text className="body-2 text-gray-90">
 							{isMore ? content : truncateText(content)}
-							{content.length > maxChars && <Text>{!isMore && "..."}</Text>}
-							{content.length > maxChars && (
+							{content.length > calculateMaxChars && (
+								<Text>{!isMore && "..."}</Text>
+							)}
+							{content.length > calculateMaxChars && (
 								<TouchableOpacity
 									onPress={() => setIsMore(!isMore)}
 									className="flex-row items-start justify-center"
