@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function Upload() {
+export default function MyPage() {
   return (
     <View>
-      <Text>Upload</Text>
+      <Text>MyPage</Text>
     </View>
   );
 }

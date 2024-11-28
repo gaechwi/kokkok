@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function Upload() {
+export default function History() {
   return (
     <View>
-      <Text>Upload</Text>
+      <Text>History</Text>
     </View>
   );
 }
