@@ -10,6 +10,7 @@ import {
 import images from "@constants/images";
 import icons from "@constants/icons";
 import { useState } from "react";
+import { Link } from "expo-router";
 
 const SignIn = () => {
 	const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +20,7 @@ const SignIn = () => {
 			<ScrollView>
 				<View className="mt-10 flex items-center justify-center px-6">
 					<Image
-						source={images.authLogo}
+						source={images.AuthLogo}
 						className="h-[90px] w-[328px]"
 						resizeMode="contain"
 					/>
@@ -65,7 +66,9 @@ const SignIn = () => {
 					<View className="mt-10 flex flex-row justify-center gap-3">
 						<Text className="body-1 text-gray-50">비밀번호 찾기</Text>
 						<Text className="body-1 text-gray-50">|</Text>
-						<Text className="body-1 text-gray-50">회원가입</Text>
+						<Link href="/sign-up/step1">
+							<Text className="body-1 text-gray-50">회원가입</Text>
+						</Link>
 					</View>
 
 					<View className="mt-14 flex items-center">
