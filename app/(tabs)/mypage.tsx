@@ -1,11 +1,9 @@
 import { View, Text } from "react-native";
 
-const MyPage = () => {
+export default function MyPage() {
   return (
     <View>
       <Text>MyPage</Text>
     </View>
   );
-};
-
-export default MyPage;
+}

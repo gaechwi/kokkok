@@ -1,11 +1,9 @@
 import { View, Text } from "react-native";
 
-const History = () => {
+export default function History() {
   return (
     <View>
       <Text>History</Text>
     </View>
   );
-};
-
-export default History;
+}

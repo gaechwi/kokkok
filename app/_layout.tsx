@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
-const _layout = () => {
+export default function RootLayout() {
   const [loaded, error] = useFonts({
     "Pretendard-Black": require("../assets/fonts/Pretendard-Black.otf"),
     "Pretendard-Bold": require("../assets/fonts/Pretendard-Bold.otf"),
@@ -35,6 +35,4 @@ const _layout = () => {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
     </Stack>
   );
-};
-
-export default _layout;
+}

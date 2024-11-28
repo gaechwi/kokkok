@@ -1,11 +1,9 @@
 import { View, Text } from "react-native";
 
-const Friend = () => {
+export default function Friend() {
   return (
     <View>
       <Text>Friend</Text>
     </View>
   );
-};
-
-export default Friend;
+}
