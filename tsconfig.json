@@ -1,14 +1,14 @@
 {
-	"extends": "expo/tsconfig.base",
-	"compilerOptions": {
-		"strict": true,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./*"],
-			"@components/*": ["./components/*"],
-			"@constants/*": ["./constants/*"],
-			"@assets/*": ["./assets/*"],
-			"@utils/*": ["./utils/*"]
-		}
-	}
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@components/*": ["./components/*"],
+      "@constants/*": ["./constants/*"],
+      "@assets/*": ["./assets/*"],
+      "@utils/*": ["./utils/*"]
+    }
+  }
 }

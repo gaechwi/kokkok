@@ -9,17 +9,25 @@ import HomeIcon from "@/assets/icons/home.svg";
 import KakaoIcon from "@/assets/icons/kakao.svg";
 import PlusFilledIcon from "@/assets/icons/plus-filled.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
+import MeatballIcon from "@/assets/icons/meatball.svg";
+import HeartIcon from "@/assets/icons/heart.svg";
+import CommentIcon from "@/assets/icons/comment.svg";
+import ChevronLeftIcon from "@/assets/icons/chevron-left.svg";
 
 export default {
   BellIcon,
   CalendarIcon,
+  ChevronLeftIcon,
+  CommentIcon,
   EyeIcon,
   EyeOffIcon,
   FriendIcon,
   GoogleIcon,
   GithubIcon,
+  HeartIcon,
   HomeIcon,
   KakaoIcon,
+  MeatballIcon,
   PlusFilledIcon,
   ProfileIcon,
 };
