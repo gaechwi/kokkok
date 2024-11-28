@@ -56,25 +56,16 @@ export default function PostItem({
 
 	const truncateText = (text: string) => {
 		if (!text || text.length <= calculateMaxChars) return text;
-
-		let truncated = text.slice(0, calculateMaxChars);
-
+		const truncated = text.slice(0, calculateMaxChars);
 		const lastSentence = truncated.match(/[^.!?]*[.!?]+/g);
 		if (lastSentence && lastSentence.length > 0) {
-			const lastIndex = truncated.lastIndexOf(
-				lastSentence[lastSentence.length - 1],
+			return truncated.slice(
+				0,
+				truncated.lastIndexOf(lastSentence[lastSentence.length - 1]) + 1,
 			);
-			truncated = truncated.slice(0, lastIndex + 1);
-		} else {
-			const lastSpace = truncated.lastIndexOf(" ");
-			if (lastSpace > 0) {
-				truncated = truncated.slice(0, lastSpace);
-			} else {
-				truncated = text.slice(0, calculateMaxChars);
-			}
 		}
-
-		return truncated;
+		const lastSpace = truncated.lastIndexOf(" ");
+		return lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
 	};
 
 	const onOpenModal = () => {
@@ -117,19 +108,19 @@ export default function PostItem({
 			</View>
 
 			{/* carousel */}
-			<View className="h-max w-full bg-white">
+			<View className="h-max w-full bg-white pb-1">
 				<Carousel images={images} />
 			</View>
 
 			{/* relation */}
 			<View className="flex-row items-center justify-between bg-white px-4 pb-4">
-				<View className="flex-row items-center gap-2">
+				<View className="flex-row items-center gap-2 pr-[2px]">
 					<TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
 						<icons.HeartIcon
 							width={24}
 							height={24}
-							color={isLiked ? "#FF5757" : "#333333"}
-							fill={isLiked ? "#FF5757" : "transparent"}
+							color={isLiked ? "#ff7a7a" : "#333333"}
+							fill={isLiked ? "#ff7a7a" : "transparent"}
 						/>
 					</TouchableOpacity>
 					{likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
@@ -140,7 +131,7 @@ export default function PostItem({
 									key={`avatar-${index}`}
 									source={{ uri: avatar }}
 									resizeMode="cover"
-									className="-ml-[5px] size-[18px] rounded-full"
+									className="-ml-[5px] size-[24px] rounded-full"
 									style={{
 										zIndex: 5 - index,
 										borderWidth: 1,
@@ -149,14 +140,18 @@ export default function PostItem({
 								/>
 							))}
 							{likedAuthorAvatar.length > 2 && (
-								<Text className="caption-1 text-gray-90">외 여러명</Text>
+								<Text className="pl-[2px] font-pbold text-[13px] text-gray-90 leading-[150%]">
+									외 여러명
+								</Text>
 							)}
 						</TouchableOpacity>
 					)}
 					<TouchableOpacity className="flex-row items-center gap-[2px]">
-						<icons.CommentIcon width={24} height={24} />
+						<icons.CommentIcon width={24} height={24} color="#333333" />
 						{commentsCount > 0 && (
-							<Text className="caption-1 text-gray-90">{commentsCount}</Text>
+							<Text className="caption-1 text-gray-90">
+								{commentsCount > 99 ? "99+" : commentsCount}
+							</Text>
 						)}
 					</TouchableOpacity>
 				</View>
@@ -179,7 +174,7 @@ export default function PostItem({
 									className="flex-row items-start justify-center"
 								>
 									<Text className="h-[16px] text-gray-45 leading-[150%]">
-										{isMore ? " 접기" : " 더보기"}
+										{isMore ? "  접기" : "더보기"}
 									</Text>
 								</TouchableOpacity>
 							)}
@@ -190,7 +185,7 @@ export default function PostItem({
 
 			{/* comments */}
 			{comment && (
-				<View className="bg-white px-4 pb-4">
+				<View className="bg-white px-6 pb-4">
 					<View className="flex-row items-center gap-2">
 						<Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
 							{comment.author.name}

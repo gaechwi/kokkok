@@ -45,7 +45,7 @@ export default function Home() {
 					liked={false}
 					likedAuthorAvatar={[AVATAR_URL, AVATAR_URL]}
 					createdAt="2021-01-01"
-					commentsCount={10}
+					commentsCount={100}
 				/>
 				<PostItem
 					author={{
