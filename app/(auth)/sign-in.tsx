@@ -7,8 +7,8 @@ import {
 	TouchableOpacity,
 } from "react-native";
 
-import images from "../../constants/images";
-import icons from "../../constants/icons";
+import images from "@constants/images";
+import icons from "@constants/icons";
 import { useState } from "react";
 
 const SignIn = () => {
