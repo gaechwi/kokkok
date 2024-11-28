@@ -30,16 +30,24 @@ const SignIn = () => {
 							placeholder="이메일을 입력해주세요."
 							keyboardType="email-address"
 							autoCapitalize="none"
+							accessibilityLabel="이메일 입력"
+							accessibilityHint="이메일을 입력해주세요."
 						/>
 						<View className="w-full">
 							<TextInput
 								className="h-[58px] w-full rounded-[10px] border border-gray-20 px-4 focus:border-primary"
 								placeholder="비밀번호를 입력해주세요."
 								secureTextEntry={!showPassword}
+								accessibilityLabel="비밀번호 입력"
+								accessibilityHint="비밀번호를 입력해주세요."
 							/>
 							<TouchableOpacity
 								className="-translate-y-1/2 absolute top-1/2 right-4"
 								onPress={() => setShowPassword((prev) => !prev)}
+								accessibilityLabel={
+									showPassword ? "비밀번호 숨기기" : "비밀번호 표시"
+								}
+								accessibilityRole="button"
 							>
 								{showPassword ? (
 									<icons.EyeOffIcon width={24} height={24} color="#828282" />
