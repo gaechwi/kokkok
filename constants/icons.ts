@@ -9,13 +9,13 @@ import CommentIcon from "../assets/icons/comment.svg";
 import ChevronLeftIcon from "../assets/icons/chevron-left.svg";
 
 export default {
-	GoogleIcon,
-	GithubIcon,
-	KakaoIcon,
-	EyeIcon,
-	EyeOffIcon,
-	MeatballIcon,
-	HeartIcon,
-	CommentIcon,
-	ChevronLeftIcon,
+  GoogleIcon,
+  GithubIcon,
+  KakaoIcon,
+  EyeIcon,
+  EyeOffIcon,
+  MeatballIcon,
+  HeartIcon,
+  CommentIcon,
+  ChevronLeftIcon,
 };
