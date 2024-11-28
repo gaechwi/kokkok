@@ -34,6 +34,7 @@ module.exports = {
 				80: "#404040",
 				90: "#333333",
 			},
+			white: "#FFFFFF",
 		},
 		extend: {
 			fontFamily: {
