@@ -6,6 +6,7 @@ import EyeOffIcon from "../assets/icons/eye-off.svg";
 import MeatballIcon from "../assets/icons/meatball.svg";
 import HeartIcon from "../assets/icons/heart.svg";
 import CommentIcon from "../assets/icons/comment.svg";
+import ChevronLeftIcon from "../assets/icons/chevron-left.svg";
 
 export default {
 	GoogleIcon,
@@ -16,4 +17,5 @@ export default {
 	MeatballIcon,
 	HeartIcon,
 	CommentIcon,
+	ChevronLeftIcon,
 };
