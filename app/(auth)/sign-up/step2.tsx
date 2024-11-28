@@ -12,7 +12,7 @@ const Step2 = () => {
 	return (
 		<View className="h-full bg-white">
 			<ScrollView>
-				<View className="mt-10 flex items-center justify-center px-6">
+				<View className="mt-12 flex items-center justify-center px-6">
 					<TouchableOpacity>
 						<Image
 							source={images.AvatarInput}
