@@ -15,7 +15,9 @@ export default function FriendTab({
         className={`flex-1 h-full justify-center items-center ${isFriendTap ? "border-b-2 border-primary" : "border-b-[1px] border-gray-20"}`}
         onPress={() => handlePress(true)}
       >
-        <Text className={`title-2 ${isFriendTap ? "" : "font-pmedium"}`}>
+        <Text
+          className={`title-2 text-gray-90 ${isFriendTap ? "" : "font-pmedium"}`}
+        >
           친구 목록
         </Text>
       </TouchableOpacity>
@@ -23,7 +25,9 @@ export default function FriendTab({
         className={`flex-1 h-full justify-center items-center ${isFriendTap ? "border-b-[1px] border-gray-20" : "border-b-2 border-primary"}`}
         onPress={() => handlePress(false)}
       >
-        <Text className={`title-2 ${isFriendTap ? "font-pmedium" : ""}`}>
+        <Text
+          className={`title-2 text-gray-90 ${isFriendTap ? "font-pmedium" : ""}`}
+        >
           친구 요청
         </Text>
       </TouchableOpacity>
