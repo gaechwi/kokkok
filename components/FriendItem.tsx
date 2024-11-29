@@ -4,7 +4,6 @@ import icons from "@/constants/icons";
 
 // 추후 적당한 위치로 이동
 const FIT_STATUS = {
-  DEFAULT: "기본",
   DONE: "운동함",
   NOT_DONE: "안함",
   REST: "쉬는 날",
@@ -73,6 +72,31 @@ export function FriendItem({
           <Text className="body-5 text-white">👈 콕 찌르기 </Text>
         )}
       </TouchableOpacity>
+    </View>
+  );
+}
+
+export function FriendRequest({
+  nickname,
+  avatar,
+  description,
+}: FriendProfileProps) {
+  return (
+    <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
+      <FriendProfile
+        nickname={nickname}
+        avatar={avatar}
+        description={description}
+      />
+
+      <View className="flex-row gap-[11px]">
+        <TouchableOpacity className="bg-primary px-[12px] py-[11px] rounded-[10px]">
+          <Text className="caption-1 font-pmedium text-white">수락</Text>
+        </TouchableOpacity>
+        <TouchableOpacity className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]">
+          <Text className="caption-1 font-pmedium text-gray-90">거절</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

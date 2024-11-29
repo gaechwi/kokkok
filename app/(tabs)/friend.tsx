@@ -2,7 +2,7 @@ import { useState } from "react";
 import FriendTab from "@/components/FriendTab";
 import { View, ScrollView } from "react-native";
 import SearchBar from "@/components/SearchBar";
-import { FriendItem } from "@/components/FriendItem";
+import { FriendItem, FriendRequest } from "@/components/FriendItem";
 
 /* mock data와 type */
 
@@ -55,19 +55,29 @@ export default function Friend() {
           setIsFriendTap(newIsFriendTab)
         }
       />
-      <ScrollView className="px-6 pt-6 h-full w-full">
-        <SearchBar
-          value={keyword}
-          handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-        />
-        <View className="px-2 pt-2">
+      {isFriendTap ? (
+        <ScrollView className="px-6 pt-6 h-full w-full">
+          <SearchBar
+            value={keyword}
+            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+          />
+          <View className="px-2 pt-2">
+            {[1, 2, 3, 4, 5].map((n) =>
+              USERS.map((user) => (
+                <FriendItem key={n + user.accountId} {...user} />
+              )),
+            )}
+          </View>
+        </ScrollView>
+      ) : (
+        <ScrollView className="px-6 pt-2 h-full w-full">
           {[1, 2, 3, 4, 5].map((n) =>
-            USERS.map((user) => (
-              <FriendItem key={n + user.accountId} {...user} />
+            USERS.toReversed().map((user) => (
+              <FriendRequest key={n + user.accountId} {...user} />
             )),
           )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 }
