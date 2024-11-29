@@ -7,10 +7,38 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
-import images from "../../../constants/images";
+import images from "@constants/images";
+import { useAtom } from "jotai";
+import { signUpFormAtom } from "@contexts/auth";
+import { useRouter } from "expo-router";
+import { signUp } from "@utils/appwrite";
 
 const Step2 = () => {
+  const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
+  const router = useRouter();
+
+  const handleSignUp = async () => {
+    if (!signUpForm.username) {
+      Alert.alert("닉네임을 채워주세요");
+      return;
+    }
+
+    try {
+      await signUp(
+        signUpForm.email,
+        signUpForm.password,
+        signUpForm.username,
+        signUpForm.description,
+      );
+
+      router.replace("/home");
+    } catch (error) {
+      Alert.alert("회원가입 실패", error.message);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -32,6 +60,10 @@ const Step2 = () => {
               placeholder="닉네임을 입력해주세요."
               accessibilityLabel="닉네임 입력"
               accessibilityHint="닉네임을 입력해주세요."
+              value={signUpForm.username}
+              onChangeText={(text) =>
+                setSignUpForm({ ...signUpForm, username: text })
+              }
             />
             <TextInput
               className="h-[108px] w-full rounded-[10px] border border-gray-20 p-4 focus:border-primary"
@@ -40,10 +72,17 @@ const Step2 = () => {
               accessibilityHint="소개글을 입력해주세요."
               multiline={true} // 여러 줄 입력 가능
               numberOfLines={4} // 기본 표시 줄 수
+              value={signUpForm.description}
+              onChangeText={(text) =>
+                setSignUpForm({ ...signUpForm, description: text })
+              }
             />
           </View>
 
-          <TouchableOpacity className="mt-12 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary">
+          <TouchableOpacity
+            className="mt-12 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+            onPress={handleSignUp}
+          >
             <Text className="heading-2 text-white">완료</Text>
           </TouchableOpacity>
         </View>

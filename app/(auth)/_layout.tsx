@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import icons from "../../constants/icons";
+import icons from "@constants/icons";
 import { useRouter } from "expo-router";
 
 const AuthLayout = () => {
