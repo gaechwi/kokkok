@@ -20,11 +20,11 @@ export default function History() {
       <View className="items-center rounded-[10px] border border-gray-25 px-[24px] pt-[16px] pb-[32px]">
         <View className="mb-[16px] flex-row items-center gap-[24px]">
           <TouchableOpacity>
-            <icons.ArrowLeftIcon width={20} height={20} color="#5D5D5D" />
+            <icons.ChevronLeftIcon width={20} height={20} color="#5D5D5D" />
           </TouchableOpacity>
           <Text className="heading-2">11월</Text>
           <TouchableOpacity>
-            <icons.ArrowRightIcon width={20} height={20} color="#5D5D5D" />
+            <icons.ChevronRightIcon width={20} height={20} color="#5D5D5D" />
           </TouchableOpacity>
         </View>
 

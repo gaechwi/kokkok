@@ -1,7 +1,7 @@
-import ArrowLeftIcon from "@/assets/icons/arrow_left.svg";
-import ArrowRightIcon from "@/assets/icons/arrow_right.svg";
 import BellIcon from "@/assets/icons/bell.svg";
 import CalendarIcon from "@/assets/icons/calendar.svg";
+import ChevronLeftIcon from "@/assets/icons/chevron-left.svg";
+import ChevronRightIcon from "@/assets/icons/chevron-right.svg";
 import EyeIcon from "@/assets/icons/eye.svg";
 import EyeOffIcon from "@/assets/icons/eye-off.svg";
 import FaceDefaultIcon from "@/assets/icons/face_default.svg";
@@ -18,14 +18,12 @@ import ProfileIcon from "@/assets/icons/profile.svg";
 import MeatballIcon from "@/assets/icons/meatball.svg";
 import HeartIcon from "@/assets/icons/heart.svg";
 import CommentIcon from "@/assets/icons/comment.svg";
-import ChevronLeftIcon from "@/assets/icons/chevron-left.svg";
 
 export default {
-  ArrowLeftIcon,
-  ArrowRightIcon,
   BellIcon,
   CalendarIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   CommentIcon,
   EyeIcon,
   EyeOffIcon,
