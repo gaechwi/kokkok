@@ -1,6 +1,7 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import icons from "@/constants/icons";
+import images from "@/constants/images";
 
 // 추후 적당한 위치로 이동
 const FIT_STATUS = {
@@ -30,7 +31,11 @@ const FriendProfile = ({
   description,
 }: FriendProfileProps) => (
   <View className="flex-row gap-2">
-    <Image src={avatar} className="size-[48px] rounded-full" />
+    <Image
+      src={avatar}
+      defaultSource={images.AvaTarDefault}
+      style={{ width: 48, height: 48, borderRadius: 9999 }}
+    />
     <View className="gap-[4px]">
       <Text className="title-4 text-gray-90">{nickname}</Text>
       <Text className="caption-3 text-gray-45">{description}</Text>
