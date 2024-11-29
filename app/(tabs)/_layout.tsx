@@ -22,7 +22,7 @@ const TAP_ICONS = {
     <icons.ProfileIcon width={24} height={24} color={color} />
   ),
 } as const;
-type TAP_TYPE = keyof typeof TAP_ICONS;
+type TapType = keyof typeof TAP_ICONS;
 
 const TAP_NAME = {
   home: "홈",
@@ -45,7 +45,7 @@ const TabIcon = ({
   name,
 }: {
   color: string;
-  name: TAP_TYPE;
+  name: TapType;
 }) => (
   <View className="w-fit items-center justify-center gap-0">
     {TAP_ICONS[name](color)}
@@ -55,7 +55,7 @@ const TabIcon = ({
   </View>
 );
 
-const Header = ({ name }: { name: TAP_TYPE }) => (
+const Header = ({ name }: { name: TapType }) => (
   <SafeAreaView className="border-gray-25 border-b bg-white">
     <View className="h-14 flex-row items-center justify-between px-4">
       <Text className="heading-2">{HEADER_TITLE[name]}</Text>
