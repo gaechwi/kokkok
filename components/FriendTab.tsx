@@ -27,7 +27,7 @@ export default function FriendTab({
   handlePress,
 }: FriendTapProps) {
   return (
-    <View className="w-full h-[64px] flex-row bg-white">
+    <View className="w-full h-[64px] flex-row">
       <TabItem
         title="친구 목록"
         handlePress={() => handlePress(true)}
