@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import icons from "@/constants/icons";
 import { useState } from "react";
@@ -116,8 +115,6 @@ export default function History() {
           </View>
         </View>
       </View>
-
-      <StatusBar style="auto" />
     </View>
   );
 }
