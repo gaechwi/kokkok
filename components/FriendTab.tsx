@@ -1,8 +1,8 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
-interface FriendTapProps {
-  isFriendTap: boolean;
-  handlePress: (nIF: boolean) => void;
+interface FriendTabProps {
+  isFriendTab: boolean;
+  handlePress: (newIsFriendTab: boolean) => void;
 }
 
 interface TabItemProps {
@@ -23,20 +23,20 @@ const TabItem = ({ title, handlePress, isActive }: TabItemProps) => (
 );
 
 export default function FriendTab({
-  isFriendTap,
+  isFriendTab,
   handlePress,
-}: FriendTapProps) {
+}: FriendTabProps) {
   return (
     <View className="w-full h-[64px] flex-row">
       <TabItem
         title="친구 목록"
         handlePress={() => handlePress(true)}
-        isActive={isFriendTap === true}
+        isActive={isFriendTab}
       />
       <TabItem
         title="친구 요청"
         handlePress={() => handlePress(false)}
-        isActive={isFriendTap === false}
+        isActive={!isFriendTab}
       />
     </View>
   );

@@ -44,18 +44,18 @@ const USERS: User[] = [
 /* 실제 컴포넌트 */
 
 export default function Friend() {
-  const [isFriendTap, setIsFriendTap] = useState(true);
+  const [isFriendTab, setIsFriendTab] = useState(true);
   const [keyword, setKeyword] = useState("");
 
   return (
     <View className="bg-white">
       <FriendTab
-        isFriendTap={isFriendTap}
+        isFriendTab={isFriendTab}
         handlePress={(newIsFriendTab: boolean) =>
-          setIsFriendTap(newIsFriendTab)
+          setIsFriendTab(newIsFriendTab)
         }
       />
-      {isFriendTap ? (
+      {isFriendTab ? (
         <ScrollView className="px-6 pt-6 h-full w-full">
           <SearchBar
             value={keyword}
