@@ -1,15 +1,51 @@
 import { StatusBar } from "expo-status-bar";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import icons from "@/constants/icons";
+import { useState } from "react";
 
 export default function History() {
-  const daysInMonth = Array.from({ length: 30 }, (_, i) => i + 1);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const totalDaysInMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0,
+  ).getDate();
+
+  const firstDayOfWeek = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1,
+  ).getDay();
+
+  // 날짜 배열 생성 (앞쪽에 null로 패딩하여 요일에 맞게 배치)
+  const daysArray = Array.from(
+    { length: firstDayOfWeek + totalDaysInMonth },
+    (_, i) => {
+      if (i < firstDayOfWeek) return null;
+      return i - firstDayOfWeek + 1;
+    },
+  );
+
+  const handlePreviousMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(currentDate.getMonth() - 1);
+    setCurrentDate(newDate);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(currentDate.getMonth() + 1);
+    setCurrentDate(newDate);
+  };
 
   return (
     <View className="flex-1 gap-[20px] bg-white px-[28px] py-[24px]">
       <View className="flex-row items-center">
         <Text className="heading-1 grow">
-          11월 <Text className="text-primary">17</Text>일 운동 완료!
+          {currentMonth}월 <Text className="text-primary">17</Text>일 운동 완료!
         </Text>
 
         <TouchableOpacity className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25">
@@ -19,11 +55,11 @@ export default function History() {
 
       <View className="items-center rounded-[10px] border border-gray-25 px-[24px] pt-[16px] pb-[32px]">
         <View className="mb-[16px] flex-row items-center gap-[24px]">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handlePreviousMonth}>
             <icons.ChevronLeftIcon width={20} height={20} color="#5D5D5D" />
           </TouchableOpacity>
-          <Text className="heading-2">11월</Text>
-          <TouchableOpacity>
+          <Text className="heading-2">{currentMonth}월</Text>
+          <TouchableOpacity onPress={handleNextMonth}>
             <icons.ChevronRightIcon width={20} height={20} color="#5D5D5D" />
           </TouchableOpacity>
         </View>
@@ -37,15 +73,24 @@ export default function History() {
         </View>
 
         <FlatList
-          data={daysInMonth}
+          data={daysArray}
           numColumns={7}
-          keyExtractor={(item) => item.toString()}
-          renderItem={({ item }) => (
-            <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
-              <Text className="body-4 text-gray-65">{item}</Text>
-              <icons.FaceDefaultIcon width={32} height={32} />
-            </View>
-          )}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({ item }) => {
+            if (item === null) {
+              return (
+                <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
+                  {/* 빈 공간 */}
+                </View>
+              );
+            }
+            return (
+              <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
+                <Text className="body-4 text-gray-65">{item}</Text>
+                <icons.FaceDefaultIcon width={32} height={32} />
+              </View>
+            );
+          }}
           scrollEnabled={false}
         />
       </View>
