@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
-import icons from "../../constants/icons";
+import icons from "@/constants/icons";
 
 export default function History() {
   const daysInMonth = Array.from({ length: 30 }, (_, i) => i + 1);
