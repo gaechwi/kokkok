@@ -1,9 +1,11 @@
 import { useState } from "react";
 import FriendTab from "@/components/FriendTab";
-import { View, Text } from "react-native";
+import { View, Text, ScrollView } from "react-native";
+import SearchBar from "@/components/SearchBar";
 
 export default function Friend() {
   const [isFriendTap, setIsFriendTap] = useState(true);
+  const [keyword, setKeyword] = useState("");
 
   return (
     <View>
@@ -13,9 +15,13 @@ export default function Friend() {
           setIsFriendTap(newIsFriendTab)
         }
       />
-      <View className="bg-white">
+      <ScrollView className="bg-white p-6 h-full w-full">
+        <SearchBar
+          value={keyword}
+          handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+        />
         <Text>Friend</Text>
-      </View>
+      </ScrollView>
     </View>
   );
 }
