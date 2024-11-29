@@ -1,4 +1,4 @@
-export const colors = {
+export default {
   primary: "#8356F5",
   secondary: {
     yellow: "#FCEC5B",
@@ -22,4 +22,4 @@ export const colors = {
     80: "#404040",
     90: "#333333",
   },
-} as const;
+};
