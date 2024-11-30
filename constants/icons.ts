@@ -15,6 +15,7 @@ import HomeIcon from "@/assets/icons/home.svg";
 import KakaoIcon from "@/assets/icons/kakao.svg";
 import PlusFilledIcon from "@/assets/icons/plus-filled.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
+import SearchIcon from "@/assets/icons/search.svg";
 import MeatballIcon from "@/assets/icons/meatball.svg";
 import HeartIcon from "@/assets/icons/heart.svg";
 import CommentIcon from "@/assets/icons/comment.svg";
@@ -40,4 +41,5 @@ export default {
   MeatballIcon,
   PlusFilledIcon,
   ProfileIcon,
+  SearchIcon,
 };
