@@ -76,12 +76,20 @@ export default function History() {
         <View className="w-full px-[3px]">
           {weeks.map((week, weekIndex) => (
             <View
-              key={weekIndex}
+              key={
+                week
+                  ? `${currentYear}-${currentMonth}-${week}`
+                  : `empty-${weekIndex}`
+              }
               className="mt-[8px] flex-row items-center justify-between"
             >
               {week.map((day, dayIndex) => (
                 <View
-                  key={dayIndex}
+                  key={
+                    day
+                      ? `${currentYear}-${currentMonth}-${day}`
+                      : `empty-${dayIndex}`
+                  }
                   className="w-[30px] items-center justify-start"
                 >
                   {day ? (
