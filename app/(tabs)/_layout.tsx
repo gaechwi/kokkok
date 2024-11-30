@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@constants/icons";
@@ -22,7 +22,7 @@ const TAP_ICONS = {
     <icons.ProfileIcon width={24} height={24} color={color} />
   ),
 } as const;
-type TAP_TYPE = keyof typeof TAP_ICONS;
+type TapType = keyof typeof TAP_ICONS;
 
 const TAP_NAME = {
   home: "홈",
@@ -45,7 +45,7 @@ const TabIcon = ({
   name,
 }: {
   color: string;
-  name: TAP_TYPE;
+  name: TapType;
 }) => (
   <View className="w-fit items-center justify-center gap-0">
     {TAP_ICONS[name](color)}
@@ -55,8 +55,8 @@ const TabIcon = ({
   </View>
 );
 
-const Header = ({ name }: { name: TAP_TYPE }) => (
-  <SafeAreaView className="border-gray-25 border-b bg-white">
+const Header = ({ name }: { name: TapType }) => (
+  <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
     <View className="h-14 flex-row items-center justify-between px-4">
       <Text className="heading-2">{HEADER_TITLE[name]}</Text>
       {/* 마이페이지는 설정 버튼 추가 */}
@@ -79,10 +79,11 @@ export default function TabsLayout() {
             backgroundColor: colors.white,
             borderTopWidth: 1,
             borderTopColor: colors.gray[20],
-            height: 64,
+            height: 80,
             justifyContent: "center",
             alignItems: "center",
             flexDirection: "row",
+            paddingBottom: Platform.OS === "android" ? 24 : 16,
           },
         }}
       >
