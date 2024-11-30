@@ -64,17 +64,17 @@ export function FriendItem({
         disabled={status !== "NOT_DONE"}
       >
         {status === "DONE" ? (
-          <View className="flex-row">
+          <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[5px]">운동 완료</Text>
             <icons.FaceDoneIcon width={19} height={19} />
           </View>
         ) : status === "REST" ? (
-          <View className="flex-row">
+          <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[8px]">쉬는 중</Text>
             <icons.FaceRestIcon width={19} height={19} />
           </View>
         ) : (
-          <Text className="body-5 text-white">👈 콕 찌르기 </Text>
+          <Text className="body-5 text-white">👈 콕 찌르기</Text>
         )}
       </TouchableOpacity>
     </View>
