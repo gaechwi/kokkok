@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Text, View, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -107,13 +107,28 @@ export default function TabsLayout() {
           name="upload"
           options={{
             title: "인증하기",
+            tabBarStyle: { display: "none" },
+            header: () => (
+              <SafeAreaView className="border-gray-25 border-b bg-white">
+                <View className="relative h-14 w-full flex-row items-center justify-between px-4">
+                  <TouchableOpacity
+                    onPress={() => router.back()}
+                    className="-translate-y-1/2 absolute top-1/2 left-3 z-10"
+                  >
+                    <icons.BackIcon
+                      width={24}
+                      height={24}
+                      color={colors.gray[60]}
+                    />
+                  </TouchableOpacity>
+
+                  <Text className="heading-2 w-full text-center">인증하기</Text>
+                </View>
+              </SafeAreaView>
+            ),
             tabBarIcon: () => (
-              <View>
-                <icons.PlusFilledIcon
-                  width={48}
-                  height={48}
-                  color={colors.primary}
-                />
+              <View className="size-12 items-center justify-center rounded-full bg-primary p-3">
+                <icons.PlusIcon width={24} height={24} color={colors.white} />
               </View>
             ),
           }}
