@@ -1,4 +1,11 @@
-import { Client, Account, ID, Avatars, Databases } from "react-native-appwrite";
+import {
+  Client,
+  Account,
+  ID,
+  Avatars,
+  Databases,
+  Query,
+} from "react-native-appwrite";
 
 export const appwriteConfig = {
   endpoint: "https://cloud.appwrite.io/v1",
@@ -6,6 +13,7 @@ export const appwriteConfig = {
   platform: "com.gaechwi.kokkok",
   databaseId: "6745cc64001d43c5d918",
   userCollectionId: "6745ccbf002e6b1ac24a",
+  postCollectionId: "6745d1dd003250e09752",
 };
 
 const client: Client = new Client();
@@ -81,4 +89,55 @@ export async function signIn(email: string, password: string) {
       error instanceof Error ? error.message : "로그인에 실패했습니다";
     throw new Error(errorMessage);
   }
+}
+
+// 게시글 타입 정의
+interface Post {
+  id: string;
+  images: string[];
+  contents: string;
+  createdAt: string;
+  updatedAt: string;
+  likes: string[];
+}
+
+// getPosts 함수 수정
+export async function getPosts(pageParam = 0): Promise<{
+  posts: Post[];
+  total: number;
+  hasMore: boolean;
+}> {
+  const limit = 10;
+  const offset = pageParam * limit;
+
+  const posts = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.postCollectionId,
+    [
+      Query.orderDesc("$createdAt"),
+      Query.limit(limit),
+      Query.offset(offset),
+      Query.select([
+        "$id",
+        "images",
+        "contents",
+        "$createdAt",
+        "$updatedAt",
+        "likes",
+      ]),
+    ],
+  );
+
+  return {
+    posts: posts.documents.map((doc) => ({
+      id: doc.$id,
+      images: doc.images,
+      contents: doc.contents,
+      createdAt: doc.$createdAt,
+      updatedAt: doc.$updatedAt,
+      likes: doc.likes,
+    })),
+    total: posts.total,
+    hasMore: offset + limit < posts.total,
+  };
 }
