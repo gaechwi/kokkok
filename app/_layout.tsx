@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import "../global.css";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
+import { HeaderWithBack } from "@/components/Header";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,6 +34,14 @@ export default function RootLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="notification"
+        options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
+      />
+      <Stack.Screen
+        name="setting"
+        options={{ header: () => <HeaderWithBack name="SETTING" /> }}
+      />
     </Stack>
   );
 }
