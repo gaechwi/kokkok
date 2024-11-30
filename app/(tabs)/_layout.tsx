@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@/constants/icons";
@@ -79,10 +79,11 @@ export default function TabsLayout() {
             backgroundColor: colors.white,
             borderTopWidth: 1,
             borderTopColor: colors.gray[20],
-            height: 64,
+            height: 80,
             justifyContent: "center",
             alignItems: "center",
             flexDirection: "row",
+            paddingBottom: Platform.OS === "android" ? 24 : 16,
           },
         }}
       >
