@@ -6,7 +6,6 @@ import images from "@/constants/images";
 // 추후 적당한 위치로 이동
 const FIT_STATUS = {
   DONE: "운동함",
-  NOT_DONE: "안함",
   REST: "쉬는 날",
 } as const;
 type StatusType = keyof typeof FIT_STATUS;
@@ -20,7 +19,7 @@ interface FriendProfileProps {
 }
 
 interface FriendItemProps extends FriendProfileProps {
-  status: StatusType;
+  status?: StatusType;
 }
 
 /* SubComponent */
@@ -60,8 +59,8 @@ export function FriendItem({
       />
 
       <TouchableOpacity
-        className={`${status === "NOT_DONE" ? "bg-primary" : "bg-gray-40"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
-        disabled={status !== "NOT_DONE"}
+        className="bg-primary disabled:bg-gray-40 w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center"
+        disabled={!!status}
       >
         {status === "DONE" ? (
           <View className="flex-row items-center justify-center">

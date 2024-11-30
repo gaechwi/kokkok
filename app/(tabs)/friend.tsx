@@ -13,7 +13,7 @@ interface User {
   nickname: string;
   avatar: string;
   description: string;
-  status: "DONE" | "NOT_DONE" | "REST";
+  status?: "DONE" | "REST";
 }
 
 const USERS: User[] = [
@@ -31,7 +31,6 @@ const USERS: User[] = [
     avatar:
       "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731427831515-thumbnail.webp",
     description: "저도 블로그 개발자입니다.",
-    status: "NOT_DONE",
   },
   {
     accountId: "3",
