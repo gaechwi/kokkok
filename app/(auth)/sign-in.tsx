@@ -5,15 +5,40 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 
 import images from "@constants/images";
 import icons from "@constants/icons";
 import { useState } from "react";
 import { Link } from "expo-router";
+import { signIn } from "@utils/appwrite";
+import { useRouter } from "expo-router";
 
 const SignIn = () => {
+  const router = useRouter();
+
+  const [userInput, setUserInput] = useState({
+    email: "",
+    password: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleSignIn = async () => {
+    try {
+      await signIn(userInput.email, userInput.password);
+
+      router.replace("/home");
+    } catch (error: unknown) {
+      Alert.alert(
+        "로그인 실패",
+        error instanceof Error
+          ? error.message
+          : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.",
+      );
+    }
+  };
 
   return (
     <View className="h-full bg-white">
@@ -33,6 +58,10 @@ const SignIn = () => {
               autoCapitalize="none"
               accessibilityLabel="이메일 입력"
               accessibilityHint="이메일을 입력해주세요."
+              value={userInput.email}
+              onChangeText={(text) =>
+                setUserInput((prev) => ({ ...prev, email: text }))
+              }
             />
             <View className="w-full">
               <TextInput
@@ -41,6 +70,10 @@ const SignIn = () => {
                 secureTextEntry={!showPassword}
                 accessibilityLabel="비밀번호 입력"
                 accessibilityHint="비밀번호를 입력해주세요."
+                value={userInput.password}
+                onChangeText={(text) =>
+                  setUserInput((prev) => ({ ...prev, password: text }))
+                }
               />
               <TouchableOpacity
                 className="-translate-y-1/2 absolute top-1/2 right-4"
@@ -59,7 +92,10 @@ const SignIn = () => {
             </View>
           </View>
 
-          <TouchableOpacity className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary">
+          <TouchableOpacity
+            className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+            onPress={handleSignIn}
+          >
             <Text className="heading-2 text-white">로그인</Text>
           </TouchableOpacity>
 

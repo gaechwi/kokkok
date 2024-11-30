@@ -3,8 +3,8 @@ import { StatusBar } from "expo-status-bar";
 import { Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import icons from "@/constants/icons";
-import colors from "@/constants/colors";
+import icons from "@constants/icons";
+import colors from "@constants/colors";
 
 /* constants */
 
