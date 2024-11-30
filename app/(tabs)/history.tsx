@@ -1,38 +1,34 @@
-import {
-  FlatList,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import icons from "@/constants/icons";
 import { useState } from "react";
 
 export default function History() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
+  const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
-  const totalDaysInMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() + 1,
-    0,
-  ).getDate();
+  const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
 
-  const firstDayOfWeek = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    1,
-  ).getDay();
-
-  // 날짜 배열 생성 (앞쪽에 null로 패딩하여 요일에 맞게 배치)
   const daysArray = Array.from(
-    { length: firstDayOfWeek + totalDaysInMonth },
-    (_, i) => {
-      if (i < firstDayOfWeek) return null;
-      return i - firstDayOfWeek + 1;
+    { length: firstDayOfMonth + daysInMonth },
+    (_, index) => {
+      if (index < firstDayOfMonth) return null;
+      return index - firstDayOfMonth + 1;
     },
   );
+
+  // 마지막 주의 빈 공간을 null로 채우기
+  const totalDays = Math.ceil(daysArray.length / 7) * 7;
+  for (let i = daysArray.length; i < totalDays; i++) {
+    daysArray.push(null);
+  }
+
+  const weeks = [];
+  for (let i = 0; i < daysArray.length; i += 7) {
+    weeks.push(daysArray.slice(i, i + 7));
+  }
 
   const handlePreviousMonth = () => {
     const newDate = new Date(currentDate);
@@ -77,28 +73,28 @@ export default function History() {
           ))}
         </View>
 
-        <FlatList
-          className="mt-[8px] w-full"
-          data={daysArray}
-          numColumns={7}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => {
-            if (item === null) {
-              return (
-                <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
-                  {/* 빈 공간 */}
+        <View className="w-full px-[3px]">
+          {weeks.map((week, weekIndex) => (
+            <View
+              key={weekIndex}
+              className="mt-[8px] flex-row items-center justify-between"
+            >
+              {week.map((day, dayIndex) => (
+                <View
+                  key={dayIndex}
+                  className="w-[30px] items-center justify-start"
+                >
+                  {day ? (
+                    <View className="items-center justify-center gap-[8px]">
+                      <Text className="body-4 text-gray-65">{day}</Text>
+                      <icons.FaceDefaultIcon width={30} height={30} />
+                    </View>
+                  ) : null}
                 </View>
-              );
-            }
-            return (
-              <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
-                <Text className="body-4 text-gray-65">{item}</Text>
-                <icons.FaceDefaultIcon width={30} height={30} />
-              </View>
-            );
-          }}
-          scrollEnabled={false}
-        />
+              ))}
+            </View>
+          ))}
+        </View>
       </View>
 
       <View className="mt-[8px] mb-[18px] flex-row items-center rounded-[10px] border border-gray-25 px-[27px] py-[16px]">
