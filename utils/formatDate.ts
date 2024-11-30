@@ -34,7 +34,6 @@ export const formatKoreanDate = (dateString: Date) => {
  */
 export const diffDate = (dateString: Date) => {
   const date = new Date(dateString);
-  console.log(date);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
