@@ -19,7 +19,7 @@ export default function Upload() {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  const [content, setContent] = useState<string | undefined>(undefined);
+  const [content, setContent] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleUpload = async () => {
@@ -29,8 +29,6 @@ export default function Upload() {
         return;
       }
 
-      if (content === "") setContent(undefined);
-
       setIsUploading(true);
 
       await createPost({
@@ -39,7 +37,7 @@ export default function Upload() {
       });
 
       setImages([]);
-      setContent(undefined);
+      setContent("");
 
       Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
       router.back();
@@ -108,8 +106,12 @@ export default function Upload() {
   };
 
   return (
-    <View className="bg-white">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <View className="flex-1 bg-white">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="flex-shrink-0 flex-grow-0"
+      >
         <View className="w-full flex-row gap-4 p-6">
           {/* 선택된 이미지 표시 */}
           {images.map((image, index) => (

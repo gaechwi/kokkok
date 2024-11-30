@@ -43,9 +43,6 @@ export default function CustomModal({
         onTouchStart={onClose}
       >
         <AnimatedView
-          className={`z-10 w-full bg-white ${
-            position === "middle" ? "rounded-xl" : "rounded-t-xl"
-          }`}
           onTouchStart={(e) => e.stopPropagation()}
           style={{
             transform: [
@@ -58,7 +55,12 @@ export default function CustomModal({
             ],
           }}
         >
-          <SafeAreaView edges={["bottom"]} className="h-fit">
+          <SafeAreaView
+            edges={["bottom"]}
+            className={`z-10 h-fit w-full bg-white ${
+              position === "middle" ? "rounded-xl" : "rounded-t-xl"
+            }`}
+          >
             {children}
           </SafeAreaView>
         </AnimatedView>

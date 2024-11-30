@@ -96,6 +96,8 @@ export async function createPost(post: {
   images: ImagePicker.ImagePickerAsset[];
 }) {
   try {
+    const content = post.content === "" ? undefined : post.content;
+
     const imageUrls = await Promise.all(
       post.images.map((image) => uploadImage(image, "image")),
     );
@@ -108,7 +110,7 @@ export async function createPost(post: {
       appwriteConfig.postCollectionId,
       ID.unique(),
       {
-        content: post.content,
+        content,
         images: validImageUrls,
       },
     );
