@@ -40,7 +40,7 @@ export function HeaderWithBack({ name }: HeaderProps) {
         <TouchableOpacity
           onPress={() => router.back()}
           accessibilityLabel="뒤로가기"
-          className="absolute left-4 z-10"
+          className="absolute left-4"
         >
           <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
