@@ -1,4 +1,9 @@
-import { RefreshControl, SafeAreaView, ScrollView } from "react-native";
+import {
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import PostItem from "../../components/PostItem";
 import { getPosts } from "@/utils/appwrite";
 import { useEffect, useState, useCallback } from "react";
@@ -13,18 +18,37 @@ export default function Home() {
     total: 0,
     hasMore: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const fetchedPosts = await getPosts();
+    setPage(1);
+    const fetchedPosts = await getPosts({});
     setPosts(fetchedPosts);
     setRefreshing(false);
   }, []);
 
   const fetchPosts = useCallback(async () => {
-    const fetchedPosts = await getPosts();
+    const fetchedPosts = await getPosts({});
     setPosts(fetchedPosts);
   }, []);
+
+  const loadMorePosts = useCallback(async () => {
+    if (loading || !posts.hasMore) return;
+
+    setLoading(true);
+    const nextPage = page + 1;
+    const morePosts = await getPosts({ pageParam: nextPage });
+
+    setPosts((prev) => ({
+      posts: [...prev.posts, ...morePosts.posts],
+      total: morePosts.total,
+      hasMore: morePosts.hasMore,
+    }));
+    setPage(nextPage);
+    setLoading(false);
+  }, [loading, posts.hasMore, page]);
 
   useEffect(() => {
     fetchPosts();
@@ -37,6 +61,17 @@ export default function Home() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const isEndReached =
+            layoutMeasurement.height + contentOffset.y >=
+            contentSize.height - 20;
+
+          if (isEndReached) {
+            loadMorePosts();
+          }
+        }}
+        scrollEventThrottle={16}
       >
         {posts.posts.map((post) => (
           <PostItem
@@ -47,10 +82,12 @@ export default function Home() {
             }}
             images={post.images}
             liked={false}
+            contents={post.contents}
             createdAt={post.createdAt}
             commentsCount={10}
           />
         ))}
+        {loading && <ActivityIndicator size="large" className="py-4" />}
       </ScrollView>
     </SafeAreaView>
   );

@@ -91,23 +91,15 @@ export async function signIn(email: string, password: string) {
   }
 }
 
-// 게시글 타입 정의
-interface Post {
-  id: string;
-  images: string[];
-  contents: string;
-  createdAt: string;
-  updatedAt: string;
-  likes: string[];
-}
-
-// getPosts 함수 수정
-export async function getPosts(pageParam = 0): Promise<{
+// 게시글 조회
+export async function getPosts({
+  pageParam = 0,
+  limit = 10,
+}: { pageParam?: number; limit?: number }): Promise<{
   posts: Post[];
   total: number;
   hasMore: boolean;
 }> {
-  const limit = 10;
   const offset = pageParam * limit;
 
   const posts = await databases.listDocuments(
@@ -140,4 +132,14 @@ export async function getPosts(pageParam = 0): Promise<{
     total: posts.total,
     hasMore: offset + limit < posts.total,
   };
+}
+
+// 게시글 타입 정의
+interface Post {
+  id: string;
+  images: string[];
+  contents: string;
+  createdAt: string;
+  updatedAt: string;
+  likes: string[];
 }

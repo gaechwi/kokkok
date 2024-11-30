@@ -17,7 +17,7 @@ interface PostItemProps {
     avatar: string;
   };
   images: string[];
-  content?: string;
+  contents?: string;
   liked: boolean;
   likedAuthorAvatar?: string[];
   createdAt: string;
@@ -34,7 +34,7 @@ interface PostItemProps {
 export default function PostItem({
   author,
   images,
-  content,
+  contents,
   liked,
   likedAuthorAvatar,
   createdAt,
@@ -160,15 +160,15 @@ export default function PostItem({
       </View>
 
       {/* content */}
-      {content && (
+      {contents && (
         <View className="bg-white px-4 pb-4">
           <View className="flex-row flex-wrap">
             <Text className="body-2 text-gray-90">
-              {isMore ? content : truncateText(content)}
-              {content.length > calculateMaxChars && (
+              {isMore ? contents : truncateText(contents)}
+              {contents.length > calculateMaxChars && (
                 <Text>{!isMore && "..."}</Text>
               )}
-              {content.length > calculateMaxChars && (
+              {contents.length > calculateMaxChars && (
                 <TouchableOpacity
                   onPress={() => setIsMore(!isMore)}
                   className="flex-row items-start justify-center"
