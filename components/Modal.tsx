@@ -43,7 +43,7 @@ export default function CustomModal({
         onTouchStart={onClose}
       >
         <AnimatedView
-          className={`z-10 bg-white w-full ${
+          className={`z-10 w-full bg-white ${
             position === "middle" ? "rounded-xl" : "rounded-t-xl"
           }`}
           onTouchStart={(e) => e.stopPropagation()}

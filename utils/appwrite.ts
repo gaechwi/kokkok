@@ -35,8 +35,7 @@ export async function uploadImage(
   file: ImagePicker.ImagePickerAsset,
   type: string,
 ) {
-  if (!file) return;
-  console.log(file);
+  if (!file) throw new Error("파일이 제공되지 않았습니다.");
 
   try {
     const uploadedFile = await storage.createFile(
@@ -79,7 +78,7 @@ export async function getFilePreview(fileId: string, type: string) {
       throw new Error("Invalid file type");
     }
 
-    if (!fileUrl) throw Error;
+    if (!fileUrl) throw new Error("파일 URL이 존재하지 않습니다.");
 
     return fileUrl;
   } catch (error) {
@@ -100,6 +99,9 @@ export async function createPost(post: {
     const imageUrls = await Promise.all(
       post.images.map((image) => uploadImage(image, "image")),
     );
+    const validImageUrls = imageUrls.filter(
+      (url): url is URL => url !== undefined,
+    );
 
     const newPost = await databases.createDocument(
       appwriteConfig.databaseId,
@@ -107,7 +109,7 @@ export async function createPost(post: {
       ID.unique(),
       {
         content: post.content,
-        images: imageUrls,
+        images: validImageUrls,
       },
     );
 
