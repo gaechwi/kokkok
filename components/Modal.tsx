@@ -7,12 +7,14 @@ interface BottomModalProps {
   children: React.ReactNode;
   visible: boolean;
   onClose: () => void;
+  position?: "middle" | "bottom";
 }
 
-export default function BottomModal({
+export default function CustomModal({
   children,
   visible,
   onClose,
+  position = "bottom",
 }: BottomModalProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -34,9 +36,17 @@ export default function BottomModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-end bg-black/50" onTouchStart={onClose}>
+      <View
+        className={`flex-1 bg-black/50 ${
+          position === "middle" ? "justify-center px-[46px]" : "justify-end"
+        }`}
+        onTouchStart={onClose}
+      >
         <AnimatedView
-          className="rounded-t-xl bg-white"
+          className={`z-10 bg-white w-full ${
+            position === "middle" ? "rounded-xl" : "rounded-t-xl"
+          }`}
+          onTouchStart={(e) => e.stopPropagation()}
           style={{
             transform: [
               {

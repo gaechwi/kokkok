@@ -13,7 +13,7 @@ import GoogleIcon from "@/assets/icons/google.svg";
 import GithubIcon from "@/assets/icons/github.svg";
 import HomeIcon from "@/assets/icons/home.svg";
 import KakaoIcon from "@/assets/icons/kakao.svg";
-import PlusFilledIcon from "@/assets/icons/plus-filled.svg";
+import PlusIcon from "@/assets/icons/plus.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
 import MeatballIcon from "@/assets/icons/meatball.svg";
 import HeartIcon from "@/assets/icons/heart.svg";
@@ -40,7 +40,7 @@ export default {
   HomeIcon,
   KakaoIcon,
   MeatballIcon,
-  PlusFilledIcon,
+  PlusIcon,
   ProfileIcon,
   BackIcon,
   DeleteIcon,

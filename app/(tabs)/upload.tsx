@@ -13,12 +13,14 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { createPost } from "@/utils/appwrite";
 import { useRouter } from "expo-router";
+import CustomModal from "@/components/Modal";
 
 export default function Upload() {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [content, setContent] = useState<string | undefined>(undefined);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleUpload = async () => {
     try {
@@ -127,35 +129,42 @@ export default function Upload() {
           ))}
 
           {images.length < 5 && (
-            <TouchableOpacity
-              className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
-              onPress={() => {
-                Alert.alert(
-                  "이미지 선택",
-                  "이미지를 어떻게 추가하시겠습니까?",
-                  [
-                    {
-                      text: "카메라",
-                      onPress: takePhoto,
-                    },
-                    {
-                      text: "갤러리",
-                      onPress: pickImage,
-                    },
-                    {
-                      text: "취소",
-                      style: "cancel",
-                    },
-                  ],
-                );
-              }}
-            >
-              <Icons.PlusFilledIcon
-                width={24}
-                height={24}
-                color={colors.white}
-              />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
+                onPress={() => setIsModalVisible(true)}
+              >
+                <Icons.PlusIcon width={24} height={24} color={colors.white} />
+              </TouchableOpacity>
+
+              <CustomModal
+                visible={isModalVisible}
+                onClose={() => setIsModalVisible(false)}
+                position="middle"
+              >
+                <View className="w-full items-center">
+                  <TouchableOpacity
+                    className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+                    onPress={() => {
+                      setIsModalVisible(false);
+                      takePhoto();
+                    }}
+                  >
+                    <Text className="title-2 text-gray-90">카메라</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    className="h-[82px] w-full items-center justify-center"
+                    onPress={() => {
+                      setIsModalVisible(false);
+                      pickImage();
+                    }}
+                  >
+                    <Text className="title-2 text-gray-90">갤러리</Text>
+                  </TouchableOpacity>
+                </View>
+              </CustomModal>
+            </>
           )}
         </View>
       </ScrollView>
