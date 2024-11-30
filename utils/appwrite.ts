@@ -169,6 +169,11 @@ export async function createPost(post: {
   images: ImagePicker.ImagePickerAsset[];
 }) {
   try {
+    // const user = await account.get();
+    // const userId = user.$id;
+
+    // if (!userId) throw new Error("유저 정보를 찾을 수 없습니다.");
+
     const contents = post.contents === "" ? undefined : post.contents;
 
     const imageUrls = await Promise.all(
@@ -185,6 +190,7 @@ export async function createPost(post: {
       {
         contents,
         images: validImageUrls,
+        // author: userId,
       },
     );
 
@@ -194,5 +200,6 @@ export async function createPost(post: {
       error instanceof Error
         ? `createPost: ${error.message}`
         : "게시물 생성에 실패했습니다.";
+    throw new Error(errorMessage);
   }
 }
