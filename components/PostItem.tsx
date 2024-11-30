@@ -7,7 +7,7 @@ import {
   PixelRatio,
 } from "react-native";
 import Carousel from "./Carousel";
-import { diffDate } from "./FormatDate";
+import { diffDate } from "../utils/formatDate";
 import { useMemo, useState } from "react";
 import icons from "../constants/icons";
 import BottomModal from "./BottomModal";
