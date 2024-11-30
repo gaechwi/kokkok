@@ -101,11 +101,11 @@ export async function getFilePreview(fileId: string, type: string) {
 
 // 게시물 생성
 export async function createPost(post: {
-  content?: string;
+  contents?: string;
   images: ImagePicker.ImagePickerAsset[];
 }) {
   try {
-    const content = post.content === "" ? undefined : post.content;
+    const contents = post.contents === "" ? undefined : post.contents;
 
     const imageUrls = await Promise.all(
       post.images.map((image) => uploadImage(image, "image")),
@@ -119,7 +119,7 @@ export async function createPost(post: {
       appwriteConfig.postCollectionId,
       ID.unique(),
       {
-        content,
+        contents,
         images: validImageUrls,
       },
     );

@@ -19,7 +19,7 @@ export default function Upload() {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  const [content, setContent] = useState<string>("");
+  const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleUpload = async () => {
@@ -32,12 +32,12 @@ export default function Upload() {
       setIsUploading(true);
 
       await createPost({
-        content,
+        contents,
         images,
       });
 
       setImages([]);
-      setContent("");
+      setContents("");
 
       Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
       router.back();
@@ -183,8 +183,8 @@ export default function Upload() {
           placeholderTextColor={colors.gray[40]}
           multiline={true}
           textAlignVertical="top"
-          value={content}
-          onChangeText={setContent}
+          value={contents}
+          onChangeText={setContents}
           editable={!isUploading}
         />
       </View>
