@@ -56,7 +56,7 @@ const TabIcon = ({
 );
 
 const Header = ({ name }: { name: TapType }) => (
-  <SafeAreaView className="border-gray-25 border-b bg-white">
+  <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
     <View className="h-14 flex-row items-center justify-between px-4">
       <Text className="heading-2">{HEADER_TITLE[name]}</Text>
       {/* 마이페이지는 설정 버튼 추가 */}
