@@ -1,4 +1,10 @@
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import icons from "@/constants/icons";
 import { useState } from "react";
 
@@ -41,7 +47,7 @@ export default function History() {
   };
 
   return (
-    <View className="flex-1 gap-[20px] bg-white px-[28px] py-[24px]">
+    <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
       <View className="flex-row items-center">
         <Text className="heading-1 grow">
           {currentMonth}월 <Text className="text-primary">17</Text>일 운동 완료!
@@ -52,8 +58,8 @@ export default function History() {
         </TouchableOpacity>
       </View>
 
-      <View className="items-center rounded-[10px] border border-gray-25 px-[24px] pt-[16px] pb-[32px]">
-        <View className="mb-[16px] flex-row items-center gap-[24px]">
+      <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
+        <View className="flex-row items-center gap-[24px]">
           <TouchableOpacity onPress={handlePreviousMonth}>
             <icons.ChevronLeftIcon width={20} height={20} color="#5D5D5D" />
           </TouchableOpacity>
@@ -63,15 +69,16 @@ export default function History() {
           </TouchableOpacity>
         </View>
 
-        <View className="mt-[24px] flex-row">
+        <View className="mt-[24px] w-full flex-row justify-between px-[12px]">
           {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
-            <Text key={day} className="body-4 flex-1 text-center text-gray-65">
+            <Text key={day} className="body-4 text-center text-gray-65">
               {day}
             </Text>
           ))}
         </View>
 
         <FlatList
+          className="mt-[8px] w-full"
           data={daysArray}
           numColumns={7}
           keyExtractor={(_, index) => index.toString()}
@@ -86,7 +93,7 @@ export default function History() {
             return (
               <View className="mt-[8px] flex w-[14.28%] items-center justify-center gap-[8px]">
                 <Text className="body-4 text-gray-65">{item}</Text>
-                <icons.FaceDefaultIcon width={32} height={32} />
+                <icons.FaceDefaultIcon width={30} height={30} />
               </View>
             );
           }}
@@ -94,7 +101,7 @@ export default function History() {
         />
       </View>
 
-      <View className="flex-row items-center rounded-[10px] border border-gray-25 px-[25px] py-[15px]">
+      <View className="mt-[8px] mb-[18px] flex-row items-center rounded-[10px] border border-gray-25 px-[27px] py-[16px]">
         <Text className="title-4">표정의 의미는?</Text>
         <View className="ml-auto flex-row gap-[8px]">
           <View className="w-[32px] items-center">
@@ -115,6 +122,6 @@ export default function History() {
           </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
