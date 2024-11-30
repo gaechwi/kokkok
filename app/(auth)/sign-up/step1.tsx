@@ -7,13 +7,45 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 
-import images from "../../../constants/images";
+import images from "@constants/images";
+import { useAtom } from "jotai";
+import { signUpFormAtom } from "@contexts/auth";
+import { useState } from "react";
 
 const Step1 = () => {
+  const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+
   const router = useRouter();
+
+  const handleContinue = () => {
+    if (!signUpForm.email || !signUpForm.password || !passwordConfirm) {
+      Alert.alert("빈칸을 채워주세요.");
+      return;
+    }
+
+    if (signUpForm.password !== passwordConfirm) {
+      Alert.alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (signUpForm.password.length < 8 || passwordConfirm.length < 8) {
+      Alert.alert("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(signUpForm.email)) {
+      Alert.alert("알림", "올바른 이메일 형식이 아닙니다.");
+      return;
+    }
+
+    router.push("/sign-up/step2");
+  };
 
   return (
     <KeyboardAvoidingView
@@ -36,6 +68,10 @@ const Step1 = () => {
               autoCapitalize="none"
               accessibilityLabel="이메일 입력"
               accessibilityHint="이메일을 입력해주세요."
+              value={signUpForm.email}
+              onChangeText={(text) =>
+                setSignUpForm({ ...signUpForm, email: text })
+              }
             />
 
             <TextInput
@@ -44,6 +80,10 @@ const Step1 = () => {
               secureTextEntry
               accessibilityLabel="비밀번호 입력"
               accessibilityHint="비밀번호를 입력해주세요."
+              value={signUpForm.password}
+              onChangeText={(text) =>
+                setSignUpForm({ ...signUpForm, password: text })
+              }
             />
 
             <TextInput
@@ -52,12 +92,14 @@ const Step1 = () => {
               secureTextEntry
               accessibilityLabel="비밀번호 재입력"
               accessibilityHint="비밀번호를 한번 더 입력해주세요"
+              value={passwordConfirm}
+              onChangeText={(text) => setPasswordConfirm(text)}
             />
           </View>
 
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-            onPress={() => router.push("/sign-up/step2")}
+            onPress={handleContinue}
           >
             <Text className="heading-2 text-white">계속하기</Text>
           </TouchableOpacity>

@@ -8,7 +8,8 @@
       "@components/*": ["./components/*"],
       "@constants/*": ["./constants/*"],
       "@assets/*": ["./assets/*"],
-      "@utils/*": ["./utils/*"]
+      "@utils/*": ["./utils/*"],
+      "@contexts/*": ["./contexts/*"]
     }
   }
 }
