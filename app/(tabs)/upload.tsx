@@ -52,6 +52,7 @@ export default function Upload() {
   };
 
   const pickImage = async () => {
+    if (isUploading) return;
     if (images.length >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
@@ -77,6 +78,7 @@ export default function Upload() {
   };
 
   const takePhoto = async () => {
+    if (isUploading) return;
     if (images.length >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
@@ -101,6 +103,7 @@ export default function Upload() {
   };
 
   const handleDeleteImage = (indexToDelete: number) => {
+    if (isUploading) return;
     setImages(images.filter((_, index) => index !== indexToDelete));
   };
 
@@ -122,6 +125,7 @@ export default function Upload() {
               <TouchableOpacity
                 className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
                 onPress={() => handleDeleteImage(index)}
+                disabled={isUploading}
               >
                 <Icons.DeleteIcon width={16} height={16} color={colors.white} />
               </TouchableOpacity>
@@ -133,6 +137,7 @@ export default function Upload() {
               <TouchableOpacity
                 className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
                 onPress={() => setIsModalVisible(true)}
+                disabled={isUploading}
               >
                 <Icons.PlusIcon width={24} height={24} color={colors.white} />
               </TouchableOpacity>
@@ -178,6 +183,7 @@ export default function Upload() {
           textAlignVertical="top"
           value={content}
           onChangeText={setContent}
+          editable={!isUploading}
         />
       </View>
 
