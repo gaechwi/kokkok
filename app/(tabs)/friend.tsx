@@ -1,8 +1,10 @@
 import { useState } from "react";
-import FriendTab from "@/components/FriendTab";
 import { View, ScrollView } from "react-native";
-import SearchBar from "@/components/SearchBar";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { FriendItem, FriendRequest } from "@/components/FriendItem";
+import FriendTab from "@/components/FriendTab";
+import SearchBar from "@/components/SearchBar";
 
 /* mock data와 type */
 
@@ -48,7 +50,7 @@ export default function Friend() {
   const [keyword, setKeyword] = useState("");
 
   return (
-    <View className="bg-white">
+    <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FriendTab
         isFriendTab={isFriendTab}
         handlePress={(newIsFriendTab: boolean) =>
@@ -56,7 +58,9 @@ export default function Friend() {
         }
       />
       {isFriendTab ? (
-        <ScrollView className="px-6 pt-6 h-full w-full">
+        <ScrollView className="px-6 grow w-full">
+          {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
+          <View className="h-6" />
           <SearchBar
             value={keyword}
             handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
@@ -70,7 +74,9 @@ export default function Friend() {
           </View>
         </ScrollView>
       ) : (
-        <ScrollView className="px-6 pt-2 h-full w-full">
+        <ScrollView className="px-8 grow w-full">
+          {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
+          <View className="h-2" />
           {[1, 2, 3, 4, 5].map((n) =>
             USERS.toReversed().map((user) => (
               <FriendRequest key={n + user.accountId} {...user} />
@@ -78,6 +84,6 @@ export default function Friend() {
           )}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
