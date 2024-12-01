@@ -7,8 +7,8 @@ import {
   type NativeScrollEvent,
 } from "react-native";
 import PostItem from "../../components/PostItem";
-import { getPosts } from "@/utils/appwrite";
 import { useEffect, useState, useCallback } from "react";
+import { getPosts } from "@/utils/supabase";
 
 const AVATAR_URL =
   "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
@@ -40,7 +40,7 @@ export default function Home() {
 
     setLoading(true);
     const nextPage = page + 1;
-    const morePosts = await getPosts({ pageParam: nextPage });
+    const morePosts = await getPosts({ offset: nextPage });
 
     setPosts((prev) => ({
       posts: [...prev.posts, ...morePosts.posts],

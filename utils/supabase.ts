@@ -201,3 +201,78 @@ export async function createPost({
     throw new Error(errorMessage);
   }
 }
+
+// 게시글 조회
+export async function getPosts({
+  offset = 0,
+  limit = 10,
+}: {
+  offset?: number;
+  limit?: number;
+}): Promise<{ posts: Post[]; total: number; hasMore: boolean }> {
+  try {
+    const {
+      data: posts,
+      error: postsError,
+      count,
+    } = await supabase
+      .from("post")
+      .select(
+        `
+        id,
+        images,
+        contents,
+        created_at,
+        likes
+      `,
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (postsError) throw postsError;
+    if (!posts) throw new Error("게시글을 불러올 수 없습니다.");
+
+    return {
+      posts: posts.map(
+        (post): Post => ({
+          id: post.id,
+          images: post.images,
+          contents: post.contents,
+          createdAt: post.created_at,
+          likes: post.likes,
+        }),
+      ),
+      total: count || 0,
+      hasMore: count ? offset + limit < count : false,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// ============================================
+//
+//                    type
+//
+// ============================================
+
+// 게시글 타입 정의
+interface Post {
+  id: string;
+  images: string[];
+  contents: string;
+  createdAt: string;
+  likes: number;
+  // author: User;
+}
+
+// 유저 타입 정의
+interface User {
+  id: string;
+  email: string;
+  username: string;
+  avatarUrl: string;
+}
