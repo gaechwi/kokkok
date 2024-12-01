@@ -6,10 +6,10 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
-import WorkoutCalendar from "@/components/WorkoutCalendar";
 import SetRestDayModal from "@/components/SetRestDayModal";
+import CalendarNavigator from "@/components/CalendarNavigator";
+import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
-import colors from "@/constants/colors";
 
 type Status = "DONE" | "REST";
 interface Mock {
@@ -37,8 +37,15 @@ const mock: Mock[] = [
 ];
 
 export default function History() {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const month = currentDate.getMonth() + 1;
+  const [date, setDate] = useState<Date>(new Date());
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const isNextDisabled = year === currentYear && month >= currentMonth;
 
   const workoutDays = mock.filter(
     (item) =>
@@ -46,15 +53,15 @@ export default function History() {
   ).length;
 
   const handlePreviousMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() - 1);
-    setCurrentDate(newDate);
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() - 1);
+    setDate(newDate);
   };
 
   const handleNextMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + 1);
-    setCurrentDate(newDate);
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() + 1);
+    setDate(newDate);
   };
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -78,12 +85,15 @@ export default function History() {
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
-        <CalendarNavigator
-          date={currentDate}
-          onPrevious={handlePreviousMonth}
-          onNext={handleNextMonth}
-        />
-        <WorkoutCalendar date={currentDate} workoutStatus={mock} />
+        <CalendarNavigator>
+          <CalendarNavigator.PreviousButton onPress={handlePreviousMonth} />
+          <CalendarNavigator.MonthDisplay date={date} />
+          <CalendarNavigator.NextButton
+            onPress={handleNextMonth}
+            disabled={isNextDisabled}
+          />
+        </CalendarNavigator>
+        <WorkoutCalendar date={date} workoutStatus={mock} />
       </View>
 
       <FaceExplanation />
@@ -99,54 +109,6 @@ function SetRestDayButton({ onPress }: TouchableOpacityProps) {
     >
       <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
     </TouchableOpacity>
-  );
-}
-
-interface CalendarNavigatorProps {
-  date: Date;
-  onPrevious: () => void;
-  onNext: () => void;
-}
-
-function CalendarNavigator({
-  date,
-  onPrevious,
-  onNext,
-}: CalendarNavigatorProps) {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-
-  const isNextDisabled = year === currentYear && month >= currentMonth;
-
-  return (
-    <View className="flex-row items-center gap-[24px]">
-      {/* Previous Button */}
-      <TouchableOpacity onPress={onPrevious}>
-        <icons.ChevronLeftIcon width={20} height={20} color={colors.gray[90]} />
-      </TouchableOpacity>
-
-      {/* Month Display */}
-      <Text
-        className={`heading-2 text-center ${year === currentYear ? "w-[43px]" : "w-[87px]"}`}
-      >
-        {year === currentYear
-          ? `${month}월`
-          : `${String(year).slice(2)}년 ${month}월`}
-      </Text>
-
-      {/* Next Button */}
-      <TouchableOpacity onPress={onNext} disabled={isNextDisabled}>
-        <icons.ChevronRightIcon
-          width={20}
-          height={20}
-          color={isNextDisabled ? colors.gray[30] : colors.gray[90]}
-        />
-      </TouchableOpacity>
-    </View>
   );
 }
 
