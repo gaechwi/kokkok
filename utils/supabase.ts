@@ -18,6 +18,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// ============================================
+//
+//                    auth
+//
+// ============================================
+
 // 회원가입
 export async function signUp({
   email,
@@ -93,6 +99,12 @@ export async function signIn({
   }
 }
 
+// ============================================
+//
+//                    image
+//
+// ============================================
+
 // 이미지 업로드
 export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
   if (!file) throw new Error("파일이 제공되지 않았습니다.");
@@ -129,6 +141,12 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
     throw new Error(errorMessage);
   }
 }
+
+// ============================================
+//
+//                    post
+//
+// ============================================
 
 // 게시물 생성
 export async function createPost({

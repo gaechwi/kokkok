@@ -49,6 +49,14 @@ export default function Upload() {
     }
   };
 
+  const imageOptions: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.8,
+    exif: false,
+  };
+
   const pickImage = async () => {
     if (isUploading) return;
     if (images.length >= 5) {
@@ -63,12 +71,7 @@ export default function Upload() {
     }
 
     // 이미지 선택 모달 표시
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync(imageOptions);
 
     if (!result.canceled) {
       setImages([...images, result.assets[0]]);
@@ -89,12 +92,7 @@ export default function Upload() {
     }
 
     // 카메라 실행
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    const result = await ImagePicker.launchCameraAsync(imageOptions);
 
     if (!result.canceled) {
       setImages([...images, result.assets[0]]);
