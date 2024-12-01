@@ -57,16 +57,36 @@ function CalendarNavigator({
   onPrevious,
   onNext,
 }: CalendarNavigatorProps) {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const year = date.getFullYear();
   const month = date.getMonth() + 1;
+
+  const isNextDisabled = year === currentYear && month >= currentMonth;
 
   return (
     <View className="flex-row items-center gap-[24px]">
+      {/* Previous Button */}
       <TouchableOpacity onPress={onPrevious}>
         <icons.ChevronLeftIcon width={20} height={20} color="#5D5D5D" />
       </TouchableOpacity>
-      <Text className="heading-2">{month}월</Text>
-      <TouchableOpacity onPress={onNext}>
-        <icons.ChevronRightIcon width={20} height={20} color="#5D5D5D" />
+
+      {/* Month Display */}
+      <Text className="heading-2">
+        {year === currentYear
+          ? `${month}월`
+          : `${String(year).slice(2)}년 ${month}월`}
+      </Text>
+
+      {/* Next Button */}
+      <TouchableOpacity onPress={onNext} disabled={isNextDisabled}>
+        <icons.ChevronRightIcon
+          width={20}
+          height={20}
+          color={isNextDisabled ? "#CCCCCC" : "#5D5D5D"}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -83,6 +103,7 @@ function FaceExplanation() {
   return (
     <View className="mt-[8px] mb-[18px] flex-row items-center rounded-[10px] border border-gray-25 px-[27px] py-[16px]">
       <Text className="title-4">표정의 의미는?</Text>
+
       <View className="ml-auto flex-row gap-[8px]">
         {faces.map(({ icon, label }) => (
           <View key={label} className="w-[32px] items-center">
