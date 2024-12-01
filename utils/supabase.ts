@@ -2,9 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import type * as ImagePicker from "expo-image-picker";
 
-const supabaseUrl = "https://omrikgqmembehcfnvsce.supabase.co";
-const supabaseAnonKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcmlrZ3FtZW1iZWhjZm52c2NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwMzQxMzgsImV4cCI6MjA0ODYxMDEzOH0.XnMW6SEOoAH7JKHOpvEdW7KwAD_SStPhzpMyx95pVlE";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
+
+const supabaseUrl = SUPABASE_URL;
+const supabaseAnonKey = SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -28,8 +29,6 @@ export async function signUp({
   description?: string;
 }) {
   try {
-    console.log(email, password, username, description);
-
     // 1. 계정 생성
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email,
