@@ -3,11 +3,19 @@ import icons from "@/constants/icons";
 import colors from "@/constants/colors";
 
 interface CalendarNavigatorProps {
+  className?: string;
   children: React.ReactNode;
 }
 
-function CalendarNavigator({ children }: CalendarNavigatorProps) {
-  return <View className="flex-row items-center gap-[24px]">{children}</View>;
+function CalendarNavigator({
+  className = "",
+  children,
+}: CalendarNavigatorProps) {
+  return (
+    <View className={`${className} flex-row items-center gap-[24px]`}>
+      {children}
+    </View>
+  );
 }
 
 interface ButtonProps {
