@@ -13,7 +13,7 @@ import images from "@constants/images";
 import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
-import { signUp } from "@utils/appwrite";
+import { signUp } from "@/utils/supabase";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -26,16 +26,19 @@ const Step2 = () => {
     }
 
     try {
-      await signUp(
-        signUpForm.email,
-        signUpForm.password,
-        signUpForm.username,
-        signUpForm.description,
-      );
+      await signUp({
+        email: signUpForm.email,
+        password: signUpForm.password,
+        username: signUpForm.username,
+        description: signUpForm.description,
+      });
 
       router.replace("/home");
     } catch (error) {
-      Alert.alert("회원가입 실패", error.message);
+      Alert.alert(
+        "회원가입 실패",
+        error instanceof Error ? error.message : "회원가입에 실패했습니다.",
+      );
     }
   };
 

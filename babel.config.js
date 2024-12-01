@@ -1,3 +1,4 @@
+// biome-ignore lint/complexity/useArrowFunction: <explanation>
 module.exports = function (api) {
   api.cache(true);
   return {
@@ -18,6 +19,16 @@ module.exports = function (api) {
             "@utils": "./utils",
             "@contexts": "./contexts",
           },
+        },
+      ],
+      [
+        "module:react-native-dotenv",
+        {
+          moduleName: "@env",
+          path: ".env",
+          allowlist: ["SUPABASE_URL", "SUPABASE_ANON_KEY"],
+          safe: true,
+          allowUndefined: false,
         },
       ],
     ],
