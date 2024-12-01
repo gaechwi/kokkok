@@ -2,6 +2,7 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
 import Calendar from "@/components/Calendar";
 import icons from "@/constants/icons";
+import colors from "@/constants/colors";
 
 export default function History() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -70,7 +71,7 @@ function CalendarNavigator({
     <View className="flex-row items-center gap-[24px]">
       {/* Previous Button */}
       <TouchableOpacity onPress={onPrevious}>
-        <icons.ChevronLeftIcon width={20} height={20} color="#5D5D5D" />
+        <icons.ChevronLeftIcon width={20} height={20} color={colors.gray[90]} />
       </TouchableOpacity>
 
       {/* Month Display */}
@@ -85,7 +86,7 @@ function CalendarNavigator({
         <icons.ChevronRightIcon
           width={20}
           height={20}
-          color={isNextDisabled ? "#CCCCCC" : "#5D5D5D"}
+          color={isNextDisabled ? colors.gray[30] : colors.gray[90]}
         />
       </TouchableOpacity>
     </View>
