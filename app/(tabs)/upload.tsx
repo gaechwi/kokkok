@@ -11,9 +11,9 @@ import {
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { createPost } from "@/utils/appwrite";
 import { useRouter } from "expo-router";
 import CustomModal from "@/components/Modal";
+import { createPost } from "@/utils/supabase";
 
 export default function Upload() {
   const router = useRouter();
