@@ -119,7 +119,7 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
       contentType,
     });
 
-    const result = supabase.storage.from("images").getPublicUrl(filePath);
+    const result = await supabase.storage.from("images").getPublicUrl(filePath);
     return result.data.publicUrl;
   } catch (error) {
     const errorMessage =
