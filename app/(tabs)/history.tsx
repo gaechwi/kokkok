@@ -1,13 +1,42 @@
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
-import Calendar from "@/components/Calendar";
+import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
 
+type Status = "DONE" | "REST";
+interface Mock {
+  date: string;
+  status: Status;
+}
+const mock: Mock[] = [
+  { date: "2024-11-01T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-02T00:00:00.000Z", status: "REST" },
+  { date: "2024-11-05T00:00:00.000Z", status: "REST" },
+  { date: "2024-11-08T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-14T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-15T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-16T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-19T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-20T00:00:00.000Z", status: "REST" },
+  { date: "2024-11-24T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-25T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-28T00:00:00.000Z", status: "DONE" },
+  { date: "2024-11-29T00:00:00.000Z", status: "REST" },
+  { date: "2024-11-30T00:00:00.000Z", status: "DONE" },
+  { date: "2024-12-01T00:00:00.000Z", status: "DONE" },
+  { date: "2024-12-10T00:00:00.000Z", status: "REST" },
+  { date: "2024-12-13T00:00:00.000Z", status: "DONE" },
+];
+
 export default function History() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-
   const month = currentDate.getMonth() + 1;
+
+  const workoutDays = mock.filter(
+    (item) =>
+      Number(item.date.split("-")[1]) === month && item.status === "DONE",
+  ).length;
 
   const handlePreviousMonth = () => {
     const newDate = new Date(currentDate);
@@ -25,7 +54,8 @@ export default function History() {
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
       <View className="flex-row items-center">
         <Text className="heading-1 grow">
-          {month}월 <Text className="text-primary">17</Text>일 운동 완료!
+          {month}월 <Text className="text-primary">{workoutDays}</Text>일 운동
+          완료!
         </Text>
 
         <TouchableOpacity className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25">
@@ -39,7 +69,7 @@ export default function History() {
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
         />
-        <Calendar date={currentDate} />
+        <WorkoutCalendar date={currentDate} workoutStatus={mock} />
       </View>
 
       <FaceExplanation />
