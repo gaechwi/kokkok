@@ -7,10 +7,10 @@ import {
   PixelRatio,
 } from "react-native";
 import Carousel from "./Carousel";
-import { diffDate } from "../utils/formatDate";
+import { diffDate } from "@/utils/formatDate";
 import { useMemo, useState } from "react";
-import icons from "../constants/icons";
-import BottomModal from "./BottomModal";
+import icons from "@/constants/icons";
+import CustomModal from "./Modal";
 interface PostItemProps {
   author: {
     name: string;
@@ -94,7 +94,11 @@ export default function PostItem({
         <TouchableOpacity onPress={onOpenModal}>
           <icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
 
-          <BottomModal visible={isModalVisible} onClose={onCloseModal}>
+          <CustomModal
+            visible={isModalVisible}
+            onClose={onCloseModal}
+            position="bottom"
+          >
             <View className="items-center">
               <TouchableOpacity className="h-[82px] w-full items-center justify-center border-gray-20 border-b">
                 <Text className="title-2 text-gray-90">수정하기</Text>
@@ -103,7 +107,7 @@ export default function PostItem({
                 <Text className="title-2 text-gray-90">삭제하기</Text>
               </TouchableOpacity>
             </View>
-          </BottomModal>
+          </CustomModal>
         </TouchableOpacity>
       </View>
 

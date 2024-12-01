@@ -1,41 +1,38 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, TouchableOpacity, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, View, Platform } from "react-native";
 
 import icons from "@constants/icons";
 import colors from "@constants/colors";
+import {
+  HeaderWithBack,
+  HeaderWithNotification,
+  HeaderWithSettingAndNotification,
+} from "@/components/Header";
 
 /* constants */
 
 const TAP_ICONS = {
-  home: (color: string) => (
+  HOME: (color: string) => (
     <icons.HomeIcon width={24} height={24} color={color} />
   ),
-  friend: (color: string) => (
+  FRIEND: (color: string) => (
     <icons.FriendIcon width={24} height={24} color={color} />
   ),
-  history: (color: string) => (
+  HISTORY: (color: string) => (
     <icons.CalendarIcon width={24} height={24} color={color} />
   ),
-  mypage: (color: string) => (
+  MY_PAGE: (color: string) => (
     <icons.ProfileIcon width={24} height={24} color={color} />
   ),
 } as const;
 type TapType = keyof typeof TAP_ICONS;
 
 const TAP_NAME = {
-  home: "홈",
-  friend: "친구",
-  history: "기록",
-  mypage: "마이",
-};
-
-const HEADER_TITLE = {
-  home: "KokKok",
-  friend: "친구",
-  history: "기록",
-  mypage: "마이페이지",
+  HOME: "홈",
+  FRIEND: "친구",
+  HISTORY: "기록",
+  MY_PAGE: "마이",
 };
 
 /* components */
@@ -53,18 +50,6 @@ const TabIcon = ({
       {TAP_NAME[name]}
     </Text>
   </View>
-);
-
-const Header = ({ name }: { name: TapType }) => (
-  <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
-    <View className="h-14 flex-row items-center justify-between px-4">
-      <Text className="heading-2">{HEADER_TITLE[name]}</Text>
-      {/* 마이페이지는 설정 버튼 추가 */}
-      <TouchableOpacity>
-        <icons.BellIcon width={24} height={24} />
-      </TouchableOpacity>
-    </View>
-  </SafeAreaView>
 );
 
 export default function TabsLayout() {
@@ -90,30 +75,28 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            header: () => <Header name="home" />,
+            header: () => <HeaderWithNotification name="HOME" />,
             title: "Home",
-            tabBarIcon: ({ color }) => <TabIcon color={color} name="home" />,
+            tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}
         />
         <Tabs.Screen
           name="friend"
           options={{
-            header: () => <Header name="friend" />,
+            header: () => <HeaderWithNotification name="FRIEND" />,
             title: "Friend",
-            tabBarIcon: ({ color }) => <TabIcon color={color} name="friend" />,
+            tabBarIcon: ({ color }) => <TabIcon color={color} name="FRIEND" />,
           }}
         />
         <Tabs.Screen
           name="upload"
           options={{
-            title: "인증하기",
+            header: () => <HeaderWithBack name="UPLOAD" />,
+            title: "Upload",
+            tabBarStyle: { display: "none" },
             tabBarIcon: () => (
-              <View>
-                <icons.PlusFilledIcon
-                  width={48}
-                  height={48}
-                  color={colors.primary}
-                />
+              <View className="size-12 items-center justify-center rounded-full bg-primary p-3">
+                <icons.PlusIcon width={24} height={24} color={colors.white} />
               </View>
             ),
           }}
@@ -121,17 +104,17 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="history"
           options={{
-            header: () => <Header name="history" />,
+            header: () => <HeaderWithNotification name="HISTORY" />,
             title: "History",
-            tabBarIcon: ({ color }) => <TabIcon color={color} name="history" />,
+            tabBarIcon: ({ color }) => <TabIcon color={color} name="HISTORY" />,
           }}
         />
         <Tabs.Screen
           name="mypage"
           options={{
-            header: () => <Header name="mypage" />,
+            header: () => <HeaderWithSettingAndNotification name="MY_PAGE" />,
             title: "MyPage",
-            tabBarIcon: ({ color }) => <TabIcon color={color} name="mypage" />,
+            tabBarIcon: ({ color }) => <TabIcon color={color} name="MY_PAGE" />,
           }}
         />
       </Tabs>
