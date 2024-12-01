@@ -129,7 +129,7 @@ export default function Upload() {
                 onPress={() => handleDeleteImage(index)}
                 disabled={isUploading}
               >
-                <Icons.DeleteIcon width={16} height={16} color={colors.white} />
+                <Icons.XIcon width={16} height={16} color={colors.white} />
               </TouchableOpacity>
             </View>
           ))}

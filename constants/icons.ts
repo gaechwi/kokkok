@@ -21,7 +21,7 @@ import MeatballIcon from "@/assets/icons/meatball.svg";
 import HeartIcon from "@/assets/icons/heart.svg";
 import CommentIcon from "@/assets/icons/comment.svg";
 import BackIcon from "@/assets/icons/back.svg";
-import DeleteIcon from "@/assets/icons/delete.svg";
+import XIcon from "@/assets/icons/x.svg";
 
 export default {
   BellIcon,
@@ -45,7 +45,7 @@ export default {
   PlusIcon,
   ProfileIcon,
   BackIcon,
-  DeleteIcon,
+  XIcon,
   SearchIcon,
   SettingIcon,
 };
