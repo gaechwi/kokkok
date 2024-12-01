@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import type * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
 
@@ -107,27 +109,23 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
   }
 
   try {
-    const fileName = `${Math.random().toString(36).substring(7)}_${file.fileName || "untitled"}`;
-    const filePath = `public/${fileName}`;
+    const filePath = `${new Date().getTime()}_${file.fileName || "untitled"}`;
 
-    // 파일 업로드
-    const { error: uploadError } = await supabase.storage
-      .from("images")
-      .upload(filePath, await fetch(file.uri).then((r) => r.blob()), {
-        contentType: file.mimeType || "image/jpeg",
-      });
+    const base64 = await FileSystem.readAsStringAsync(file.uri, {
+      encoding: "base64",
+    });
+    const contentType = file.mimeType || "image/jpeg";
+    await supabase.storage.from("images").upload(filePath, decode(base64), {
+      contentType,
+    });
 
-    if (uploadError) throw uploadError;
-
-    // 파일 URL 가져오기
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("images").getPublicUrl(filePath);
-
-    return publicUrl;
+    const result = supabase.storage.from("images").getPublicUrl(filePath);
+    return result.data.publicUrl;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "파일 업로드에 실패했습니다.";
+      error instanceof Error
+        ? `uploadImage: ${error.message}`
+        : "파일 업로드에 실패했습니다.";
     throw new Error(errorMessage);
   }
 }
@@ -142,13 +140,13 @@ export async function createPost({
 }) {
   try {
     // 현재 로그인된 사용자 정보 가져오기
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    // const {
+    //   data: { user },
+    //   error: userError,
+    // } = await supabase.auth.getUser();
 
-    if (userError) throw userError;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    // if (userError) throw userError;
+    // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
     // 내용이 빈 문자열이면 undefined로 설정
     const postContents = contents === "" ? undefined : contents;
@@ -165,10 +163,10 @@ export async function createPost({
 
     // 게시물 생성
     const { data: newPost, error: postError } = await supabase
-      .from("posts")
+      .from("post")
       .insert([
         {
-          user_id: user.id,
+          // user_id: user.id,
           contents: postContents,
           images: validImageUrls,
         },
@@ -176,7 +174,6 @@ export async function createPost({
       .select()
       .single();
 
-    if (postError) throw postError;
     return newPost;
   } catch (error) {
     const errorMessage =

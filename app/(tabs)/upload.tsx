@@ -90,6 +90,7 @@ export default function Upload() {
 
     // 카메라 실행
     const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
