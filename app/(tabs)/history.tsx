@@ -1,6 +1,13 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  type TouchableOpacityProps,
+  View,
+} from "react-native";
 import { useState } from "react";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
+import SetRestDayModal from "@/components/SetRestDayModal";
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
 
@@ -50,6 +57,14 @@ export default function History() {
     setCurrentDate(newDate);
   };
 
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
       <View className="flex-row items-center">
@@ -58,9 +73,8 @@ export default function History() {
           완료!
         </Text>
 
-        <TouchableOpacity className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25">
-          <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
-        </TouchableOpacity>
+        <SetRestDayButton onPress={openModal} />
+        <SetRestDayModal visible={isModalOpen} onClose={closeModal} />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
@@ -74,6 +88,17 @@ export default function History() {
 
       <FaceExplanation />
     </ScrollView>
+  );
+}
+
+function SetRestDayButton({ onPress }: TouchableOpacityProps) {
+  return (
+    <TouchableOpacity
+      className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25"
+      onPress={onPress}
+    >
+      <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
+    </TouchableOpacity>
   );
 }
 
