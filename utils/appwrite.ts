@@ -102,36 +102,42 @@ export async function getPosts({
 }> {
   const offset = pageParam * limit;
 
-  const posts = await databases.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.postCollectionId,
-    [
-      Query.orderDesc("$createdAt"),
-      Query.limit(limit),
-      Query.offset(offset),
-      Query.select([
-        "$id",
-        "images",
-        "contents",
-        "$createdAt",
-        "$updatedAt",
-        "likes",
-      ]),
-    ],
-  );
+  try {
+    const posts = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      [
+        Query.orderDesc("$createdAt"),
+        Query.limit(limit),
+        Query.offset(offset),
+        Query.select([
+          "$id",
+          "images",
+          "contents",
+          "$createdAt",
+          "$updatedAt",
+          "likes",
+        ]),
+      ],
+    );
 
-  return {
-    posts: posts.documents.map((doc) => ({
-      id: doc.$id,
-      images: doc.images,
-      contents: doc.contents,
-      createdAt: doc.$createdAt,
-      updatedAt: doc.$updatedAt,
-      likes: doc.likes,
-    })),
-    total: posts.total,
-    hasMore: offset + limit < posts.total,
-  };
+    return {
+      posts: posts.documents.map((doc) => ({
+        id: doc.$id,
+        images: doc.images,
+        contents: doc.contents,
+        createdAt: doc.$createdAt,
+        updatedAt: doc.$updatedAt,
+        likes: doc.likes,
+      })),
+      total: posts.total,
+      hasMore: offset + limit < posts.total,
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
 }
 
 // 게시글 타입 정의

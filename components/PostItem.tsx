@@ -58,14 +58,21 @@ export default function PostItem({
     if (!text || text.length <= calculateMaxChars) return text;
     const truncated = text.slice(0, calculateMaxChars);
     const lastSentence = truncated.match(/[^.!?]*[.!?]+/g);
+
+    let result: string;
     if (lastSentence && lastSentence.length > 0) {
-      return truncated.slice(
+      result = truncated.slice(
         0,
         truncated.lastIndexOf(lastSentence[lastSentence.length - 1]) + 1,
       );
+    } else {
+      const lastSpace = truncated.lastIndexOf(" ");
+      result = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
     }
-    const lastSpace = truncated.lastIndexOf(" ");
-    return lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+
+    // 마지막 공백만 제거
+    result = result.replace(/\s$/, "");
+    return `${result}...`;
   };
 
   const onOpenModal = () => {
@@ -166,15 +173,12 @@ export default function PostItem({
             <Text className="body-2 text-gray-90">
               {isMore ? contents : truncateText(contents)}
               {contents.length > calculateMaxChars && (
-                <Text>{!isMore && "..."}</Text>
-              )}
-              {contents.length > calculateMaxChars && (
                 <TouchableOpacity
                   onPress={() => setIsMore(!isMore)}
                   className="flex-row items-start justify-center"
                 >
                   <Text className="body-2 -mt-[10px] h-[17px] text-gray-45">
-                    {isMore ? "  접기" : "더보기"}
+                    {isMore ? " 접기" : " 더보기"}
                   </Text>
                 </TouchableOpacity>
               )}

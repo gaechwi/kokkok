@@ -23,7 +23,7 @@ export default function Home() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
+    setPage(0);
     const fetchedPosts = await getPosts({});
     setPosts(fetchedPosts);
     setRefreshing(false);
