@@ -3,6 +3,8 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from "react-native";
 import PostItem from "../../components/PostItem";
 import { getPosts } from "@/utils/appwrite";
@@ -49,6 +51,20 @@ export default function Home() {
     setLoading(false);
   }, [loading, posts.hasMore, page]);
 
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } =
+        event.nativeEvent;
+      const isEndReached =
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+
+      if (isEndReached) {
+        loadMorePosts();
+      }
+    },
+    [loadMorePosts],
+  );
+
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -60,16 +76,7 @@ export default function Home() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isEndReached =
-            layoutMeasurement.height + contentOffset.y >=
-            contentSize.height - 20;
-
-          if (isEndReached) {
-            loadMorePosts();
-          }
-        }}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {posts.posts.map((post) => (
