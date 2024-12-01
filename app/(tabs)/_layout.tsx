@@ -89,13 +89,10 @@ export default function TabsLayout() {
           options={{
             header: () => <HeaderWithBack name="UPLOAD" />,
             title: "Upload",
+            tabBarStyle: { display: "none" },
             tabBarIcon: () => (
-              <View>
-                <icons.PlusFilledIcon
-                  width={48}
-                  height={48}
-                  color={colors.primary}
-                />
+              <View className="size-12 items-center justify-center rounded-full bg-primary p-3">
+                <icons.PlusIcon width={24} height={24} color={colors.white} />
               </View>
             ),
           }}

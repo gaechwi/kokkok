@@ -13,13 +13,15 @@ import GoogleIcon from "@/assets/icons/google.svg";
 import GithubIcon from "@/assets/icons/github.svg";
 import HomeIcon from "@/assets/icons/home.svg";
 import KakaoIcon from "@/assets/icons/kakao.svg";
-import PlusFilledIcon from "@/assets/icons/plus-filled.svg";
+import PlusIcon from "@/assets/icons/plus.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
 import SearchIcon from "@/assets/icons/search.svg";
 import SettingIcon from "@/assets/icons/setting.svg";
 import MeatballIcon from "@/assets/icons/meatball.svg";
 import HeartIcon from "@/assets/icons/heart.svg";
 import CommentIcon from "@/assets/icons/comment.svg";
+import BackIcon from "@/assets/icons/back.svg";
+import DeleteIcon from "@/assets/icons/delete.svg";
 
 export default {
   BellIcon,
@@ -40,8 +42,10 @@ export default {
   HomeIcon,
   KakaoIcon,
   MeatballIcon,
-  PlusFilledIcon,
+  PlusIcon,
   ProfileIcon,
+  BackIcon,
+  DeleteIcon,
   SearchIcon,
   SettingIcon,
 };
