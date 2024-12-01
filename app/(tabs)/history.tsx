@@ -105,7 +105,9 @@ function CalendarNavigator({
       </TouchableOpacity>
 
       {/* Month Display */}
-      <Text className="heading-2">
+      <Text
+        className={`heading-2 text-center ${year === currentYear ? "w-[43px]" : "w-[87px]"}`}
+      >
         {year === currentYear
           ? `${month}월`
           : `${String(year).slice(2)}년 ${month}월`}
