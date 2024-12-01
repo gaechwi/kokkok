@@ -12,7 +12,7 @@ import images from "@constants/images";
 import icons from "@constants/icons";
 import { useState } from "react";
 import { Link } from "expo-router";
-import { signIn } from "@utils/appwrite";
+import { signIn } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 
 const SignIn = () => {
@@ -27,7 +27,10 @@ const SignIn = () => {
 
   const handleSignIn = async () => {
     try {
-      await signIn(userInput.email, userInput.password);
+      await signIn({
+        email: userInput.email,
+        password: userInput.password,
+      });
 
       router.replace("/home");
     } catch (error: unknown) {
