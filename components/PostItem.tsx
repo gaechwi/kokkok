@@ -7,9 +7,9 @@ import {
   PixelRatio,
 } from "react-native";
 import Carousel from "./Carousel";
-import { diffDate } from "@/utils/FormatDate";
+import { diffDate } from "@/utils/formatDate";
 import { useMemo, useState } from "react";
-import icons from "../constants/icons";
+import icons from "@/constants/icons";
 import CustomModal from "./Modal";
 interface PostItemProps {
   author: {
