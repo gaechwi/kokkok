@@ -21,18 +21,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    setPage(0);
-    const fetchedPosts = await getPosts({});
-    setPosts(fetchedPosts);
-    setRefreshing(false);
-  }, []);
-
   const fetchPosts = useCallback(async () => {
     const fetchedPosts = await getPosts({});
     setPosts(fetchedPosts);
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(0);
+    await fetchPosts();
+    setRefreshing(false);
+  }, [fetchPosts]);
 
   const loadMorePosts = useCallback(async () => {
     if (loading || !posts.hasMore) return;
