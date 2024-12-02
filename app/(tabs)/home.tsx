@@ -13,6 +13,9 @@ import { getPosts } from "@/utils/supabase";
 const AVATAR_URL =
   "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
 
+const OFFSET = 0;
+const LIMIT = 10;
+
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState<Awaited<ReturnType<typeof getPosts>>>({
@@ -24,7 +27,10 @@ export default function Home() {
   const [page, setPage] = useState(0);
 
   const fetchPosts = useCallback(async () => {
-    const fetchedPosts = await getPosts({});
+    const fetchedPosts = await getPosts({
+      offset: OFFSET,
+      limit: LIMIT,
+    });
     setPosts(fetchedPosts);
   }, []);
 
@@ -40,13 +46,24 @@ export default function Home() {
 
     setLoading(true);
     const nextPage = page + 1;
-    const morePosts = await getPosts({ offset: nextPage });
+    const morePosts = await getPosts({
+      offset: nextPage * LIMIT,
+      limit: LIMIT,
+    });
 
-    setPosts((prev) => ({
-      posts: [...prev.posts, ...morePosts.posts],
-      total: morePosts.total,
-      hasMore: morePosts.hasMore,
-    }));
+    setPosts((prev) => {
+      const existingIds = new Set(prev.posts.map((post) => post.id));
+
+      const newPosts = morePosts.posts.filter(
+        (post) => !existingIds.has(post.id),
+      );
+
+      return {
+        posts: [...prev.posts, ...newPosts],
+        total: morePosts.total,
+        hasMore: morePosts.hasMore && newPosts.length > 0,
+      };
+    });
     setPage(nextPage);
     setLoading(false);
   }, [loading, posts.hasMore, page]);
@@ -88,9 +105,14 @@ export default function Home() {
             }}
             images={post.images}
             liked={false}
+            likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL, AVATAR_URL]}
             contents={post.contents}
             createdAt={post.createdAt}
             commentsCount={10}
+            comment={{
+              author: { name: "Jane Doe", avatar: AVATAR_URL },
+              content: "Hello, World!",
+            }}
           />
         ))}
         {loading && <ActivityIndicator size="large" className="py-4" />}

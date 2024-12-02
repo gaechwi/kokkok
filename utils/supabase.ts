@@ -78,10 +78,7 @@ export async function signUp({
 export async function signIn({
   email,
   password,
-}: {
-  email: string;
-  password: string;
-}) {
+}: { email: string; password: string }) {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -152,10 +149,7 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
 export async function createPost({
   contents,
   images,
-}: {
-  contents?: string;
-  images: ImagePicker.ImagePickerAsset[];
-}) {
+}: { contents?: string; images: ImagePicker.ImagePickerAsset[] }) {
   try {
     // 현재 로그인된 사용자 정보 가져오기
     // const {
