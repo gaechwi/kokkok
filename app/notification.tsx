@@ -16,6 +16,8 @@ export default function Notification() {
             <NotificationItem key={n + notification.id} {...notification} />
           )),
         )}
+
+        <View className="h-[34px]" />
       </ScrollView>
     </SafeAreaView>
   );

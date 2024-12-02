@@ -29,15 +29,15 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const NOTIFICATION_CONFIG = {
     POKE: {
-      title: "👈 콕!",
+      titles: ["👈 콕!"],
       content: `${actor.nickname}님이 콕 찌르셨어요.`,
     },
     COMMENT: {
-      title: `${actor.nickname}님의 댓글`,
+      titles: [`${actor.nickname}님의 댓글`],
       content: shorten_comment(comment || ""),
     },
     LIKE: {
-      title: `${actor.nickname}님이\n게시글에 좋아요를 눌렀어요❤️`,
+      titles: [`${actor.nickname}님이`, "게시글에 좋아요를 눌렀어요❤️"],
     },
   };
 
@@ -54,11 +54,14 @@ export function NotificationItem({
           />
 
           <View className="gap-[4px] w-[198px]">
-            <Text
-              className={`title-4 text-gray-90 ${type === "LIKE" ? "" : "truncate"}`}
-            >
-              {NOTIFICATION_CONFIG[type].title}
-            </Text>
+            {NOTIFICATION_CONFIG[type].titles.map((title) => (
+              <Text
+                key={title}
+                className={`title-4 text-gray-90 ${type === "LIKE" ? "" : "truncate"}`}
+              >
+                {title}
+              </Text>
+            ))}
 
             {type !== "LIKE" && (
               <Text className="body-5 text-gray-45">
