@@ -52,7 +52,7 @@ export async function signUp({
 
     // 2. 프로필 정보 저장
     const { data: profileData, error: profileError } = await supabase
-      .from("users")
+      .from("user")
       .insert([
         {
           id: authData.user.id,
