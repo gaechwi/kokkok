@@ -5,8 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FriendItem, FriendRequest } from "@/components/FriendItem";
 import FriendTab from "@/components/FriendTab";
 import SearchBar from "@/components/SearchBar";
-import { USERS } from "@/mockData/user";
-import { getFriendRequests } from "@/utils/supabase";
+import { getFriendRequests, getFriends } from "@/utils/supabase";
 
 /* 실제 컴포넌트 */
 
@@ -17,6 +16,13 @@ export default function Friend() {
   const [isFriendTab, setIsFriendTab] = useState(true);
   const [keyword, setKeyword] = useState("");
 
+  const [friends, setFriends] = useState<
+    Awaited<ReturnType<typeof getFriends>>
+  >({
+    data: [],
+    total: 0,
+    hasMore: false,
+  });
   const [requests, setRequests] = useState<
     Awaited<ReturnType<typeof getFriendRequests>>
   >({
@@ -25,17 +31,26 @@ export default function Friend() {
     hasMore: false,
   });
 
-  const fetchRequests = useCallback(async () => {
-    const fetchedRequest = await getFriendRequests({
+  const fetchFriends = useCallback(async () => {
+    const fetchedFriends = await getFriends({
       offset: OFFSET,
       limit: LIMIT,
     });
-    setRequests(fetchedRequest);
+    setFriends(fetchedFriends);
+  }, []);
+
+  const fetchRequests = useCallback(async () => {
+    const fetchedRequests = await getFriendRequests({
+      offset: OFFSET,
+      limit: LIMIT,
+    });
+    setRequests(fetchedRequests);
   }, []);
 
   useEffect(() => {
+    fetchFriends();
     fetchRequests();
-  }, [fetchRequests]);
+  }, [fetchFriends, fetchRequests]);
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
@@ -56,11 +71,9 @@ export default function Friend() {
           />
 
           <View className="px-2 pt-2">
-            {[1, 2, 3, 4, 5].map((n) =>
-              USERS.map((user) => (
-                <FriendItem key={n + user.id} fromUser={user} />
-              )),
-            )}
+            {friends.data.map((friend) => (
+              <FriendItem key={friend.id} fromUser={friend} />
+            ))}
           </View>
 
           <View className="h-4" />

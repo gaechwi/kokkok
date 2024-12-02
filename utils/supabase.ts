@@ -275,6 +275,46 @@ export async function getPosts({
 //
 // ============================================
 
+// 친구 조회
+export async function getFriends({
+  offset = 0,
+  limit = 12,
+}: {
+  offset?: number;
+  limit?: number;
+}): Promise<{ data: User[]; total: number; hasMore: boolean }> {
+  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
+
+  try {
+    const { data, error, count } = await supabase
+      .from("friendRequest")
+      .select("to", { count: "exact" })
+      .eq("from", user.id)
+      .eq("isAccepted", true)
+      .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
+      .range(offset, offset + limit - 1);
+
+    console.log("hi", data);
+    if (error) throw error;
+    if (!data) throw new Error("친구를 불러올 수 없습니다.");
+
+    const friends = await Promise.all(
+      data.map((request) => getUser(request.to)),
+    );
+    console.log(friends);
+
+    return {
+      data: friends,
+      total: count || 0,
+      hasMore: count ? offset + limit < count : false,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "친구 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // 친구요청 조회 조회
 export async function getFriendRequests({
   offset = 0,
