@@ -36,8 +36,12 @@ const FriendProfile = ({
       style={{ width: 48, height: 48, borderRadius: 9999 }}
     />
     <View className="gap-[4px] w-[150px]">
-      <Text className="title-4 text-gray-90 truncate">{username}</Text>
-      <Text className="caption-3 text-gray-45 truncate">{description}</Text>
+      <Text className="title-4 text-gray-90" numberOfLines={1}>
+        {username}
+      </Text>
+      <Text className="caption-3 text-gray-45" numberOfLines={1}>
+        {description}
+      </Text>
     </View>
   </View>
 );

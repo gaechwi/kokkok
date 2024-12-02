@@ -55,13 +55,17 @@ export function NotificationItem({
 
           <View className="gap-[4px] w-[198px]">
             {NOTIFICATION_CONFIG[type].title.map((title) => (
-              <Text key={title} className="title-4 text-gray-90 truncate">
+              <Text
+                key={title}
+                className="title-4 text-gray-90"
+                numberOfLines={1}
+              >
                 {title}
               </Text>
             ))}
 
             {type !== "LIKE" && (
-              <Text className="body-5 text-gray-45 truncate">
+              <Text className="body-5 text-gray-45" numberOfLines={1}>
                 {NOTIFICATION_CONFIG[type].content}
               </Text>
             )}
