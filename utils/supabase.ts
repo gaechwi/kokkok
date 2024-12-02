@@ -306,7 +306,6 @@ export async function getFriendRequests({
       .eq("to", user.id)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-    console.log(data, count);
 
     if (error) throw error;
     if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
@@ -316,7 +315,6 @@ export async function getFriendRequests({
       data.map((request) => getUser(request.from)),
     );
 
-    console.log(froms);
     return {
       data: data.map((request, idx) => ({
         id: request.id,
