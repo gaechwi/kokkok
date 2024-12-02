@@ -2,15 +2,15 @@ import { Text, View } from "react-native";
 import icons from "@/constants/icons";
 
 // FIXME: 타입 수정 필요
-interface CalendarProps {
+interface WorkoutCalendarProps {
   date: Date;
-  workoutStatus: { date: string; status: "DONE" | "REST" }[];
+  workoutStatuses: { date: string; status: "DONE" | "REST" }[];
 }
 
 export default function WorkoutCalendar({
   date,
-  workoutStatus,
-}: CalendarProps) {
+  workoutStatuses,
+}: WorkoutCalendarProps) {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
 
@@ -27,7 +27,7 @@ export default function WorkoutCalendar({
         day,
       ).padStart(2, "0")}`;
       const status =
-        workoutStatus.find((ws) => ws.date.split("T")[0] === formattedDate)
+        workoutStatuses.find((ws) => ws.date.split("T")[0] === formattedDate)
           ?.status ?? null;
 
       return { day, status };
