@@ -1,4 +1,3 @@
-import AppleIcon from "@/assets/icons/apple.svg";
 import BellIcon from "@/assets/icons/bell.svg";
 import CalendarIcon from "@/assets/icons/calendar.svg";
 import ChevronLeftIcon from "@/assets/icons/chevron-left.svg";
@@ -12,6 +11,7 @@ import FaceNotDoneIcon from "@/assets/icons/face_not_done.svg";
 import FriendIcon from "@/assets/icons/friend.svg";
 import GoogleIcon from "@/assets/icons/google.svg";
 import GithubIcon from "@/assets/icons/github.svg";
+import KakaoIcon from "@/assets/icons/kakao.svg";
 import HomeIcon from "@/assets/icons/home.svg";
 import PlusIcon from "@/assets/icons/plus.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
@@ -24,7 +24,6 @@ import BackIcon from "@/assets/icons/back.svg";
 import XIcon from "@/assets/icons/x.svg";
 
 export default {
-  AppleIcon,
   BellIcon,
   CalendarIcon,
   ChevronLeftIcon,
@@ -39,6 +38,7 @@ export default {
   FriendIcon,
   GoogleIcon,
   GithubIcon,
+  KakaoIcon,
   HeartIcon,
   HomeIcon,
   MeatballIcon,

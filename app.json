@@ -20,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.kokkok"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -31,7 +32,9 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/Pretendard-Regular.otf"]
+          "fonts": [
+            "./assets/fonts/Pretendard-Regular.otf"
+          ]
         }
       ]
     ]
