@@ -12,34 +12,32 @@ import {
 import images from "@constants/images";
 import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
-import { useRouter } from "expo-router";
-import { signUp } from "@/utils/supabase";
+// import { useRouter } from "expo-router";
+// import { signUp } from "@/utils/supabase";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
-  const router = useRouter();
+  //   const router = useRouter();
 
   const handleSignUp = async () => {
-    if (!signUpForm.username) {
-      Alert.alert("닉네임을 채워주세요");
-      return;
-    }
-
-    try {
-      await signUp({
-        email: signUpForm.email,
-        password: signUpForm.password,
-        username: signUpForm.username,
-        description: signUpForm.description,
-      });
-
-      router.replace("/home");
-    } catch (error) {
-      Alert.alert(
-        "회원가입 실패",
-        error instanceof Error ? error.message : "회원가입에 실패했습니다.",
-      );
-    }
+    // if (!signUpForm.username) {
+    //   Alert.alert("닉네임을 채워주세요");
+    //   return;
+    // }
+    // try {
+    //   await signUp({
+    //     email: signUpForm.email,
+    //     password: signUpForm.password,
+    //     username: signUpForm.username,
+    //     description: signUpForm.description,
+    //   });
+    //   router.replace("/home");
+    // } catch (error) {
+    //   Alert.alert(
+    //     "회원가입 실패",
+    //     error instanceof Error ? error.message : "회원가입에 실패했습니다.",
+    //   );
+    // }
   };
 
   return (
@@ -48,42 +46,28 @@ const Step2 = () => {
       className="h-full flex-1 bg-white"
     >
       <ScrollView>
-        <View className="mt-12 flex items-center justify-center px-6">
-          <TouchableOpacity>
-            <Image
-              source={images.AvatarInput}
-              className="size-[236px]"
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-
-          <View className="mt-10 flex w-full gap-10">
+        <View className="mt-[58px] flex items-center justify-center px-6">
+          <Image
+            source={images.AuthLogo}
+            className="h-[90px] w-[328px]"
+            resizeMode="contain"
+          />
+          <View className="relative flex w-full gap-10 last:mt-10">
             <TextInput
-              className="h-[58px] w-full rounded-[10px] border border-gray-20 px-4 focus:border-primary"
-              placeholder="닉네임을 입력해주세요."
-              accessibilityLabel="닉네임 입력"
-              accessibilityHint="닉네임을 입력해주세요."
-              value={signUpForm.username}
-              onChangeText={(text) =>
-                setSignUpForm({ ...signUpForm, username: text })
-              }
+              className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
+              placeholder="인증코드를 입력해주세요."
+              accessibilityLabel="인증코드 입력"
+              accessibilityHint="인증코드를 입력해주세요."
+              //   value={}
+              //   onChangeText={}
             />
-            <TextInput
-              className="h-[108px] w-full rounded-[10px] border border-gray-20 p-4 focus:border-primary"
-              placeholder="소개글을 입력해주세요."
-              accessibilityLabel="소개글 입력"
-              accessibilityHint="소개글을 입력해주세요."
-              multiline={true} // 여러 줄 입력 가능
-              numberOfLines={4} // 기본 표시 줄 수
-              value={signUpForm.description}
-              onChangeText={(text) =>
-                setSignUpForm({ ...signUpForm, description: text })
-              }
-            />
+            <Text className="-translate-y-1/2 body-1 absolute top-1/2 right-4 text-gray-40">
+              nn : nn
+            </Text>
           </View>
 
           <TouchableOpacity
-            className="mt-12 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+            className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
             onPress={handleSignUp}
           >
             <Text className="heading-2 text-white">완료</Text>
