@@ -294,14 +294,12 @@ export async function getFriends({
       .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
       .range(offset, offset + limit - 1);
 
-    console.log("hi", data);
     if (error) throw error;
     if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
     const friends = await Promise.all(
       data.map((request) => getUser(request.to)),
     );
-    console.log(friends);
 
     return {
       data: friends,
