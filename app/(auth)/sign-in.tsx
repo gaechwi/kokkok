@@ -121,6 +121,7 @@ const SignIn = () => {
             </View>
           </View>
         </View>
+        <Link href="/password-reset/step1">테스트용</Link>
       </ScrollView>
     </View>
   );

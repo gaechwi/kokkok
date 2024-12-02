@@ -52,7 +52,7 @@ const Step2 = () => {
             className="h-[90px] w-[328px]"
             resizeMode="contain"
           />
-          <View className="relative flex w-full gap-10 last:mt-10">
+          <View className="relative mt-10 flex w-full gap-10">
             <TextInput
               className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
               placeholder="인증코드를 입력해주세요."
