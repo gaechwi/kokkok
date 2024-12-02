@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView } from "react-native";
+import { useState } from "react";
+import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendItem, FriendRequest } from "@/components/FriendItem";
@@ -7,6 +7,8 @@ import FriendTab from "@/components/FriendTab";
 import SearchBar from "@/components/SearchBar";
 import { USERS } from "@/mockData/user";
 import { getFriendRequests } from "@/utils/supabase";
+import useFetchData from "@/hooks/useFetchData";
+import { RequestResponse } from "@/types/FriendRequest.interface";
 
 /* 실제 컴포넌트 */
 
@@ -17,25 +19,45 @@ export default function Friend() {
   const [isFriendTab, setIsFriendTab] = useState(true);
   const [keyword, setKeyword] = useState("");
 
-  const [requests, setRequests] = useState<
-    Awaited<ReturnType<typeof getFriendRequests>>
-  >({
-    data: [],
-    total: 0,
-    hasMore: false,
-  });
+  const {
+    data: requests,
+    isLoading,
+    error,
+  } = useFetchData<RequestResponse>(
+    ["friendRequests", OFFSET],
+    () => getFriendRequests({ offset: OFFSET, limit: LIMIT }),
+    "친구 요청 조회에 실패했습니다.",
+  );
 
-  const fetchRequests = useCallback(async () => {
-    const fetchedRequest = await getFriendRequests({
-      offset: OFFSET,
-      limit: LIMIT,
-    });
-    setRequests(fetchedRequest);
-  }, []);
+  // NOTE 추후 페이지 분리 및 개선할 예정
+  if (error) {
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <FriendTab
+          isFriendTab={isFriendTab}
+          handlePress={(newIsFriendTab: boolean) =>
+            setIsFriendTab(newIsFriendTab)
+          }
+        />
+        <View className="size-full justify-center items-center">
+          <Text className="title-1">{error.message}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+  if (isLoading || !requests) {
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <FriendTab
+          isFriendTab={isFriendTab}
+          handlePress={(newIsFriendTab: boolean) =>
+            setIsFriendTab(newIsFriendTab)
+          }
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">

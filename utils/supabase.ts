@@ -5,6 +5,8 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
+import { RequestResponse } from "@/types/FriendRequest.interface";
+import { User } from "@/types/User.interface";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -282,7 +284,7 @@ export async function getFriendRequests({
 }: {
   offset?: number;
   limit?: number;
-}): Promise<{ data: RequestInfo[]; total: number; hasMore: boolean }> {
+}): Promise<RequestResponse> {
   // 현재 로그인된 사용자 정보 가져오기
   // const {
   //   data: { user },
@@ -293,41 +295,32 @@ export async function getFriendRequests({
   // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
   const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
 
-  try {
-    const { data, error, count } = await supabase
-      .from("friendRequest")
-      .select(
-        `
+  const { data, error, count } = await supabase
+    .from("friendRequest")
+    .select(
+      `
           id,
           from
         `,
-        { count: "exact" },
-      )
-      .eq("to", user.id)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      { count: "exact" },
+    )
+    .eq("to", user.id)
+    .order("createdAt", { ascending: false })
+    .range(offset, offset + limit - 1);
 
-    if (error) throw error;
-    if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+  if (error) throw error;
 
-    // FIXME 개선 필요
-    const froms = await Promise.all(
-      data.map((request) => getUser(request.from)),
-    );
+  // FIXME 개선 필요
+  const froms = await Promise.all(data.map((request) => getUser(request.from)));
 
-    return {
-      data: data.map((request, idx) => ({
-        id: request.id,
-        from: froms[idx],
-      })),
-      total: count || 0,
-      hasMore: count ? offset + limit < count : false,
-    };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 조회에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  return {
+    data: data.map((request, idx) => ({
+      id: request.id,
+      from: froms[idx],
+    })),
+    total: count || 0,
+    hasMore: count ? offset + limit < count : false,
+  };
 }
 
 // ============================================
@@ -344,18 +337,4 @@ interface Post {
   createdAt: string;
   likes: number;
   // author: User;
-}
-
-// 유저 타입 정의
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatarUrl: string;
-  description: string;
-}
-
-interface RequestInfo {
-  id: string;
-  from: User;
 }
