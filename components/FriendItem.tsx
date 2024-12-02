@@ -13,8 +13,8 @@ type StatusType = keyof typeof FIT_STATUS;
 /* Interfaces */
 
 interface FriendProfileProps {
-  nickname: string;
-  avatar: string;
+  username: string;
+  avatarUrl: string;
   description: string;
 }
 
@@ -25,18 +25,18 @@ interface FriendItemProps extends FriendProfileProps {
 /* SubComponent */
 
 const FriendProfile = ({
-  nickname,
-  avatar,
+  username,
+  avatarUrl,
   description,
 }: FriendProfileProps) => (
   <View className="flex-row gap-2">
     <Image
-      src={avatar}
+      src={avatarUrl}
       defaultSource={images.AvaTarDefault}
       style={{ width: 48, height: 48, borderRadius: 9999 }}
     />
     <View className="gap-[4px]">
-      <Text className="title-4 text-gray-90">{nickname}</Text>
+      <Text className="title-4 text-gray-90">{username}</Text>
       <Text className="caption-3 text-gray-45">{description}</Text>
     </View>
   </View>
@@ -45,16 +45,16 @@ const FriendProfile = ({
 /* Components */
 
 export function FriendItem({
-  nickname,
-  avatar,
+  username,
+  avatarUrl,
   description,
   status,
 }: FriendItemProps) {
   return (
     <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile
-        nickname={nickname}
-        avatar={avatar}
+        username={username}
+        avatarUrl={avatarUrl}
         description={description}
       />
 
@@ -81,15 +81,15 @@ export function FriendItem({
 }
 
 export function FriendRequest({
-  nickname,
-  avatar,
+  username,
+  avatarUrl,
   description,
 }: FriendProfileProps) {
   return (
     <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile
-        nickname={nickname}
-        avatar={avatar}
+        username={username}
+        avatarUrl={avatarUrl}
         description={description}
       />
 
