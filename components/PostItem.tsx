@@ -45,20 +45,12 @@ export default function PostItem({
 
   const { calculateMaxChars, truncateText } = useTruncateText();
 
-  const onOpenModal = () => {
-    setIsModalVisible(true);
+  const toggleModal = () => {
+    setIsModalVisible((prev) => !prev);
   };
 
-  const onCloseModal = () => {
-    setIsModalVisible(false);
-  };
-
-  const onOpenComments = () => {
-    setIsCommentsVisible(true);
-  };
-
-  const onCloseComments = () => {
-    setIsCommentsVisible(false);
+  const toggleComments = () => {
+    setIsCommentsVisible((prev) => !prev);
   };
 
   return (
@@ -77,12 +69,12 @@ export default function PostItem({
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={onOpenModal}>
+          <TouchableOpacity onPress={toggleModal}>
             <icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
 
             <CustomModal
               visible={isModalVisible}
-              onClose={onCloseModal}
+              onClose={toggleModal}
               position="bottom"
             >
               <View className="items-center">
@@ -142,7 +134,7 @@ export default function PostItem({
 
             {/* comments */}
             <TouchableOpacity
-              onPress={onOpenComments}
+              onPress={toggleComments}
               className="ml-[10px] flex-row items-center gap-[4px]"
             >
               <icons.CommentIcon
@@ -186,7 +178,7 @@ export default function PostItem({
 
             {/* comments */}
             {comment && (
-              <Pressable onPress={onOpenComments} className="mt-2 px-2">
+              <Pressable onPress={toggleComments} className="mt-2 px-2">
                 <View className="flex-row items-center gap-2">
                   <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
                     {comment.author.name}
@@ -206,7 +198,7 @@ export default function PostItem({
         <View className="flex-1">
           <CommentsSection
             visible={isCommentsVisible}
-            onClose={onCloseComments}
+            onClose={toggleComments}
             comments={[
               {
                 id: Math.random().toString(),

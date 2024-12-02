@@ -153,6 +153,7 @@ export default function CommentsSection({
                 keyExtractor={(item) => item.id.toString()}
                 initialNumToRender={10}
                 removeClippedSubviews
+                showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                   <View className="mb-2.5 w-full">
                     <Text className="heading-2 text-center">댓글</Text>
