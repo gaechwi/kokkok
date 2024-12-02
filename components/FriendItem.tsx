@@ -35,9 +35,9 @@ const FriendProfile = ({
       defaultSource={images.AvaTarDefault}
       style={{ width: 48, height: 48, borderRadius: 9999 }}
     />
-    <View className="gap-[4px]">
-      <Text className="title-4 text-gray-90">{username}</Text>
-      <Text className="caption-3 text-gray-45">{description}</Text>
+    <View className="gap-[4px] w-[150px]">
+      <Text className="title-4 text-gray-90 truncate">{username}</Text>
+      <Text className="caption-3 text-gray-45 truncate">{description}</Text>
     </View>
   </View>
 );
