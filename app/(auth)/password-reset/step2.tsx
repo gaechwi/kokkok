@@ -22,7 +22,7 @@ const Step2 = () => {
       <ScrollView>
         <View className="mt-[58px] flex items-center justify-center px-6">
           <Image
-            source={images.Step1}
+            source={images.Step2}
             className="h-[90px] w-full"
             resizeMode="contain"
           />

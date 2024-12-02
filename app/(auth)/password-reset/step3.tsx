@@ -22,7 +22,7 @@ const Step3 = () => {
       <ScrollView>
         <View className="mt-[58px] flex items-center justify-center px-6">
           <Image
-            source={images.Step1}
+            source={images.Step3}
             className="h-[90px] w-full"
             resizeMode="contain"
           />
@@ -44,7 +44,7 @@ const Step3 = () => {
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
             onPress={() => {
-              router.replace("/password-reset/step2");
+              router.replace("/home");
             }}
           >
             <Text className="heading-2 text-white">완료</Text>

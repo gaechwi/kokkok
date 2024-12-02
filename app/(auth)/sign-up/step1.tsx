@@ -146,7 +146,7 @@ const Step1 = () => {
                 router.push("/sign-up/step2");
               }}
             >
-              <Text className="heading-2 text-white">확인</Text>
+              <Text className="title-2 text-white">확인</Text>
             </TouchableOpacity>
           </View>
         </View>
