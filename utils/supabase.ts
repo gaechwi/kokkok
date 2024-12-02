@@ -58,7 +58,7 @@ export async function signUp({
           id: authData.user.id,
           email,
           username,
-          avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
+          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
           description: description || null,
         },
       ])
