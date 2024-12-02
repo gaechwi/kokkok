@@ -29,11 +29,11 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const NOTIFICATION_CONFIG = {
     POKE: {
-      title: ["👈 콕!"],
+      title: "👈 콕!",
       content: `${actor.username}님이 콕 찌르셨어요.`,
     },
     COMMENT: {
-      title: [`${actor.username}님의 댓글`],
+      title: `${actor.username}님의 댓글`,
       content: shorten_comment(comment || ""),
     },
     LIKE: {
@@ -54,20 +54,24 @@ export function NotificationItem({
           />
 
           <View className="gap-[4px] w-[198px]">
-            {NOTIFICATION_CONFIG[type].title.map((title) => (
-              <Text
-                key={title}
-                className="title-4 text-gray-90"
-                numberOfLines={1}
-              >
-                {title}
-              </Text>
-            ))}
-
-            {type !== "LIKE" && (
-              <Text className="body-5 text-gray-45" numberOfLines={1}>
-                {NOTIFICATION_CONFIG[type].content}
-              </Text>
+            {type === "LIKE" ? (
+              <>
+                <Text className="title-4 text-gray-90" numberOfLines={1}>
+                  {NOTIFICATION_CONFIG[type].title[0]}
+                </Text>
+                <Text className="title-4 text-gray-90" numberOfLines={1}>
+                  {NOTIFICATION_CONFIG[type].title[1]}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text className="title-4 text-gray-90" numberOfLines={1}>
+                  {NOTIFICATION_CONFIG[type].title}
+                </Text>
+                <Text className="body-5 text-gray-45" numberOfLines={1}>
+                  {NOTIFICATION_CONFIG[type].content}
+                </Text>
+              </>
             )}
           </View>
         </View>
