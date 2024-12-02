@@ -24,6 +24,7 @@ export default function Friend() {
             <FriendRequest key={n + user.accountId} {...user} />
           )),
         )}
+        <View className="h-4" />
       </ScrollView>
     </SafeAreaView>
   );
