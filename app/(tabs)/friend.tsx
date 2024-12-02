@@ -49,10 +49,12 @@ export default function Friend() {
         <ScrollView className="px-6 grow w-full">
           {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
           <View className="h-6" />
+
           <SearchBar
             value={keyword}
             handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
           />
+
           <View className="px-2 pt-2">
             {[1, 2, 3, 4, 5].map((n) =>
               USERS.map((user) => (
@@ -60,6 +62,8 @@ export default function Friend() {
               )),
             )}
           </View>
+
+          <View className="h-4" />
         </ScrollView>
       ) : (
         <ScrollView className="px-8 grow w-full">
@@ -68,6 +72,7 @@ export default function Friend() {
           {requests.data.map(({ id, from }) => (
             <FriendRequest key={id} {...from} />
           ))}
+          <View className="h-4" />
         </ScrollView>
       )}
     </SafeAreaView>
