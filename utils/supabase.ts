@@ -52,7 +52,7 @@ export async function signUp({
 
     // 2. 프로필 정보 저장
     const { data: profileData, error: profileError } = await supabase
-      .from("users")
+      .from("user")
       .insert([
         {
           id: authData.user.id,
@@ -92,6 +92,28 @@ export async function signIn({
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "로그인에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// ============================================
+//
+//                    user
+//
+// ============================================
+
+// 유저 정보 조회
+export async function getUser(id: string): Promise<User> {
+  try {
+    const { data, error } = await supabase.from("user").select().eq("id", id);
+
+    if (error) throw error;
+    if (!data) throw new Error("유저를 불러올 수 없습니다.");
+
+    return data[0];
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "유저 정보 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
 }
@@ -249,6 +271,67 @@ export async function getPosts({
 
 // ============================================
 //
+//                    friend
+//
+// ============================================
+
+// 친구요청 조회 조회
+export async function getFriendRequests({
+  offset = 0,
+  limit = 12,
+}: {
+  offset?: number;
+  limit?: number;
+}): Promise<{ data: RequestInfo[]; total: number; hasMore: boolean }> {
+  // 현재 로그인된 사용자 정보 가져오기
+  // const {
+  //   data: { user },
+  //   error: userError,
+  // } = await supabase.auth.getUser();
+
+  // if (userError) throw userError;
+  // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
+
+  try {
+    const { data, error, count } = await supabase
+      .from("friendRequest")
+      .select(
+        `
+          id,
+          from
+        `,
+        { count: "exact" },
+      )
+      .eq("to", user.id)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+    // FIXME 개선 필요
+    const froms = await Promise.all(
+      data.map((request) => getUser(request.from)),
+    );
+
+    return {
+      data: data.map((request, idx) => ({
+        id: request.id,
+        from: froms[idx],
+      })),
+      total: count || 0,
+      hasMore: count ? offset + limit < count : false,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "친구 요청 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// ============================================
+//
 //                    type
 //
 // ============================================
@@ -269,4 +352,10 @@ interface User {
   email: string;
   username: string;
   avatarUrl: string;
+  description: string;
+}
+
+interface RequestInfo {
+  id: string;
+  from: User;
 }
