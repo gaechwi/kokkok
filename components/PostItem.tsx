@@ -168,27 +168,26 @@ export default function PostItem({
           <View className="bg-white px-4 pb-[22px]">
             {/* content */}
             {contents && (
-              <View className="flex-row flex-wrap">
+              <Pressable
+                disabled={!isMore && contents.length <= calculateMaxChars}
+                onPress={() => setIsMore(!isMore)}
+                className="flex-row flex-wrap"
+              >
                 <Text className="title-5 text-gray-90">
                   {isMore ? contents : truncateText(contents)}
                   {contents.length > calculateMaxChars && (
-                    <TouchableOpacity
-                      onPress={() => setIsMore(!isMore)}
-                      className="h-[16px] flex-row items-center justify-center"
-                    >
-                      <Text className="title-5 -mb-[3px] text-gray-45">
-                        {isMore ? " 접기" : "더보기"}
-                      </Text>
-                    </TouchableOpacity>
+                    <Text className="title-5 -mb-[3px] text-gray-45">
+                      {isMore ? " 접기" : "더보기"}
+                    </Text>
                   )}
                 </Text>
-              </View>
+              </Pressable>
             )}
 
             {/* comments */}
             {comment && (
-              <Pressable onPress={onOpenComments} className="px-2">
-                <View className="flex-row items-center gap-2 pt-2">
+              <Pressable onPress={onOpenComments} className="mt-2 px-2">
+                <View className="flex-row items-center gap-2">
                   <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
                     {comment.author.name}
                   </Text>
