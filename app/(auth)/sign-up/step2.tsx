@@ -7,7 +7,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import images from "@constants/images";
 import { useAtom } from "jotai";
