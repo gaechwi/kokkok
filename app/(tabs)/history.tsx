@@ -11,6 +11,7 @@ import CalendarNavigator from "@/components/CalendarNavigator";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
 
+// FIXME: 타입 수정 필요
 type Status = "DONE" | "REST";
 interface Mock {
   date: string;
@@ -72,6 +73,10 @@ export default function History() {
     setIsModalOpen(false);
   };
 
+  const handleRestDayModalSubmit = (restDates: Omit<Mock, "status">[]) => {
+    console.log(restDates);
+  };
+
   return (
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
       <View className="flex-row items-center">
@@ -81,7 +86,11 @@ export default function History() {
         </Text>
 
         <SetRestDayButton onPress={openModal} />
-        <SetRestDayModal visible={isModalOpen} onClose={closeModal} />
+        <SetRestDayModal
+          visible={isModalOpen}
+          onClose={closeModal}
+          onSubmit={handleRestDayModalSubmit}
+        />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
@@ -93,7 +102,7 @@ export default function History() {
             disabled={isNextDisabled}
           />
         </CalendarNavigator>
-        <WorkoutCalendar date={date} workoutStatus={mock} />
+        <WorkoutCalendar date={date} workoutStatuses={mock} />
       </View>
 
       <FaceExplanation />
