@@ -1,10 +1,10 @@
 import {
   RefreshControl,
   SafeAreaView,
-  ScrollView,
   ActivityIndicator,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
+  FlatList,
 } from "react-native";
 import PostItem from "../../components/PostItem";
 import { useEffect, useState, useCallback } from "react";
@@ -88,15 +88,12 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">
-      <ScrollView
-        className="w-full grow"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        {posts.posts.map((post) => (
+      <FlatList
+        data={posts.posts}
+        keyExtractor={(
+          post: Awaited<ReturnType<typeof getPosts>>["posts"][0],
+        ) => post.id.toString()}
+        renderItem={({ item: post }) => (
           <PostItem
             key={post.id}
             author={{
@@ -114,9 +111,17 @@ export default function Home() {
               content: "Hello, World!",
             }}
           />
-        ))}
-        {loading && <ActivityIndicator size="large" className="py-4" />}
-      </ScrollView>
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        onEndReached={loadMorePosts}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? <ActivityIndicator size="large" className="py-4" /> : null
+        }
+        onScroll={handleScroll}
+      />
     </SafeAreaView>
   );
 }
