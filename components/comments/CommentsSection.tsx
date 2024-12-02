@@ -15,7 +15,7 @@ import CommentItem from "./CommentItem";
 const { height: deviceHeight } = Dimensions.get("window");
 const MIN_HEIGHT = 0;
 const CLOSE_THRESHOLD = deviceHeight * 0.2;
-const MAX_HEIGHT = deviceHeight * 0.92;
+const MAX_HEIGHT = deviceHeight;
 const DURATION = 400;
 
 const ANIMATION_CONFIG = {
