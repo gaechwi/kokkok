@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, Pressable } from "react-native";
 import Carousel from "./Carousel";
 import { diffDate } from "@/utils/formatDate";
 import { useState } from "react";
@@ -187,7 +187,7 @@ export default function PostItem({
 
             {/* comments */}
             {comment && (
-              <View className="px-2">
+              <Pressable onPress={onOpenComments} className="px-2">
                 <View className="flex-row items-center gap-2 pt-2">
                   <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
                     {comment.author.name}
@@ -199,7 +199,7 @@ export default function PostItem({
                     {comment.content}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             )}
           </View>
         )}

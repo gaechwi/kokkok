@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Modal,
   Animated,
@@ -46,6 +46,20 @@ export default function CommentsSection({
     }).start();
   }, [visible, slideAnim]);
 
+  const handleClose = useCallback(() => {
+    Animated.timing(heightAnim, {
+      toValue: 0,
+      duration: DURATION,
+      useNativeDriver: false,
+    }).start(() => {
+      onClose();
+      setTimeout(() => {
+        heightRef.current = deviceHeight * 0.8;
+        heightAnim.setValue(heightRef.current);
+      }, 100);
+    });
+  }, [onClose, heightAnim]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -61,6 +75,7 @@ export default function CommentsSection({
           const finalHeight = heightRef.current - gestureState.dy;
 
           if (finalHeight < CLOSE_THRESHOLD) {
+            // 최소 높이보다 작으면 닫힘
             onClose();
             setTimeout(() => {
               heightRef.current = deviceHeight * 0.8;
@@ -74,6 +89,7 @@ export default function CommentsSection({
               useNativeDriver: false,
             }).start();
           } else {
+            // 최소 높이보다 작으면 최소 높이로 돌아감
             const clampedHeight = Math.min(
               MAX_HEIGHT,
               Math.max(MIN_HEIGHT, finalHeight),
@@ -96,15 +112,11 @@ export default function CommentsSection({
       transparent
       visible={visible}
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View
-        style={{
-          flex: 1,
-          justifyContent: "flex-end",
-          backgroundColor: "rgba(0,0,0,0.5)",
-        }}
-        onTouchStart={onClose}
+        className="flex-1 justify-end bg-black/50"
+        onTouchStart={handleClose}
       >
         <AnimatedView
           onTouchStart={(e) => e.stopPropagation()}
@@ -127,32 +139,13 @@ export default function CommentsSection({
           >
             <SafeAreaView
               edges={["bottom"]}
-              style={{
-                maxHeight: "100%",
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                borderColor: "#D3D3D3",
-                borderWidth: 1,
-                backgroundColor: "#FFFFFF",
-                paddingHorizontal: 30,
-              }}
+              className="h-full rounded-t-[20px] border border-gray-300 bg-white px-8"
             >
               <View
-                style={{
-                  width: "100%",
-                  alignItems: "center",
-                  paddingVertical: 10,
-                }}
+                className="w-full items-center py-2.5"
                 {...panResponder.panHandlers}
               >
-                <View
-                  style={{
-                    height: 4,
-                    width: 40,
-                    backgroundColor: "#E0E0E0",
-                    borderRadius: 2,
-                  }}
-                />
+                <View className="h-1 w-10 rounded-[2px] bg-gray-200" />
               </View>
 
               <FlatList
@@ -161,22 +154,14 @@ export default function CommentsSection({
                 initialNumToRender={10}
                 removeClippedSubviews
                 ListHeaderComponent={
-                  <View style={{ marginBottom: 10, width: "100%" }}>
-                    <Text style={{ fontSize: 20, textAlign: "center" }}>
-                      댓글
-                    </Text>
+                  <View className="mb-2.5 w-full">
+                    <Text className="heading-2 text-center">댓글</Text>
                   </View>
                 }
                 renderItem={({ item }) => <CommentItem {...item} />}
                 ListEmptyComponent={
-                  <Text
-                    style={{
-                      marginTop: 20,
-                      textAlign: "center",
-                      color: "#A0A0A0",
-                    }}
-                  >
-                    No comments yet.
+                  <Text className="heading-2 mt-5 text-center text-gray-90">
+                    아직 댓글이 없습니다.
                   </Text>
                 }
               />
