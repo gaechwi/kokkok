@@ -8,7 +8,7 @@ import SearchBar from "@/components/SearchBar";
 import { USERS } from "@/mockData/user";
 import { getFriendRequests } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
-import { RequestResponse } from "@/types/FriendRequest.interface";
+import type { RequestResponse } from "@/types/FriendRequest.interface";
 
 /* 실제 컴포넌트 */
 

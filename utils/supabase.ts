@@ -5,8 +5,8 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import { RequestResponse } from "@/types/FriendRequest.interface";
-import { User } from "@/types/User.interface";
+import type { RequestResponse } from "@/types/FriendRequest.interface";
+import type { User } from "@/types/User.interface";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;

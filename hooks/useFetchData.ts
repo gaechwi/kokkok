@@ -1,4 +1,8 @@
-import { useQuery, QueryKey, UseQueryResult } from "@tanstack/react-query";
+import {
+  useQuery,
+  type QueryKey,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 
 // queryKey, getService, defaultErrorMessage, enabled 순
 // 기본 에러 핸들링: 제공된 메시지 || defaultErrorMessage

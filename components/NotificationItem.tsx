@@ -2,7 +2,7 @@ import { Image, Text, View } from "react-native";
 
 import images from "@/constants/images";
 import { diffDate } from "@/utils/formatDate";
-import { User } from "@/mockData/user";
+import type { User } from "@/mockData/user";
 
 interface NotificationItemProps {
   actor: User;
