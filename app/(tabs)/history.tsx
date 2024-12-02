@@ -6,7 +6,7 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
-import SetRestDayModal from "@/components/SetRestDayModal";
+import RestDayModal from "@/components/RestDayModal";
 import CalendarNavigator from "@/components/CalendarNavigator";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
@@ -86,7 +86,7 @@ export default function History() {
         </Text>
 
         <SetRestDayButton onPress={openModal} />
-        <SetRestDayModal
+        <RestDayModal
           visible={isModalOpen}
           onClose={closeModal}
           onSubmit={handleRestDayModalSubmit}

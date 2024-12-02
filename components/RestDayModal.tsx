@@ -24,17 +24,17 @@ const mock: Mock[] = [
   { date: "2025-01-12T00:00:00.000Z" },
 ];
 
-interface SetRestDayModalProps {
+interface RestDayModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (restDates: Mock[]) => void;
 }
 
-export default function SetRestDayModal({
+export default function RestDayModal({
   visible,
   onClose,
   onSubmit,
-}: SetRestDayModalProps) {
+}: RestDayModalProps) {
   const [date, setDate] = useState<Date>(new Date());
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
