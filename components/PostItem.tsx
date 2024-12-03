@@ -1,17 +1,11 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  PixelRatio,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, Pressable } from "react-native";
 import Carousel from "./Carousel";
 import { diffDate } from "@/utils/formatDate";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import icons from "@/constants/icons";
 import CustomModal from "./Modal";
 import colors from "@/constants/colors";
+import { useTruncateText } from "@/hooks/useTruncateText";
 interface PostItemProps {
   author: {
     name: string;
@@ -30,6 +24,7 @@ interface PostItemProps {
     };
     content: string;
   };
+  onCommentsPress: () => void; // 새로 추가
 }
 
 export default function PostItem({
@@ -41,46 +36,17 @@ export default function PostItem({
   createdAt,
   commentsCount = 0,
   comment,
+  onCommentsPress, // 새로 추가
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const screenWidth = Dimensions.get("window").width;
+  const { calculateMaxChars, truncateText } = useTruncateText();
 
-  const calculateMaxChars = useMemo(() => {
-    const fontScale = PixelRatio.getFontScale();
-    const baseCharsPerLine = Math.floor(screenWidth / (15 * fontScale));
-    return baseCharsPerLine * 2;
-  }, [screenWidth]);
-
-  const truncateText = (text: string) => {
-    if (!text || text.length <= calculateMaxChars) return text;
-    const truncated = text.slice(0, calculateMaxChars);
-    const lastSentence = truncated.match(/[^.!?]*[.!?]+/g);
-
-    let result: string;
-    if (lastSentence && lastSentence.length > 0) {
-      result = truncated.slice(
-        0,
-        truncated.lastIndexOf(lastSentence[lastSentence.length - 1]) + 1,
-      );
-    } else {
-      const lastSpace = truncated.lastIndexOf(" ");
-      result = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
-    }
-
-    result = result.replace(/\s$/, "");
-    return `${result}...`;
-  };
-
-  const onOpenModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const onCloseModal = () => {
-    setIsModalVisible(false);
+  const toggleModal = () => {
+    setIsModalVisible((prev) => !prev);
   };
 
   return (
@@ -99,12 +65,12 @@ export default function PostItem({
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={onOpenModal}>
+          <TouchableOpacity onPress={toggleModal}>
             <icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
 
             <CustomModal
               visible={isModalVisible}
-              onClose={onCloseModal}
+              onClose={toggleModal}
               position="bottom"
             >
               <View className="items-center">
@@ -163,8 +129,15 @@ export default function PostItem({
             )}
 
             {/* comments */}
-            <TouchableOpacity className="ml-[10px] flex-row items-center gap-[4px]">
-              <icons.CommentIcon width={24} height={24} color="#333333" />
+            <TouchableOpacity
+              onPress={onCommentsPress} // 수정된 부분
+              className="ml-[10px] flex-row items-center gap-[4px]"
+            >
+              <icons.CommentIcon
+                width={24}
+                height={24}
+                color={colors.gray[90]}
+              />
               {commentsCount > 0 && (
                 <Text className="font-pbold text-[13px] text-gray-90 leading-[150%]">
                   {commentsCount > 99 ? "99+" : commentsCount}
@@ -179,42 +152,45 @@ export default function PostItem({
           </Text>
         </View>
 
-        <View className="pb-[22px]">
-          {/* content */}
-          {contents && (
-            <View className="bg-white px-4">
-              <View className="flex-row flex-wrap">
+        {(contents || comment) && (
+          <View className="bg-white px-4 pb-[22px]">
+            {/* content */}
+            {contents && (
+              <Pressable
+                disabled={!isMore && contents.length <= calculateMaxChars}
+                onPress={() => setIsMore(!isMore)}
+                className="flex-row flex-wrap"
+              >
                 <Text className="title-5 text-gray-90">
                   {isMore ? contents : truncateText(contents)}
                   {contents.length > calculateMaxChars && (
-                    <TouchableOpacity
-                      onPress={() => setIsMore(!isMore)}
-                      className="h-[16px] flex-row items-center justify-center"
-                    >
-                      <Text className="title-5 -mb-[3px] text-gray-45">
-                        {isMore ? " 접기" : "더보기"}
-                      </Text>
-                    </TouchableOpacity>
+                    <Text className="title-5 -mb-[3px] text-gray-45">
+                      {isMore ? " 접기" : "더보기"}
+                    </Text>
                   )}
                 </Text>
-              </View>
-            </View>
-          )}
+              </Pressable>
+            )}
 
-          {/* comments */}
-          {comment && (
-            <View className="bg-white px-6">
-              <View className="flex-row items-center gap-2 pt-2">
-                <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
-                  {comment.author.name}
-                </Text>
-                <Text className="body-2 flex-1 text-gray-90" numberOfLines={1}>
-                  {comment.content}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
+            {/* comments */}
+            {comment && (
+              <Pressable onPress={onCommentsPress} className="mt-2 px-2">
+                {/* 수정된 부분 */}
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
+                    {comment.author.name}
+                  </Text>
+                  <Text
+                    className="body-2 flex-1 text-gray-90"
+                    numberOfLines={1}
+                  >
+                    {comment.content}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
