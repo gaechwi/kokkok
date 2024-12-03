@@ -1,13 +1,10 @@
 import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { FriendItem, FriendRequest } from "@/components/FriendItem";
-import FriendTab from "@/components/FriendTab";
-import SearchBar from "@/components/SearchBar";
+import { FriendRequest } from "@/components/FriendItem";
 import { getFriendRequests, getFriends } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
 import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
-import { router } from "expo-router";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -37,10 +34,6 @@ export default function Request() {
   if (error || errorFriend) {
     return (
       <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <FriendTab
-          isFriendTab={false}
-          handlePress={() => router.replace("/friend")}
-        />
         <View className="size-full justify-center items-center">
           <Text className="title-1">
             {error?.message || errorFriend?.message}
@@ -52,22 +45,11 @@ export default function Request() {
 
   // NOTE 추후 페이지 분리 및 개선할 예정
   if (isLoading || isLoadingFriend || !requests || !friends) {
-    return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <FriendTab
-          isFriendTab={false}
-          handlePress={() => router.replace("/friend")}
-        />
-      </SafeAreaView>
-    );
+    return <SafeAreaView edges={[]} className="flex-1 bg-white" />;
   }
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <FriendTab
-        isFriendTab={false}
-        handlePress={() => router.replace("/friend")}
-      />
       <ScrollView className="px-8 grow w-full">
         {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
         <View className="h-2" />
