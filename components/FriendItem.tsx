@@ -1,4 +1,6 @@
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -33,6 +35,7 @@ interface FriendRequestProps {
   requestId: string;
   toUserId: string;
   fromUser: User;
+  isLoading: boolean;
 }
 
 /* SubComponent */
@@ -92,25 +95,38 @@ export function FriendRequest({
   requestId,
   toUserId,
   fromUser,
+  isLoading,
 }: FriendRequestProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const queryClient = useQueryClient();
+
   const handleAccept = async (requestId: string, from: string, to: string) => {
     try {
+      setIsProcessing(true);
       await putFriendRequest(requestId, true);
       await createFriendRequest(to, from, true);
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
     } catch (error) {
       error instanceof Error
         ? Alert.alert(error.message)
         : Alert.alert("친구 요청 수락에 실패했습니다");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleRefuse = async (requestId: string) => {
     try {
+      setIsProcessing(true);
       await deleteFriendRequest(requestId);
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     } catch (error) {
       error instanceof Error
         ? Alert.alert(error.message)
         : Alert.alert("친구 요청 삭제에 실패했습니다");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -122,12 +138,14 @@ export function FriendRequest({
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
           onPress={() => handleAccept(requestId, fromUser.id, toUserId)}
+          disabled={isProcessing || isLoading}
         >
           <Text className="caption-1 font-pmedium text-white">수락</Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
           onPress={() => handleRefuse(requestId)}
+          disabled={isProcessing || isLoading}
         >
           <Text className="caption-1 font-pmedium text-gray-90">거절</Text>
         </TouchableOpacity>

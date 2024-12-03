@@ -40,7 +40,11 @@ export default function Request() {
         {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
         <View className="h-2" />
         {requests.data.map((request) => (
-          <FriendRequest key={request.requestId} {...request} />
+          <FriendRequest
+            key={request.requestId}
+            {...request}
+            isLoading={isLoading}
+          />
         ))}
         <View className="h-4" />
       </ScrollView>
