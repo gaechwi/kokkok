@@ -41,10 +41,15 @@ export async function signUp({
   description?: string;
 }) {
   try {
-    await supabase.auth.signUp({
-      email,
-      password,
+    // await supabase.auth.signUp({
+    //   email,
+    //   password,
+    // });
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: password,
     });
+
+    if (updateError) throw updateError;
 
     const { data: profileData, error: profileError } = await supabase
       .from("user")

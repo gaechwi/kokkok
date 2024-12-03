@@ -37,8 +37,6 @@ const useProtectedRoute = (session: Session | null) => {
       // 로그인되지 않은 상태에서 보호된 라우트 접근 시도
       router.replace("/sign-in");
     } else if (session && inAuthGroup && !isPasswordResetSteps) {
-      console.log(pathname);
-      console.log(session && inAuthGroup && !isPasswordResetSteps);
       // 이미 로그인된 상태에서 인증 페이지 접근 시도
       router.replace("/home");
     }
