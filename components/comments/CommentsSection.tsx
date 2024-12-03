@@ -15,15 +15,19 @@ import {
   TextInput,
   Image,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
 import { LinearGradient } from "expo-linear-gradient";
 
 const { height: deviceHeight } = Dimensions.get("window");
+const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 90 : 82;
 const MIN_HEIGHT = 0;
-const CLOSE_THRESHOLD = deviceHeight * 0.1;
-const MAX_HEIGHT = deviceHeight;
+const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
+const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
+const DEFAULT_HEIGHT = MAX_HEIGHT * 0.8;
 const DURATION = 400;
 
 const ANIMATION_CONFIG = {
@@ -47,7 +51,7 @@ export default function CommentsSection({
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const slideAnim = useMemo(() => new Animated.Value(0), []);
-  const heightRef = useRef(deviceHeight * 0.8);
+  const heightRef = useRef(DEFAULT_HEIGHT);
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
   const user = {
     id: "151232aws2132",
@@ -56,6 +60,34 @@ export default function CommentsSection({
       "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp",
   };
   const [comment, setComment] = useState("");
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      (e) => {
+        heightRef.current = MAX_HEIGHT - e.endCoordinates.height;
+        heightAnim.setValue(heightRef.current);
+      },
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        heightRef.current = MAX_HEIGHT;
+        Animated.timing(heightAnim, {
+          toValue: MAX_HEIGHT,
+          duration: 250,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          useNativeDriver: false,
+        }).start();
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, [heightAnim]);
 
   useEffect(() => {
     Animated.timing(slideAnim, {
@@ -72,7 +104,7 @@ export default function CommentsSection({
     }).start(() => {
       onClose();
       setTimeout(() => {
-        heightRef.current = deviceHeight * 0.8;
+        heightRef.current = DEFAULT_HEIGHT;
         heightAnim.setValue(heightRef.current);
       }, 100);
     });
@@ -96,7 +128,7 @@ export default function CommentsSection({
             // 최소 높이보다 작으면 닫힘
             onClose();
             setTimeout(() => {
-              heightRef.current = deviceHeight * 0.8;
+              heightRef.current = DEFAULT_HEIGHT;
               heightAnim.setValue(heightRef.current);
             }, DURATION);
           } else if (finalHeight > MAX_HEIGHT) {
@@ -176,116 +208,124 @@ export default function CommentsSection({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <View className="flex-1 justify-end bg-black/50" onTouchEnd={handleClose}>
-        {/* comment list */}
-        <AnimatedView
-          onTouchEnd={(e) => e.stopPropagation()}
-          style={{
-            transform: [
-              {
-                translateY: slideAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [deviceHeight, 0],
-                }),
-              },
-            ],
-          }}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <View
+          className="flex-1 justify-end bg-black/50"
+          onTouchEnd={handleClose}
         >
-          <Animated.View
+          {/* comment list */}
+          <AnimatedView
+            onTouchEnd={(e) => e.stopPropagation()}
             style={{
-              height: heightAnim,
-              overflow: "hidden",
+              transform: [
+                {
+                  translateY: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [deviceHeight, 0],
+                  }),
+                },
+              ],
             }}
           >
-            <SafeAreaView
-              edges={["bottom"]}
-              className="h-full rounded-t-[20px] border border-gray-300 bg-white"
+            <Animated.View
+              style={{
+                height: heightAnim,
+                overflow: "hidden",
+              }}
             >
-              <View className="flex-1">
-                <View
-                  className="w-full items-center py-2.5"
-                  {...panResponder.panHandlers}
-                >
-                  <View className="h-1 w-10 rounded-[2px] bg-gray-200" />
-                </View>
+              <SafeAreaView
+                edges={["bottom"]}
+                className="h-full rounded-t-[20px] border border-gray-300 bg-white"
+              >
+                <View className="flex-1">
+                  <View
+                    className="w-full items-center py-2.5"
+                    {...panResponder.panHandlers}
+                  >
+                    <View className="h-1 w-10 rounded-[2px] bg-gray-200" />
+                  </View>
 
-                <View className="relative z-10 w-full pb-2.5">
-                  <LinearGradient
-                    colors={[
-                      "rgba(255, 255, 255, 1)",
-                      "rgba(255, 255, 255, 0)",
-                    ]}
-                    start={[0, 0]}
-                    end={[0, 1]}
-                    style={{
-                      position: "absolute",
-                      top: 37,
-                      left: 0,
-                      right: 0,
-                      height: 10,
-                      zIndex: 1,
-                    }}
-                  />
-                  <Text className="heading-2 text-center">댓글</Text>
-                </View>
-
-                <FlatList
-                  className="px-8"
-                  data={comments}
-                  keyExtractor={(item) => item.id.toString()}
-                  initialNumToRender={10}
-                  removeClippedSubviews
-                  showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => <CommentItem {...item} />}
-                  ListHeaderComponent={<View className="pt-4" />}
-                  ListEmptyComponent={
-                    <Text className="heading-2 mt-5 text-center text-gray-90">
-                      아직 댓글이 없습니다.
-                    </Text>
-                  }
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={onRefresh}
+                  <View className="relative z-10 w-full pb-2.5">
+                    <LinearGradient
+                      colors={[
+                        "rgba(255, 255, 255, 1)",
+                        "rgba(255, 255, 255, 0)",
+                      ]}
+                      start={[0, 0]}
+                      end={[0, 1]}
+                      style={{
+                        position: "absolute",
+                        top: 37,
+                        left: 0,
+                        right: 0,
+                        height: 10,
+                        zIndex: 1,
+                      }}
                     />
-                  }
-                  onEndReached={loadMorePosts}
-                  onEndReachedThreshold={0.5}
-                  ListFooterComponent={
-                    loading ? (
-                      <ActivityIndicator size="large" className="py-4" />
-                    ) : null
-                  }
-                  onScroll={handleScroll}
-                />
-              </View>
-            </SafeAreaView>
-          </Animated.View>
-        </AnimatedView>
+                    <Text className="heading-2 text-center">댓글</Text>
+                  </View>
 
-        {/* comment input */}
-        <View
-          onTouchEnd={(e) => e.stopPropagation()}
-          className={`flex-row items-center gap-4 border-gray-20 border-t bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
-        >
-          <Image
-            source={{ uri: user.avatar }}
-            resizeMode="cover"
-            className="size-12 rounded-full"
-          />
+                  <FlatList
+                    className="px-8"
+                    data={comments}
+                    keyExtractor={(item) => item.id.toString()}
+                    initialNumToRender={10}
+                    removeClippedSubviews
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item }) => <CommentItem {...item} />}
+                    ListHeaderComponent={<View className="pt-4" />}
+                    ListEmptyComponent={
+                      <Text className="heading-2 mt-5 text-center text-gray-90">
+                        아직 댓글이 없습니다.
+                      </Text>
+                    }
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                      />
+                    }
+                    onEndReached={loadMorePosts}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                      loading ? (
+                        <ActivityIndicator size="large" className="py-4" />
+                      ) : null
+                    }
+                    onScroll={handleScroll}
+                  />
+                </View>
+              </SafeAreaView>
+            </Animated.View>
+          </AnimatedView>
 
-          <TextInput
-            className="h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 focus:border-primary"
-            placeholder="댓글을 입력해주세요."
-            keyboardType="default"
-            autoCapitalize="words"
-            accessibilityLabel="댓글 입력"
-            accessibilityHint="댓글을 입력해주세요."
-            value={comment}
-            onChangeText={(text) => setComment(text)}
-          />
+          {/* comment input */}
+          <View
+            onTouchEnd={(e) => e.stopPropagation()}
+            className={`flex-row items-center gap-4 border-gray-20 border-t bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
+          >
+            <Image
+              source={{ uri: user.avatar }}
+              resizeMode="cover"
+              className="size-12 rounded-full"
+            />
+
+            <TextInput
+              className="h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 focus:border-primary"
+              placeholder="댓글을 입력해주세요."
+              keyboardType="default"
+              autoCapitalize="words"
+              accessibilityLabel="댓글 입력"
+              accessibilityHint="댓글을 입력해주세요."
+              value={comment}
+              onChangeText={(text) => setComment(text)}
+            />
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
