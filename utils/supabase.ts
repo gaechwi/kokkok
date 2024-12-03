@@ -60,7 +60,6 @@ export async function signUp({
       .select()
       .single();
 
-    console.log(profileError);
     if (profileError) throw profileError.message;
     return profileData;
   } catch (error: unknown) {

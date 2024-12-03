@@ -53,7 +53,6 @@ const Step2 = () => {
 
     try {
       const res = await verifySignUpOTP(signUpForm.email, otpcode);
-      console.log(res.user?.id, signUpForm);
 
       await signUp({
         id: res.user?.id,
