@@ -1,9 +1,17 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  type TouchableOpacityProps,
+  View,
+} from "react-native";
 import { useState } from "react";
+import RestDayModal from "@/components/RestDayModal";
+import CalendarNavigator from "@/components/CalendarNavigator";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
-import colors from "@/constants/colors";
 
+// FIXME: 타입 수정 필요
 type Status = "DONE" | "REST";
 interface Mock {
   date: string;
@@ -30,8 +38,15 @@ const mock: Mock[] = [
 ];
 
 export default function History() {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const month = currentDate.getMonth() + 1;
+  const [date, setDate] = useState<Date>(new Date());
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const isNextDisabled = year === currentYear && month >= currentMonth;
 
   const workoutDays = mock.filter(
     (item) =>
@@ -39,15 +54,27 @@ export default function History() {
   ).length;
 
   const handlePreviousMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() - 1);
-    setCurrentDate(newDate);
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() - 1);
+    setDate(newDate);
   };
 
   const handleNextMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + 1);
-    setCurrentDate(newDate);
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() + 1);
+    setDate(newDate);
+  };
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleRestDayModalSubmit = (restDates: Omit<Mock, "status">[]) => {
+    console.log(restDates);
   };
 
   return (
@@ -58,18 +85,22 @@ export default function History() {
           완료!
         </Text>
 
-        <TouchableOpacity className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25">
-          <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
-        </TouchableOpacity>
+        <SetRestDayButton onPress={openModal} />
+        <RestDayModal
+          visible={isModalOpen}
+          onClose={closeModal}
+          onSubmit={handleRestDayModalSubmit}
+        />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
         <CalendarNavigator
-          date={currentDate}
+          date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
+          isNextDisabled={isNextDisabled}
         />
-        <WorkoutCalendar date={currentDate} workoutStatus={mock} />
+        <WorkoutCalendar date={date} workoutStatuses={mock} />
       </View>
 
       <FaceExplanation />
@@ -77,51 +108,14 @@ export default function History() {
   );
 }
 
-interface CalendarNavigatorProps {
-  date: Date;
-  onPrevious: () => void;
-  onNext: () => void;
-}
-
-function CalendarNavigator({
-  date,
-  onPrevious,
-  onNext,
-}: CalendarNavigatorProps) {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-
-  const isNextDisabled = year === currentYear && month >= currentMonth;
-
+function SetRestDayButton({ onPress }: TouchableOpacityProps) {
   return (
-    <View className="flex-row items-center gap-[24px]">
-      {/* Previous Button */}
-      <TouchableOpacity onPress={onPrevious}>
-        <icons.ChevronLeftIcon width={20} height={20} color={colors.gray[90]} />
-      </TouchableOpacity>
-
-      {/* Month Display */}
-      <Text
-        className={`heading-2 text-center ${year === currentYear ? "w-[43px]" : "w-[87px]"}`}
-      >
-        {year === currentYear
-          ? `${month}월`
-          : `${String(year).slice(2)}년 ${month}월`}
-      </Text>
-
-      {/* Next Button */}
-      <TouchableOpacity onPress={onNext} disabled={isNextDisabled}>
-        <icons.ChevronRightIcon
-          width={20}
-          height={20}
-          color={isNextDisabled ? colors.gray[30] : colors.gray[90]}
-        />
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25"
+      onPress={onPress}
+    >
+      <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
+    </TouchableOpacity>
   );
 }
 
