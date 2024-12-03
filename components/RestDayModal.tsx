@@ -1,33 +1,21 @@
 import { Text, TouchableOpacity, View } from "react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { getRestDates } from "@/utils/supabase";
+
 import CustomModal from "./Modal";
 import CalendarNavigator from "./CalendarNavigator";
 import RestDayCalendar from "./RestDayCalendar";
+
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
 
-// FIXME: 타입 수정 필요
-interface Mock {
-  date: `${number}-${number}-${number}`;
-}
-const mock: Mock[] = [
-  { date: "2024-12-01" },
-  { date: "2024-12-08" },
-  { date: "2024-12-14" },
-  { date: "2024-12-20" },
-  { date: "2024-12-25" },
-  { date: "2024-12-29" },
-  { date: "2025-01-02" },
-  { date: "2025-01-04" },
-  { date: "2025-01-05" },
-  { date: "2025-01-11" },
-  { date: "2025-01-12" },
-];
+type RestDate = Awaited<ReturnType<typeof getRestDates>>[number];
 
 interface RestDayModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (restDates: Mock[]) => void;
+  onSubmit: (restDates: RestDate[]) => void;
 }
 
 export default function RestDayModal({
@@ -43,7 +31,19 @@ export default function RestDayModal({
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
-  const [restDates, setRestDates] = useState<Mock[]>(mock);
+  const [restDates, setRestDates] = useState<RestDate[]>([]);
+  const loadRestDates = useCallback(async () => {
+    try {
+      const data = await getRestDates();
+      setRestDates(data);
+    } catch (error) {
+      console.error("쉬는 날 불러오기 에러:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRestDates();
+  }, [loadRestDates]);
 
   const isPreviousDisabled = year === currentYear && month <= currentMonth;
 

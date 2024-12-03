@@ -350,6 +350,21 @@ export async function getHistories(): Promise<History[]> {
   return data;
 }
 
+export async function getRestDates(): Promise<Pick<History, "date">[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
 // ============================================
 //
 //                    type
