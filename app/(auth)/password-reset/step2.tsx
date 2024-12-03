@@ -7,12 +7,31 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { verifyResetToken } from "@/utils/supabase";
+import { useAtom } from "jotai";
+import { passwordResetFormAtom } from "@/contexts/auth";
 
 const Step2 = () => {
   const router = useRouter();
+  const [token, setToken] = useState("");
+  const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
+
+  const handleVerifyToken = async () => {
+    try {
+      await verifyResetToken(resetEmail.email, token);
+      router.replace("/password-reset/step3");
+    } catch (error) {
+      Alert.alert(
+        "인증 실패",
+        error instanceof Error ? error.message : "인증에 실패했습니다.",
+      );
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -33,6 +52,8 @@ const Step2 = () => {
               placeholder="인증코드를 입력해주세요"
               accessibilityLabel="인증코드 입력"
               accessibilityHint="인증코드를 입력해주세요"
+              value={token}
+              onChangeText={(text) => setToken(text)}
             />
             <Text className="-translate-y-1/2 body-1 absolute top-1/2 right-4 text-gray-40">
               nn : nn
@@ -41,9 +62,7 @@ const Step2 = () => {
 
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-            onPress={() => {
-              router.replace("/password-reset/step3");
-            }}
+            onPress={handleVerifyToken}
           >
             <Text className="heading-2 text-white">인증번호 입력</Text>
           </TouchableOpacity>
