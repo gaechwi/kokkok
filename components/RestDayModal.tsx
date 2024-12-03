@@ -92,7 +92,7 @@ export default function RestDayModal({
           <icons.XIcon width={24} height={24} color={colors.gray[90]} />
         </TouchableOpacity>
 
-        <Text className="heading-1 mb-[8px]">쉬는 날을 설정하세요</Text>
+        <Text className="heading-1 mb-[20px]">쉬는 날을 설정하세요</Text>
 
         <CalendarNavigator
           date={date}
@@ -108,7 +108,7 @@ export default function RestDayModal({
         />
 
         <TouchableOpacity
-          className="mt-[44px] h-[52px] w-[256px] items-center justify-center rounded-[10px] bg-primary"
+          className="mt-[16px] h-[52px] w-[256px] items-center justify-center rounded-[10px] bg-primary"
           onPress={handleSubmit}
         >
           <Text className="title-2 text-white">완료</Text>

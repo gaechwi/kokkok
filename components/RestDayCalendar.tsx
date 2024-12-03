@@ -68,8 +68,8 @@ export default function RestDayCalendar({
   };
 
   return (
-    <View className="w-full items-center">
-      <View className="mt-[24px] flex-row gap-[28px]">
+    <View className="mt-[20px] h-[320px] w-full items-center">
+      <View className="flex-row gap-[28px]">
         {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
           <Text key={day} className="body-4 text-center text-gray-65">
             {day}
@@ -81,12 +81,12 @@ export default function RestDayCalendar({
         {weeks.map((week, weekIndex) => (
           <View
             key={week ? `${year}-${month}-${weekIndex}` : `empty-${weekIndex}`}
-            className="mt-[8px] flex-row items-center justify-between gap-[8px]"
+            className="mt-[16px] flex-row items-center justify-between gap-[8px]"
           >
             {week.map((day, dayIndex) => (
               <TouchableOpacity
                 key={day ? `${year}-${month}-${day.day}` : `empty-${dayIndex}`}
-                className={`h-[32px] w-[32px] items-center justify-center rounded-[10px] ${day ? (day.isRest ? "bg-secondary-yellow" : isToday(day.day) ? "bg-gray-30" : "") : ""}`}
+                className={`h-[32px] w-[32px] items-center justify-center rounded-[10px] ${day ? (day.isRest ? "bg-secondary-yellow" : isToday(day.day) ? "bg-[#DDD0FF]" : "") : ""}`}
                 onPress={() => {
                   handleSelectDate(day?.day ?? null);
                 }}
