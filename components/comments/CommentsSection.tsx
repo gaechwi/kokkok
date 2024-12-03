@@ -65,6 +65,8 @@ export default function CommentsSection({
   const animationRef = useRef<Animated.CompositeAnimation>();
 
   useEffect(() => {
+    const cleanupAnimations = () => animationRef.current?.stop();
+
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
@@ -92,6 +94,7 @@ export default function CommentsSection({
     );
 
     return () => {
+      cleanupAnimations();
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
@@ -118,16 +121,19 @@ export default function CommentsSection({
     });
   }, [onClose, heightAnim]);
 
+  const clampHeight = useCallback(
+    (height: number) => Math.min(maxHeight, Math.max(MIN_HEIGHT, height)),
+    [maxHeight],
+  );
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+
         onPanResponderMove: (_, gestureState) => {
           // 최소 높이보다 작거나 최대 높이보다 크지 않도록 함
-          const newHeight = Math.min(
-            maxHeight,
-            Math.max(MIN_HEIGHT, heightRef.current - gestureState.dy),
-          );
+          const newHeight = clampHeight(heightRef.current - gestureState.dy);
           heightAnim.setValue(newHeight);
         },
         onPanResponderRelease: (_, gestureState) => {
@@ -149,10 +155,7 @@ export default function CommentsSection({
             }).start();
           } else {
             // 최소 높이보다 작으면 최소 높이로 돌아감
-            const clampedHeight = Math.min(
-              maxHeight,
-              Math.max(MIN_HEIGHT, finalHeight),
-            );
+            const clampedHeight = clampHeight(finalHeight);
             heightRef.current = clampedHeight;
             Animated.spring(heightAnim, {
               toValue: clampedHeight,
@@ -161,7 +164,7 @@ export default function CommentsSection({
           }
         },
       }),
-    [heightAnim, onClose, maxHeight],
+    [heightAnim, onClose, maxHeight, clampHeight],
   );
 
   const AnimatedView = Animated.createAnimatedComponent(View);
