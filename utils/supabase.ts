@@ -41,10 +41,6 @@ export async function signUp({
   description?: string;
 }) {
   try {
-    // await supabase.auth.signUp({
-    //   email,
-    //   password,
-    // });
     const { error: updateError } = await supabase.auth.updateUser({
       password: password,
     });
@@ -60,6 +56,7 @@ export async function signUp({
           username,
           avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
           description: description || null,
+          isOAuth: false,
         },
       ])
       .select()
@@ -129,10 +126,32 @@ export async function verifySignUpOTP(email: string, token: string) {
 
 // Step 1: 비밀번호 재설정 이메일 전송
 export async function resetPassword(email: string) {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  try {
+    // isOAuth 확인
+    const { data: userData, error: userError } = await supabase
+      .from("user")
+      .select("isOAuth")
+      .eq("email", email)
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (userError) throw userError;
+
+    // OAuth 사용자인 경우 비밀번호 재설정 불가
+    if (userData?.isOAuth) {
+      throw new Error(
+        "소셜 로그인으로 가입된 계정입니다. 소셜 로그인을 이용해주세요.",
+      );
+    }
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "비밀번호 재설정에 실패했습니다";
+    throw new Error(errorMessage);
+  }
 }
 
 // Step 2: OTP 검증만 수행

@@ -17,7 +17,7 @@ import { signUpFormAtom } from "@contexts/auth";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
-import { sendUpOTP } from "@/utils/supabase";
+import { sendUpOTP, supabase } from "@/utils/supabase";
 
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -27,6 +27,12 @@ const Step1 = () => {
   const router = useRouter();
 
   const handleContinue = async () => {
+    const { data: userData, error: userError } = await supabase
+      .from("user")
+      .select("isOAuth")
+      .eq("email", signUpForm.email)
+      .single();
+
     if (
       !signUpForm.email ||
       !signUpForm.username ||
@@ -58,8 +64,14 @@ const Step1 = () => {
       return;
     }
 
+    if (userData?.isOAuth) {
+      Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
+      return;
+    }
+
     try {
       await sendUpOTP(signUpForm.email);
+      setIsModalVisible(true);
     } catch (error) {
       Alert.alert(
         "알림",
@@ -67,8 +79,6 @@ const Step1 = () => {
       );
       return;
     }
-
-    setIsModalVisible(true);
   };
 
   return (
