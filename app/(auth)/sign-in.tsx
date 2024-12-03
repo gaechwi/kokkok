@@ -12,10 +12,37 @@ import images from "@constants/images";
 import icons from "@constants/icons";
 import { useState } from "react";
 import { Link } from "expo-router";
-import { signIn } from "@utils/appwrite";
+import { signIn, supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
+import { makeRedirectUri } from "expo-auth-session";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import { Provider } from "@supabase/supabase-js";
+
+WebBrowser.maybeCompleteAuthSession(); // required for web only
+const redirectTo = makeRedirectUri({});
+
+const createSessionFromUrl = async (url: string) => {
+  const { params, errorCode } = QueryParams.getQueryParams(url);
+
+  if (errorCode) throw new Error(errorCode);
+  const { access_token, refresh_token } = params;
+
+  if (!access_token) return;
+
+  const { data, error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+  if (error) throw error;
+  return data.session;
+};
 
 const SignIn = () => {
+  const url = Linking.useURL();
+  if (url) createSessionFromUrl(url);
+
   const router = useRouter();
 
   const [userInput, setUserInput] = useState({
@@ -25,9 +52,35 @@ const SignIn = () => {
 
   const [showPassword, setShowPassword] = useState(false);
 
+  const performOAuth = async (provider: Provider) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+    if (error) throw error;
+
+    const res = await WebBrowser.openAuthSessionAsync(
+      data?.url ?? "",
+      redirectTo,
+    );
+
+    if (res.type === "success") {
+      const { url } = res;
+      await createSessionFromUrl(url);
+
+      router.replace("/home");
+    }
+  };
+
   const handleSignIn = async () => {
     try {
-      await signIn(userInput.email, userInput.password);
+      await signIn({
+        email: userInput.email,
+        password: userInput.password,
+      });
 
       router.replace("/home");
     } catch (error: unknown) {
@@ -52,7 +105,7 @@ const SignIn = () => {
 
           <View className="mt-10 flex w-full gap-8">
             <TextInput
-              className="h-[58px] w-full rounded-[10px] border border-gray-20 px-4 focus:border-primary"
+              className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
               placeholder="이메일을 입력해주세요."
               keyboardType="email-address"
               autoCapitalize="none"
@@ -65,7 +118,7 @@ const SignIn = () => {
             />
             <View className="w-full">
               <TextInput
-                className="h-[58px] w-full rounded-[10px] border border-gray-20 px-4 focus:border-primary"
+                className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
                 placeholder="비밀번호를 입력해주세요."
                 secureTextEntry={!showPassword}
                 accessibilityLabel="비밀번호 입력"
@@ -112,9 +165,15 @@ const SignIn = () => {
               <Text className="title-3 text-gray-65">간편 로그인</Text>
             </View>
             <View className="mt-4 flex-row items-center gap-4">
-              <icons.GithubIcon width={56} height={56} />
-              <icons.KakaoIcon width={56} height={56} />
-              <icons.GoogleIcon width={56} height={56} />
+              <TouchableOpacity onPress={() => performOAuth("google")}>
+                <icons.GoogleIcon width={56} height={56} />
+              </TouchableOpacity>
+              {/* <TouchableOpacity onPress={() => performOAuth("kakao")}>
+                <icons.KakaoIcon width={56} height={56} />
+              </TouchableOpacity> */}
+              <TouchableOpacity onPress={() => performOAuth("github")}>
+                <icons.GithubIcon width={56} height={56} />
+              </TouchableOpacity>
             </View>
           </View>
         </View>

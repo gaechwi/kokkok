@@ -11,8 +11,8 @@ import FaceNotDoneIcon from "@/assets/icons/face_not_done.svg";
 import FriendIcon from "@/assets/icons/friend.svg";
 import GoogleIcon from "@/assets/icons/google.svg";
 import GithubIcon from "@/assets/icons/github.svg";
-import HomeIcon from "@/assets/icons/home.svg";
 import KakaoIcon from "@/assets/icons/kakao.svg";
+import HomeIcon from "@/assets/icons/home.svg";
 import PlusIcon from "@/assets/icons/plus.svg";
 import ProfileIcon from "@/assets/icons/profile.svg";
 import SearchIcon from "@/assets/icons/search.svg";
@@ -38,9 +38,9 @@ export default {
   FriendIcon,
   GoogleIcon,
   GithubIcon,
+  KakaoIcon,
   HeartIcon,
   HomeIcon,
-  KakaoIcon,
   MeatballIcon,
   PlusIcon,
   ProfileIcon,

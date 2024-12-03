@@ -1,64 +1,121 @@
-import { SafeAreaView, ScrollView } from "react-native";
+import {
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from "react-native";
 import PostItem from "../../components/PostItem";
+import { useEffect, useState, useCallback } from "react";
+import { getPosts } from "@/utils/supabase";
 
 const AVATAR_URL =
   "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
 
-const IMAGE_URL = [
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731427831515-thumbnail.webp",
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731430113912-image.webp",
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731865249691-thumbnail.webp",
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731221973228-thumbnail.webp",
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1731217925741-image.webp",
-];
+const OFFSET = 0;
+const LIMIT = 10;
 
 export default function Home() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [posts, setPosts] = useState<Awaited<ReturnType<typeof getPosts>>>({
+    posts: [],
+    total: 0,
+    hasMore: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+
+  const fetchPosts = useCallback(async () => {
+    const fetchedPosts = await getPosts({
+      offset: OFFSET,
+      limit: LIMIT,
+    });
+    setPosts(fetchedPosts);
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(0);
+    await fetchPosts();
+    setRefreshing(false);
+  }, [fetchPosts]);
+
+  const loadMorePosts = useCallback(async () => {
+    if (loading || !posts.hasMore) return;
+
+    setLoading(true);
+    const nextPage = page + 1;
+    const morePosts = await getPosts({
+      offset: nextPage * LIMIT,
+      limit: LIMIT,
+    });
+
+    setPosts((prev) => {
+      const existingIds = new Set(prev.posts.map((post) => post.id));
+
+      const newPosts = morePosts.posts.filter(
+        (post) => !existingIds.has(post.id),
+      );
+
+      return {
+        posts: [...prev.posts, ...newPosts],
+        total: morePosts.total,
+        hasMore: morePosts.hasMore && newPosts.length > 0,
+      };
+    });
+    setPage(nextPage);
+    setLoading(false);
+  }, [loading, posts.hasMore, page]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } =
+        event.nativeEvent;
+      const isEndReached =
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+
+      if (isEndReached) {
+        loadMorePosts();
+      }
+    },
+    [loadMorePosts],
+  );
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">
-      <ScrollView className="w-full grow">
-        <PostItem
-          author={{
-            name: "John Doe",
-            avatar: AVATAR_URL,
-          }}
-          images={IMAGE_URL}
-          content="이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건 테스트 내용입니다. 이건"
-          liked={false}
-          likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL]}
-          createdAt="2024-11-26"
-          commentsCount={10}
-          comment={{
-            author: {
+      <ScrollView
+        className="w-full grow"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {posts.posts.map((post) => (
+          <PostItem
+            key={post.id}
+            author={{
               name: "John Doe",
               avatar: AVATAR_URL,
-            },
-            content:
-              "이건 테스트용 댓글입니다. 이건 테스트용 댓글입니다. 이건 테스트용 댓글 입니다.",
-          }}
-        />
-        <PostItem
-          author={{
-            name: "John Doe",
-            avatar: AVATAR_URL,
-          }}
-          images={IMAGE_URL}
-          liked={false}
-          likedAuthorAvatar={[AVATAR_URL, AVATAR_URL]}
-          createdAt="2021-01-01"
-          commentsCount={100}
-        />
-        <PostItem
-          author={{
-            name: "John Doe",
-            avatar: AVATAR_URL,
-          }}
-          images={IMAGE_URL}
-          content="이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건이건"
-          liked={false}
-          likedAuthorAvatar={[AVATAR_URL]}
-          createdAt="2024-01-01"
-          commentsCount={10}
-        />
+            }}
+            images={post.images}
+            liked={false}
+            likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL, AVATAR_URL]}
+            contents={post.contents}
+            createdAt={post.createdAt}
+            commentsCount={10}
+            comment={{
+              author: { name: "Jane Doe", avatar: AVATAR_URL },
+              content: "Hello, World!",
+            }}
+          />
+        ))}
+        {loading && <ActivityIndicator size="large" className="py-4" />}
       </ScrollView>
     </SafeAreaView>
   );

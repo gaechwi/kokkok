@@ -16,6 +16,7 @@ const HEADER_TITLE = {
   MY_PAGE: "마이페이지",
   HISTORY: "기록",
   FRIEND: "친구",
+  CHANGE_PASSWORD: "비밀번호 변경",
 } as const;
 type HeaderType = keyof typeof HEADER_TITLE;
 
