@@ -13,7 +13,7 @@ import images from "@constants/images";
 import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
-import { signUp, verifyOTP } from "@/utils/supabase";
+import { signUp, verifySignUpOTP } from "@/utils/supabase";
 import { useEffect, useState } from "react";
 import { formatTime } from "@/utils/formatTime";
 
@@ -52,10 +52,11 @@ const Step2 = () => {
     }
 
     try {
-      const res = await verifyOTP(signUpForm.email, otpcode);
-      console.log(res.user?.email);
+      const res = await verifySignUpOTP(signUpForm.email, otpcode);
+      console.log(res.user?.id, signUpForm);
 
       await signUp({
+        id: res.user?.id,
         email: signUpForm.email,
         password: signUpForm.password,
         username: signUpForm.username,

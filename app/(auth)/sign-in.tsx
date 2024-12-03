@@ -153,7 +153,9 @@ const SignIn = () => {
           </TouchableOpacity>
 
           <View className="mt-10 flex flex-row justify-center gap-3">
-            <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+            <Link href="/password-reset/step1">
+              <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+            </Link>
             <Text className="body-1 text-gray-50">|</Text>
             <Link href="/sign-up/step1">
               <Text className="body-1 text-gray-50">회원가입</Text>

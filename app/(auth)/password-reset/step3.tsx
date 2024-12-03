@@ -7,12 +7,43 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { useAtom } from "jotai";
+import { passwordResetFormAtom } from "@/contexts/auth";
+import { updateNewPassword } from "@/utils/supabase";
 
 const Step3 = () => {
+  const [resetPassword, setResetPassword] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
+
   const router = useRouter();
+
+  const handleResetPassword = async () => {
+    if (resetPassword.newPassword !== resetPassword.confirmPassword) {
+      Alert.alert("알림", "비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    try {
+      await updateNewPassword(resetPassword.newPassword);
+
+      router.replace("/home");
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error
+          ? error.message
+          : "비밀번호 변경에 실패했습니다.",
+      );
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -32,12 +63,20 @@ const Step3 = () => {
               placeholder="새 비밀번호를 입력해주세요"
               accessibilityLabel="새 비밀번호 입력"
               accessibilityHint="새 비밀번호를 입력해주세요"
+              value={resetPassword.newPassword}
+              onChangeText={(text) =>
+                setResetPassword({ ...resetPassword, newPassword: text })
+              }
             />
             <TextInput
               className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
               placeholder="비밀번호를 한번 더 입력해주세요"
               accessibilityLabel="비밀번호 재입력"
               accessibilityHint="비밀번호를 한번 더 입력해주세요"
+              value={resetPassword.confirmPassword}
+              onChangeText={(text) =>
+                setResetPassword({ ...resetPassword, confirmPassword: text })
+              }
             />
           </View>
 

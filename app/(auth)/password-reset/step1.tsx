@@ -10,9 +10,13 @@ import {
 } from "react-native";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
+import { resetPassword } from "@/utils/supabase";
+import { useAtom } from "jotai";
+import { passwordResetFormAtom } from "@/contexts/auth";
 
 const Step1 = () => {
   const router = useRouter();
+  const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
 
   return (
     <KeyboardAvoidingView
@@ -32,12 +36,15 @@ const Step1 = () => {
               placeholder="이메일을 입력해주세요"
               accessibilityLabel="이메일 입력"
               accessibilityHint="이메일을 입력해주세요"
+              value={resetEmail.email}
+              onChangeText={(text) => setResetEmail({ email: text })}
             />
           </View>
 
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-            onPress={() => {
+            onPress={async () => {
+              await resetPassword(resetEmail.email);
               router.replace("/password-reset/step2");
             }}
           >

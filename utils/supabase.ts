@@ -28,36 +28,29 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // 회원가입
 export async function signUp({
+  id,
   email,
   password,
   username,
   description,
 }: {
+  id: string | undefined;
   email: string;
   password: string;
   username: string;
   description?: string;
 }) {
   try {
-    // 1. 계정 생성
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: email,
-      password: password,
+    await supabase.auth.signUp({
+      email,
+      password,
     });
 
-    if (authError)
-      throw new Error(`계정 생성에 실패했습니다: ${authError.message}`);
-    if (!authData.user)
-      throw new Error(
-        "계정 생성에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.",
-      );
-
-    // 2. 프로필 정보 저장
     const { data: profileData, error: profileError } = await supabase
       .from("user")
       .insert([
         {
-          id: authData.user.id,
+          id,
           email,
           username,
           avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
@@ -67,7 +60,8 @@ export async function signUp({
       .select()
       .single();
 
-    if (profileError) throw profileError;
+    console.log(profileError);
+    if (profileError) throw profileError.message;
     return profileData;
   } catch (error: unknown) {
     const errorMessage =
@@ -99,11 +93,11 @@ export async function signIn({
 }
 
 // OTP 인증 전송
-export async function sendOTP(email: string) {
+export async function sendUpOTP(email: string) {
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      shouldCreateUser: false,
+      shouldCreateUser: true,
     },
   });
 
@@ -112,11 +106,47 @@ export async function sendOTP(email: string) {
 }
 
 // OTP 인증 확인
-export async function verifyOTP(email: string, token: string) {
+export async function verifySignUpOTP(email: string, token: string) {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "email",
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "OTP 인증에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// Step 1: 비밀번호 재설정 이메일 전송
+export async function resetPassword(email: string) {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+
+  if (error) throw error;
+  return data;
+}
+
+// Step 2: OTP 검증만 수행
+export async function verifyResetToken(email: string, token: string) {
   const { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
-    type: "email",
+    type: "recovery",
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Step 3: 비밀번호 변경
+export async function updateNewPassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
   });
 
   if (error) throw error;

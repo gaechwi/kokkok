@@ -17,7 +17,7 @@ import { signUpFormAtom } from "@contexts/auth";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
-import { sendOTP } from "@/utils/supabase";
+import { sendUpOTP } from "@/utils/supabase";
 
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -37,6 +37,11 @@ const Step1 = () => {
       return;
     }
 
+    if (signUpForm.username.length < 3) {
+      Alert.alert("닉네임은 3자 이상이어야 합니다.");
+      return;
+    }
+
     if (signUpForm.password !== passwordConfirm) {
       Alert.alert("비밀번호가 일치하지 않습니다.");
       return;
@@ -53,7 +58,15 @@ const Step1 = () => {
       return;
     }
 
-    await sendOTP(signUpForm.email);
+    try {
+      await sendUpOTP(signUpForm.email);
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "이메일 전송에 실패했습니다.",
+      );
+      return;
+    }
 
     setIsModalVisible(true);
   };
