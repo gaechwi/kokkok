@@ -1,7 +1,7 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 
-import { getRestDates } from "@/utils/supabase";
+import { getRestDays } from "@/utils/supabase";
 
 import CustomModal from "./Modal";
 import CalendarNavigator from "./CalendarNavigator";
@@ -10,12 +10,12 @@ import RestDayCalendar from "./RestDayCalendar";
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
 
-type RestDate = Awaited<ReturnType<typeof getRestDates>>[number];
+type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 
 interface RestDayModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (restDates: RestDate[]) => void;
+  onSubmit: (restDates: RestDay[]) => void;
 }
 
 export default function RestDayModal({
@@ -31,10 +31,10 @@ export default function RestDayModal({
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
-  const [restDates, setRestDates] = useState<RestDate[]>([]);
+  const [restDates, setRestDates] = useState<RestDay[]>([]);
   const loadRestDates = useCallback(async () => {
     try {
-      const data = await getRestDates();
+      const data = await getRestDays();
       setRestDates(data);
     } catch (error) {
       console.error("쉬는 날 불러오기 에러:", error);
