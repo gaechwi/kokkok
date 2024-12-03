@@ -1,25 +1,17 @@
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendRequest } from "@/components/FriendItem";
-import { getFriendRequests, getFriends } from "@/utils/supabase";
+import { getFriendRequests } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
-import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
+import type { RequestResponse } from "@/types/Friend.interface";
+import ErrorScreen from "@/components/ErrorScreen";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const OFFSET = 0;
 const LIMIT = 12;
 
 export default function Request() {
-  const {
-    data: friends,
-    isLoading: isLoadingFriend,
-    error: errorFriend,
-  } = useFetchData<FriendResponse>(
-    ["friends", OFFSET],
-    () => getFriends({ offset: OFFSET, limit: LIMIT }),
-    "친구 조회에 실패했습니다.",
-  );
-
   const {
     data: requests,
     isLoading,
@@ -30,22 +22,16 @@ export default function Request() {
     "친구 요청 조회에 실패했습니다.",
   );
 
-  // NOTE 추후 페이지 분리 및 개선할 예정
-  if (error || errorFriend) {
+  if (error) {
     return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="size-full justify-center items-center">
-          <Text className="title-1">
-            {error?.message || errorFriend?.message}
-          </Text>
-        </View>
-      </SafeAreaView>
+      <ErrorScreen
+        errorMessage={error?.message || "친구 조회에 실패했습니다."}
+      />
     );
   }
 
-  // NOTE 추후 페이지 분리 및 개선할 예정
-  if (isLoading || isLoadingFriend || !requests || !friends) {
-    return <SafeAreaView edges={[]} className="flex-1 bg-white" />;
+  if (isLoading || !requests) {
+    return <LoadingScreen />;
   }
 
   return (

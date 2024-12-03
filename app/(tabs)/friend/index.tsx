@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendItem } from "@/components/FriendItem";
@@ -7,6 +7,8 @@ import SearchBar from "@/components/SearchBar";
 import { getFriends } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
 import type { FriendResponse } from "@/types/Friend.interface";
+import ErrorScreen from "@/components/ErrorScreen";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -26,16 +28,14 @@ export default function Friend() {
 
   if (error) {
     return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="size-full justify-center items-center">
-          <Text className="title-1">{error?.message}</Text>
-        </View>
-      </SafeAreaView>
+      <ErrorScreen
+        errorMessage={error?.message || "친구 조회에 실패했습니다."}
+      />
     );
   }
 
   if (isLoading || !friends) {
-    return <SafeAreaView edges={[]} className="flex-1 bg-white" />;
+    return <LoadingScreen />;
   }
 
   return (
