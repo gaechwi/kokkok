@@ -57,7 +57,6 @@ export default function History() {
     try {
       const data = await getHistories();
       setHistories(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching workout history:", error);
     }
