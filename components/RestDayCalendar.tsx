@@ -26,7 +26,7 @@ export default function RestDayCalendar({
       const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(
         day,
       ).padStart(2, "0")}`;
-      const isRest = !!restDates.find(
+      const isRest = !!restDates.some(
         (rd) => rd.date.split("T")[0] === formattedDate,
       );
 
@@ -40,10 +40,9 @@ export default function RestDayCalendar({
     days.push(null);
   }
 
-  const weeks = [];
-  for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
-  }
+  const weeks = Array.from({ length: days.length / 7 }, (_, index) =>
+    days.slice(index * 7, index * 7 + 7),
+  );
 
   const isToday = (day: number) => {
     const today = new Date();
@@ -58,15 +57,14 @@ export default function RestDayCalendar({
   const isPastDate = (day: number) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const targetDate = new Date(year, month - 1, day);
-
     return targetDate < today;
   };
 
-  const handleSelectDate = (day: number | undefined) => {
-    if (!day) return undefined;
-    onSelectDate(new Date(year, month - 1, day));
+  const handleSelectDate = (day: number | null) => {
+    if (day) {
+      onSelectDate(new Date(year, month - 1, day));
+    }
   };
 
   return (
@@ -90,7 +88,7 @@ export default function RestDayCalendar({
                 key={day ? `${year}-${month}-${day.day}` : `empty-${dayIndex}`}
                 className={`h-[32px] w-[32px] items-center justify-center rounded-[10px] ${day ? (day.isRest ? "bg-secondary-yellow" : isToday(day.day) ? "bg-gray-30" : "") : ""}`}
                 onPress={() => {
-                  handleSelectDate(day?.day);
+                  handleSelectDate(day?.day ?? null);
                 }}
                 disabled={!day || isPastDate(day.day)}
               >
