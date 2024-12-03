@@ -94,14 +94,12 @@ export default function History() {
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
-        <CalendarNavigator>
-          <CalendarNavigator.PreviousButton onPress={handlePreviousMonth} />
-          <CalendarNavigator.MonthDisplay date={date} />
-          <CalendarNavigator.NextButton
-            onPress={handleNextMonth}
-            disabled={isNextDisabled}
-          />
-        </CalendarNavigator>
+        <CalendarNavigator
+          date={date}
+          onPrevious={handlePreviousMonth}
+          onNext={handleNextMonth}
+          isNextDisabled={isNextDisabled}
+        />
         <WorkoutCalendar date={date} workoutStatuses={mock} />
       </View>
 

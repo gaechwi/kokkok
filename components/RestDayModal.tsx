@@ -89,19 +89,14 @@ export default function RestDayModal({
           <icons.XIcon width={24} height={24} color={colors.gray[90]} />
         </TouchableOpacity>
 
-        <Text className="heading-1">쉬는 날을 설정하세요</Text>
+        <Text className="heading-1 mb-[8px]">쉬는 날을 설정하세요</Text>
 
-        <CalendarNavigator className="mt-[21px] gap-[16px]">
-          <CalendarNavigator.PreviousButton
-            onPress={handlePreviousMonth}
-            disabled={isPreviousDisabled}
-          />
-          <CalendarNavigator.MonthDisplay
-            className="text-gray-40"
-            date={date}
-          />
-          <CalendarNavigator.NextButton onPress={handleNextMonth} />
-        </CalendarNavigator>
+        <CalendarNavigator
+          date={date}
+          onPrevious={handlePreviousMonth}
+          onNext={handleNextMonth}
+          isPreviousDisabled={isPreviousDisabled}
+        />
 
         <RestDayCalendar
           date={date}
