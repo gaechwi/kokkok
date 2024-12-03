@@ -48,10 +48,6 @@ export default function History() {
     setIsModalOpen(false);
   };
 
-  const handleRestDayModalSubmit = (restDates: Omit<History, "status">[]) => {
-    console.log(restDates);
-  };
-
   const [histories, setHistories] = useState<History[]>([]);
   const loadHistory = useCallback(async () => {
     try {
@@ -80,11 +76,7 @@ export default function History() {
         </Text>
 
         <SetRestDayButton onPress={openModal} />
-        <RestDayModal
-          visible={isModalOpen}
-          onClose={closeModal}
-          onSubmit={handleRestDayModalSubmit}
-        />
+        <RestDayModal visible={isModalOpen} onClose={closeModal} />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">

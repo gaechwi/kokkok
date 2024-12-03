@@ -365,6 +365,48 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
   return data;
 }
 
+export async function addRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const records = dates.map(({ date }) => ({
+    userId,
+    date,
+    status: "rest" as const,
+  }));
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .upsert(records, {
+      onConflict: "userId,date",
+      ignoreDuplicates: false,
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deleteRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const days = dates.map((item) => item.date);
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .delete()
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .in("date", days);
+
+  if (error) {
+    throw error;
+  }
+}
+
 // ============================================
 //
 //                    type
@@ -396,7 +438,8 @@ interface RequestInfo {
 }
 
 // 운동 기록 타입 정의
+type HistoryDate = `${number}-${number}-${number}`;
 interface History {
-  date: `${number}-${number}-${number}`;
+  date: HistoryDate;
   status: "done" | "rest";
 }
