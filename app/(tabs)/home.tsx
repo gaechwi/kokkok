@@ -5,10 +5,12 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
   FlatList,
+  View,
 } from "react-native";
 import PostItem from "../../components/PostItem";
 import { useEffect, useState, useCallback } from "react";
 import { getPosts } from "@/utils/supabase";
+import CommentsSection from "@/components/comments/CommentsSection";
 
 const AVATAR_URL =
   "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
@@ -25,6 +27,12 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
+
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+
+  const toggleComments = useCallback(() => {
+    setIsCommentsVisible((prev) => !prev);
+  }, []);
 
   const fetchPosts = useCallback(async () => {
     const fetchedPosts = await getPosts({
@@ -110,6 +118,7 @@ export default function Home() {
               author: { name: "Jane Doe", avatar: AVATAR_URL },
               content: "Hello, World!",
             }}
+            onCommentsPress={toggleComments}
           />
         )}
         refreshControl={
@@ -122,6 +131,204 @@ export default function Home() {
         }
         onScroll={handleScroll}
       />
+
+      {isCommentsVisible && (
+        <View className="flex-1">
+          <CommentsSection
+            visible={isCommentsVisible}
+            onClose={toggleComments}
+            comments={[
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "John Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+              {
+                id: Math.random().toString(),
+                user: {
+                  id: Math.random().toString(),
+                  avatar: "https://via.placeholder.com/150",
+                  username: "Jane Doe",
+                },
+                content: "Hello, World!",
+                createdAt: "2022-01-01T00:00:00Z",
+                liked: false,
+                likes: 10,
+                likedAuthorAvatar: [
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                  "https://via.placeholder.com/150",
+                ],
+              },
+            ]}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

@@ -6,7 +6,6 @@ import icons from "@/constants/icons";
 import CustomModal from "./Modal";
 import colors from "@/constants/colors";
 import { useTruncateText } from "@/hooks/useTruncateText";
-import CommentsSection from "./comments/CommentsSection";
 interface PostItemProps {
   author: {
     name: string;
@@ -25,6 +24,7 @@ interface PostItemProps {
     };
     content: string;
   };
+  onCommentsPress: () => void; // 새로 추가
 }
 
 export default function PostItem({
@@ -36,21 +36,17 @@ export default function PostItem({
   createdAt,
   commentsCount = 0,
   comment,
+  onCommentsPress, // 새로 추가
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
 
   const { calculateMaxChars, truncateText } = useTruncateText();
 
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
-  };
-
-  const toggleComments = () => {
-    setIsCommentsVisible((prev) => !prev);
   };
 
   return (
@@ -134,7 +130,7 @@ export default function PostItem({
 
             {/* comments */}
             <TouchableOpacity
-              onPress={toggleComments}
+              onPress={onCommentsPress} // 수정된 부분
               className="ml-[10px] flex-row items-center gap-[4px]"
             >
               <icons.CommentIcon
@@ -178,7 +174,8 @@ export default function PostItem({
 
             {/* comments */}
             {comment && (
-              <Pressable onPress={toggleComments} className="mt-2 px-2">
+              <Pressable onPress={onCommentsPress} className="mt-2 px-2">
+                {/* 수정된 부분 */}
                 <View className="flex-row items-center gap-2">
                   <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
                     {comment.author.name}
@@ -194,202 +191,6 @@ export default function PostItem({
             )}
           </View>
         )}
-
-        <View className="flex-1">
-          <CommentsSection
-            visible={isCommentsVisible}
-            onClose={toggleComments}
-            comments={[
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "John Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-            ]}
-          />
-        </View>
       </View>
     </View>
   );

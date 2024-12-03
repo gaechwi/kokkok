@@ -60,6 +60,7 @@ export default function CommentsSection({
       "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp",
   };
   const [comment, setComment] = useState("");
+  const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
 
   const animationRef = useRef<Animated.CompositeAnimation>();
 
@@ -69,6 +70,7 @@ export default function CommentsSection({
       (e) => {
         animationRef.current?.stop();
         heightRef.current = MAX_HEIGHT - e.endCoordinates.height;
+        setMaxHeight(heightRef.current);
         heightAnim.setValue(heightRef.current);
       },
     );
@@ -78,10 +80,11 @@ export default function CommentsSection({
       () => {
         animationRef.current?.stop();
         heightRef.current = MAX_HEIGHT;
+        setMaxHeight(heightRef.current);
         animationRef.current = Animated.timing(heightAnim, {
           toValue: MAX_HEIGHT,
-          duration: 300, // 키보드 애니메이션과 비슷한 duration
-          easing: Easing.bezier(0.4, 0, 0.2, 1), // 자연스러운 easing 곡선
+          duration: 300,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
           useNativeDriver: false,
         });
         animationRef.current.start();
@@ -120,8 +123,9 @@ export default function CommentsSection({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderMove: (_, gestureState) => {
+          // 최소 높이보다 작거나 최대 높이보다 크지 않도록 함
           const newHeight = Math.min(
-            MAX_HEIGHT,
+            maxHeight,
             Math.max(MIN_HEIGHT, heightRef.current - gestureState.dy),
           );
           heightAnim.setValue(newHeight);
@@ -136,17 +140,17 @@ export default function CommentsSection({
               heightRef.current = DEFAULT_HEIGHT;
               heightAnim.setValue(heightRef.current);
             }, DURATION);
-          } else if (finalHeight > MAX_HEIGHT) {
+          } else if (finalHeight > maxHeight) {
             // 최대 높이보다 크면 최대 높이로 돌아감
-            heightRef.current = MAX_HEIGHT;
+            heightRef.current = maxHeight;
             Animated.spring(heightAnim, {
-              toValue: MAX_HEIGHT,
+              toValue: maxHeight,
               useNativeDriver: false,
             }).start();
           } else {
             // 최소 높이보다 작으면 최소 높이로 돌아감
             const clampedHeight = Math.min(
-              MAX_HEIGHT,
+              maxHeight,
               Math.max(MIN_HEIGHT, finalHeight),
             );
             heightRef.current = clampedHeight;
@@ -157,7 +161,7 @@ export default function CommentsSection({
           }
         },
       }),
-    [heightAnim, onClose],
+    [heightAnim, onClose, maxHeight],
   );
 
   const AnimatedView = Animated.createAnimatedComponent(View);
@@ -216,14 +220,16 @@ export default function CommentsSection({
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -500}
       >
         <View
           className="flex-1 justify-end bg-black/50"
-          onTouchEnd={handleClose}
+          onTouchEnd={(e) => {
+            if (e.target === e.currentTarget) handleClose();
+          }}
         >
           {/* comment list */}
           <AnimatedView
-            onTouchEnd={(e) => e.stopPropagation()}
             style={{
               transform: [
                 {
@@ -263,7 +269,7 @@ export default function CommentsSection({
                       end={[0, 1]}
                       style={{
                         position: "absolute",
-                        top: 37,
+                        top: 36,
                         left: 0,
                         right: 0,
                         height: 10,
@@ -301,7 +307,7 @@ export default function CommentsSection({
                       ) : null
                     }
                     onScroll={handleScroll}
-                    keyboardShouldPersistTaps="handled"
+                    keyboardShouldPersistTaps="always"
                   />
                 </View>
               </SafeAreaView>
@@ -311,8 +317,7 @@ export default function CommentsSection({
 
         {/* comment input */}
         <View
-          onTouchEnd={(e) => e.stopPropagation()}
-          className={`flex-row items-center gap-4 border-gray-20 border-t bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
+          className={`z-10 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
         >
           <Image
             source={{ uri: user.avatar }}
@@ -321,10 +326,14 @@ export default function CommentsSection({
           />
 
           <TextInput
-            className="z-10 h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 focus:border-primary"
+            className="z-10 max-h-[120px] min-h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
             placeholder="댓글을 입력해주세요."
             keyboardType="default"
             autoCapitalize="words"
+            multiline={true}
+            numberOfLines={1}
+            maxLength={400}
+            textAlignVertical="center"
             accessibilityLabel="댓글 입력"
             accessibilityHint="댓글을 입력해주세요."
             value={comment}
