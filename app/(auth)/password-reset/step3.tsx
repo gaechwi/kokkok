@@ -12,8 +12,6 @@ import {
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useAtom } from "jotai";
-import { passwordResetFormAtom } from "@/contexts/auth";
 import { updateNewPassword } from "@/utils/supabase";
 
 const Step3 = () => {
@@ -21,7 +19,6 @@ const Step3 = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
 
   const router = useRouter();
 
@@ -67,6 +64,7 @@ const Step3 = () => {
               onChangeText={(text) =>
                 setResetPassword({ ...resetPassword, newPassword: text })
               }
+              secureTextEntry
             />
             <TextInput
               className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
@@ -77,14 +75,13 @@ const Step3 = () => {
               onChangeText={(text) =>
                 setResetPassword({ ...resetPassword, confirmPassword: text })
               }
+              secureTextEntry
             />
           </View>
 
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-            onPress={() => {
-              router.replace("/home");
-            }}
+            onPress={handleResetPassword}
           >
             <Text className="heading-2 text-white">완료</Text>
           </TouchableOpacity>
