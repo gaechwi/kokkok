@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView } from "react-native";
+import { useState } from "react";
+import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendItem, FriendRequest } from "@/components/FriendItem";
 import FriendTab from "@/components/FriendTab";
 import SearchBar from "@/components/SearchBar";
 import { getFriendRequests, getFriends } from "@/utils/supabase";
-
-/* 실제 컴포넌트 */
+import useFetchData from "@/hooks/useFetchData";
+import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -16,41 +16,58 @@ export default function Friend() {
   const [isFriendTab, setIsFriendTab] = useState(true);
   const [keyword, setKeyword] = useState("");
 
-  const [friends, setFriends] = useState<
-    Awaited<ReturnType<typeof getFriends>>
-  >({
-    data: [],
-    total: 0,
-    hasMore: false,
-  });
-  const [requests, setRequests] = useState<
-    Awaited<ReturnType<typeof getFriendRequests>>
-  >({
-    data: [],
-    total: 0,
-    hasMore: false,
-  });
+  const {
+    data: friends,
+    isLoading: isLoadingFriend,
+    error: errorFriend,
+  } = useFetchData<FriendResponse>(
+    ["friends", OFFSET],
+    () => getFriends({ offset: OFFSET, limit: LIMIT }),
+    "친구 조회에 실패했습니다.",
+  );
 
-  const fetchFriends = useCallback(async () => {
-    const fetchedFriends = await getFriends({
-      offset: OFFSET,
-      limit: LIMIT,
-    });
-    setFriends(fetchedFriends);
-  }, []);
+  const {
+    data: requests,
+    isLoading,
+    error,
+  } = useFetchData<RequestResponse>(
+    ["friendRequests", OFFSET],
+    () => getFriendRequests({ offset: OFFSET, limit: LIMIT }),
+    "친구 요청 조회에 실패했습니다.",
+  );
 
-  const fetchRequests = useCallback(async () => {
-    const fetchedRequests = await getFriendRequests({
-      offset: OFFSET,
-      limit: LIMIT,
-    });
-    setRequests(fetchedRequests);
-  }, []);
+  // NOTE 추후 페이지 분리 및 개선할 예정
+  if (error || errorFriend) {
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <FriendTab
+          isFriendTab={isFriendTab}
+          handlePress={(newIsFriendTab: boolean) =>
+            setIsFriendTab(newIsFriendTab)
+          }
+        />
+        <View className="size-full justify-center items-center">
+          <Text className="title-1">
+            {error?.message || errorFriend?.message}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  useEffect(() => {
-    fetchFriends();
-    fetchRequests();
-  }, [fetchFriends, fetchRequests]);
+  // NOTE 추후 페이지 분리 및 개선할 예정
+  if (isLoading || isLoadingFriend || !requests || !friends) {
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <FriendTab
+          isFriendTab={isFriendTab}
+          handlePress={(newIsFriendTab: boolean) =>
+            setIsFriendTab(newIsFriendTab)
+          }
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">

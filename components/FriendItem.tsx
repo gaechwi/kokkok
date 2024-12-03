@@ -6,8 +6,8 @@ import {
   createFriendRequest,
   deleteFriendRequest,
   putFriendRequest,
-  User,
 } from "@/utils/supabase";
+import type { User } from "@/types/User.interface";
 
 // 추후 적당한 위치로 이동
 const FIT_STATUS = {
