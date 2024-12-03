@@ -332,6 +332,26 @@ export async function getFriendRequests({
 
 // ============================================
 //
+//                    history
+//
+// ============================================
+
+export async function getHistories(): Promise<History[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date, status")
+    .eq("userId", userId)
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
+// ============================================
+//
 //                    type
 //
 // ============================================
@@ -358,4 +378,10 @@ interface User {
 interface RequestInfo {
   id: string;
   from: User;
+}
+
+// 운동 기록 타입 정의
+interface History {
+  date: `${number}-${number}-${number}`;
+  status: "done" | "rest";
 }

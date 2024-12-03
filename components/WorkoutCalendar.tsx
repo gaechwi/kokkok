@@ -1,10 +1,13 @@
 import { Text, View } from "react-native";
+import type { getHistories } from "@/utils/supabase";
 import icons from "@/constants/icons";
 
-// FIXME: 타입 수정 필요
+type History = Awaited<ReturnType<typeof getHistories>>[number];
+type Status = Pick<History, "status">["status"];
+
 interface WorkoutCalendarProps {
   date: Date;
-  workoutStatuses: { date: string; status: "DONE" | "REST" }[];
+  workoutStatuses: History[];
 }
 
 export default function WorkoutCalendar({
@@ -45,15 +48,15 @@ export default function WorkoutCalendar({
     weeks.push(days.slice(i, i + 7));
   }
 
-  const getIcon = (day: number, status: "DONE" | "REST" | null) => {
+  const getIcon = (day: number, status: Status | null) => {
     const today = new Date();
     const targetDate = new Date(year, month - 1, day);
 
-    if (status === "REST") {
+    if (status === "rest") {
       return <icons.FaceRestIcon width={30} height={30} />;
     }
 
-    if (status === "DONE") {
+    if (status === "done") {
       return <icons.FaceDoneIcon width={30} height={30} />;
     }
 

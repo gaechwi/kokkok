@@ -8,20 +8,20 @@ import colors from "@/constants/colors";
 
 // FIXME: 타입 수정 필요
 interface Mock {
-  date: string;
+  date: `${number}-${number}-${number}`;
 }
 const mock: Mock[] = [
-  { date: "2024-12-01T00:00:00.000Z" },
-  { date: "2024-12-08T00:00:00.000Z" },
-  { date: "2024-12-14T00:00:00.000Z" },
-  { date: "2024-12-20T00:00:00.000Z" },
-  { date: "2024-12-25T00:00:00.000Z" },
-  { date: "2024-12-29T00:00:00.000Z" },
-  { date: "2025-01-02T00:00:00.000Z" },
-  { date: "2025-01-04T00:00:00.000Z" },
-  { date: "2025-01-05T00:00:00.000Z" },
-  { date: "2025-01-11T00:00:00.000Z" },
-  { date: "2025-01-12T00:00:00.000Z" },
+  { date: "2024-12-01" },
+  { date: "2024-12-08" },
+  { date: "2024-12-14" },
+  { date: "2024-12-20" },
+  { date: "2024-12-25" },
+  { date: "2024-12-29" },
+  { date: "2025-01-02" },
+  { date: "2025-01-04" },
+  { date: "2025-01-05" },
+  { date: "2025-01-11" },
+  { date: "2025-01-12" },
 ];
 
 interface RestDayModalProps {
@@ -62,15 +62,18 @@ export default function RestDayModal({
   const handleSelectDate = (date: Date) => {
     const formattedDate = `${date.getFullYear()}-${String(
       date.getMonth() + 1,
-    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    ).padStart(
+      2,
+      "0",
+    )}-${String(date.getDate()).padStart(2, "0")}` as `${number}-${number}-${number}`;
 
     setRestDates((prev) => {
-      const exists = prev.some((rd) => rd.date.split("T")[0] === formattedDate);
+      const exists = prev.some((rd) => rd.date === formattedDate);
 
       if (exists) {
-        return prev.filter((rd) => rd.date.split("T")[0] !== formattedDate);
+        return prev.filter((rd) => rd.date !== formattedDate);
       }
-      return [...prev, { date: `${formattedDate}T00:00:00.000Z` }];
+      return [...prev, { date: formattedDate }];
     });
   };
 

@@ -5,37 +5,17 @@ import {
   type TouchableOpacityProps,
   View,
 } from "react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { getHistories } from "@/utils/supabase";
+
 import RestDayModal from "@/components/RestDayModal";
 import CalendarNavigator from "@/components/CalendarNavigator";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
+
 import icons from "@/constants/icons";
 
-// FIXME: 타입 수정 필요
-type Status = "DONE" | "REST";
-interface Mock {
-  date: string;
-  status: Status;
-}
-const mock: Mock[] = [
-  { date: "2024-11-01T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-02T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-05T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-08T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-14T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-15T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-16T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-19T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-20T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-24T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-25T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-28T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-29T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-30T00:00:00.000Z", status: "DONE" },
-  { date: "2024-12-01T00:00:00.000Z", status: "DONE" },
-  { date: "2024-12-10T00:00:00.000Z", status: "REST" },
-  { date: "2024-12-13T00:00:00.000Z", status: "DONE" },
-];
+type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
   const [date, setDate] = useState<Date>(new Date());
@@ -47,11 +27,6 @@ export default function History() {
   const currentMonth = currentDate.getMonth() + 1;
 
   const isNextDisabled = year === currentYear && month >= currentMonth;
-
-  const workoutDays = mock.filter(
-    (item) =>
-      Number(item.date.split("-")[1]) === month && item.status === "DONE",
-  ).length;
 
   const handlePreviousMonth = () => {
     const newDate = new Date(date);
@@ -73,9 +48,29 @@ export default function History() {
     setIsModalOpen(false);
   };
 
-  const handleRestDayModalSubmit = (restDates: Omit<Mock, "status">[]) => {
+  const handleRestDayModalSubmit = (restDates: Omit<History, "status">[]) => {
     console.log(restDates);
   };
+
+  const [histories, setHistories] = useState<History[]>([]);
+  const loadHistory = useCallback(async () => {
+    try {
+      const data = await getHistories();
+      setHistories(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching workout history:", error);
+    }
+  }, []);
+
+  const workoutDays = histories.filter(
+    (item) =>
+      new Date(item.date).getMonth() + 1 === month && item.status === "done",
+  ).length;
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   return (
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
@@ -100,7 +95,7 @@ export default function History() {
           onNext={handleNextMonth}
           isNextDisabled={isNextDisabled}
         />
-        <WorkoutCalendar date={date} workoutStatuses={mock} />
+        <WorkoutCalendar date={date} workoutStatuses={histories} />
       </View>
 
       <FaceExplanation />
