@@ -28,14 +28,32 @@ export default function Friend() {
 
   if (error) {
     return (
-      <ErrorScreen
-        errorMessage={error?.message || "친구 조회에 실패했습니다."}
-      />
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <View className="px-6 pt-6">
+          <SearchBar
+            value={keyword}
+            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+          />
+        </View>
+        <ErrorScreen
+          errorMessage={error?.message || "친구 조회에 실패했습니다."}
+        />
+      </SafeAreaView>
     );
   }
 
   if (isLoading || !friends) {
-    return <LoadingScreen />;
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <View className="px-6 pt-6">
+          <SearchBar
+            value={keyword}
+            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+          />
+        </View>
+        <LoadingScreen />
+      </SafeAreaView>
+    );
   }
 
   return (
