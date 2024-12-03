@@ -98,6 +98,31 @@ export async function signIn({
   }
 }
 
+// OTP 인증 전송
+export async function sendOTP(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// OTP 인증 확인
+export async function verifyOTP(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 // ============================================
 //
 //                    user

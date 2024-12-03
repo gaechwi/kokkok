@@ -17,6 +17,7 @@ import { signUpFormAtom } from "@contexts/auth";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
+import { sendOTP } from "@/utils/supabase";
 
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -25,7 +26,7 @@ const Step1 = () => {
 
   const router = useRouter();
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (
       !signUpForm.email ||
       !signUpForm.username ||
@@ -51,6 +52,8 @@ const Step1 = () => {
       Alert.alert("알림", "올바른 이메일 형식이 아닙니다.");
       return;
     }
+
+    await sendOTP(signUpForm.email);
 
     setIsModalVisible(true);
   };
