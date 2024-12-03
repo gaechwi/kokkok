@@ -61,25 +61,30 @@ export default function CommentsSection({
   };
   const [comment, setComment] = useState("");
 
+  const animationRef = useRef<Animated.CompositeAnimation>();
+
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      "keyboardDidShow",
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
+        animationRef.current?.stop();
         heightRef.current = MAX_HEIGHT - e.endCoordinates.height;
         heightAnim.setValue(heightRef.current);
       },
     );
 
     const keyboardDidHideListener = Keyboard.addListener(
-      "keyboardDidHide",
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
+        animationRef.current?.stop();
         heightRef.current = MAX_HEIGHT;
-        Animated.timing(heightAnim, {
+        animationRef.current = Animated.timing(heightAnim, {
           toValue: MAX_HEIGHT,
-          duration: 250,
-          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          duration: 300, // 키보드 애니메이션과 비슷한 duration
+          easing: Easing.bezier(0.4, 0, 0.2, 1), // 자연스러운 easing 곡선
           useNativeDriver: false,
-        }).start();
+        });
+        animationRef.current.start();
       },
     );
 
@@ -296,34 +301,35 @@ export default function CommentsSection({
                       ) : null
                     }
                     onScroll={handleScroll}
+                    keyboardShouldPersistTaps="handled"
                   />
                 </View>
               </SafeAreaView>
             </Animated.View>
           </AnimatedView>
+        </View>
 
-          {/* comment input */}
-          <View
-            onTouchEnd={(e) => e.stopPropagation()}
-            className={`flex-row items-center gap-4 border-gray-20 border-t bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
-          >
-            <Image
-              source={{ uri: user.avatar }}
-              resizeMode="cover"
-              className="size-12 rounded-full"
-            />
+        {/* comment input */}
+        <View
+          onTouchEnd={(e) => e.stopPropagation()}
+          className={`flex-row items-center gap-4 border-gray-20 border-t bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
+        >
+          <Image
+            source={{ uri: user.avatar }}
+            resizeMode="cover"
+            className="size-12 rounded-full"
+          />
 
-            <TextInput
-              className="h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 focus:border-primary"
-              placeholder="댓글을 입력해주세요."
-              keyboardType="default"
-              autoCapitalize="words"
-              accessibilityLabel="댓글 입력"
-              accessibilityHint="댓글을 입력해주세요."
-              value={comment}
-              onChangeText={(text) => setComment(text)}
-            />
-          </View>
+          <TextInput
+            className="z-10 h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 focus:border-primary"
+            placeholder="댓글을 입력해주세요."
+            keyboardType="default"
+            autoCapitalize="words"
+            accessibilityLabel="댓글 입력"
+            accessibilityHint="댓글을 입력해주세요."
+            value={comment}
+            onChangeText={(text) => setComment(text)}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
