@@ -5,7 +5,7 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { RequestResponse } from "@/types/FriendRequest.interface";
+import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 import type { User } from "@/types/User.interface";
 
 const supabaseUrl = SUPABASE_URL;
@@ -60,7 +60,7 @@ export async function signUp({
           id: authData.user.id,
           email,
           username,
-          avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
+          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
           description: description || null,
         },
       ])
@@ -277,6 +277,36 @@ export async function getPosts({
 //
 // ============================================
 
+// 친구 조회
+export async function getFriends({
+  offset = 0,
+  limit = 12,
+}: {
+  offset?: number;
+  limit?: number;
+}): Promise<FriendResponse> {
+  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
+
+  const { data, error, count } = await supabase
+    .from("friendRequest")
+    .select("to", { count: "exact" })
+    .eq("from", user.id)
+    .eq("isAccepted", true)
+    .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구를 불러올 수 없습니다.");
+
+  const friends = await Promise.all(data.map((request) => getUser(request.to)));
+
+  return {
+    data: friends,
+    total: count || 0,
+    hasMore: count ? offset + limit < count : false,
+  };
+}
+
 // 친구요청 조회 조회
 export async function getFriendRequests({
   offset = 0,
@@ -300,27 +330,73 @@ export async function getFriendRequests({
     .select(
       `
           id,
-          from
+          from,
+          to
         `,
       { count: "exact" },
     )
     .eq("to", user.id)
+    .is("isAccepted", null)
     .order("createdAt", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
 
   // FIXME 개선 필요
-  const froms = await Promise.all(data.map((request) => getUser(request.from)));
+  const fromUsers = await Promise.all(
+    data.map((request) => getUser(request.from)),
+  );
 
   return {
     data: data.map((request, idx) => ({
-      id: request.id,
-      from: froms[idx],
+      requestId: request.id,
+      toUserId: request.to,
+      fromUser: fromUsers[idx],
     })),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
   };
+}
+
+// 친구요청 생성
+export async function createFriendRequest(
+  from: string,
+  to: string,
+  isAccepted: boolean,
+) {
+  try {
+    const { error } = await supabase
+      .from("friendRequest")
+      .insert({ from, to, isAccepted });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "친구 요청 생성에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 친구요청 반응 업데이트
+export async function putFriendRequest(requestId: string, isAccepted: boolean) {
+  try {
+    const { error } = await supabase
+      .from("friendRequest")
+      .update({ isAccepted })
+      .eq("id", requestId);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "친구 요청 수정에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+export async function deleteFriendRequest(requestId: string) {
+  try {
+    await supabase.from("friendRequest").delete().eq("id", requestId);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "친구 요청 삭제에 실패했습니다";
+    throw new Error(errorMessage);
+  }
 }
 
 // ============================================
