@@ -12,7 +12,7 @@ interface PostItemProps {
     avatar: string;
   };
   images: string[];
-  contents?: string;
+  contents?: string | null;
   liked: boolean;
   likedAuthorAvatar?: string[];
   createdAt: string;
@@ -23,9 +23,9 @@ interface PostItemProps {
       avatar: string;
     };
     content: string;
-  };
+  } | null;
   postId: number;
-  onCommentsPress: (postId: number) => void;
+  onCommentsPress: (num: number) => void;
 }
 
 export default function PostItem({
@@ -107,7 +107,7 @@ export default function PostItem({
 
             {/* likeAvatar */}
             {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
-              <Pressable className="ml-[2px] flex-row items-center">
+              <TouchableOpacity className="ml-[2px] flex-row items-center">
                 {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
@@ -127,11 +127,11 @@ export default function PostItem({
                     외 여러명
                   </Text>
                 )}
-              </Pressable>
+              </TouchableOpacity>
             )}
 
             {/* comments */}
-            <Pressable
+            <TouchableOpacity
               onPress={() => onCommentsPress(postId)}
               className="ml-[10px] flex-row items-center gap-[4px]"
             >
@@ -145,7 +145,7 @@ export default function PostItem({
                   {commentsCount > 99 ? "99+" : commentsCount}
                 </Text>
               )}
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           {/* createdAt */}
@@ -154,10 +154,10 @@ export default function PostItem({
           </Text>
         </View>
 
-        {(contents || comment) && (
+        {(!!contents?.length || !!comment?.content?.length) && (
           <View className="bg-white px-4 pb-[22px]">
             {/* content */}
-            {contents && (
+            {!!contents?.length && (
               <Pressable
                 disabled={!isMore && contents.length <= calculateMaxChars}
                 onPress={() => setIsMore(!isMore)}
@@ -175,7 +175,7 @@ export default function PostItem({
             )}
 
             {/* comments */}
-            {comment && (
+            {!!comment?.content?.length && (
               <Pressable
                 onPress={() => onCommentsPress(postId)}
                 className="mt-2 px-2"

@@ -11,28 +11,31 @@ export type Database = {
     Tables: {
       comment: {
         Row: {
-          content: string;
+          contents: string;
           createdAt: string;
           id: number;
+          likes: number | null;
           parentsCommentId: number | null;
           postId: number;
           userId: string;
         };
         Insert: {
-          content: string;
+          contents: string;
           createdAt?: string;
           id?: number;
+          likes?: number | null;
           parentsCommentId?: number | null;
           postId: number;
-          userId: string;
+          userId?: string;
         };
         Update: {
-          content: string;
+          contents?: string;
           createdAt?: string;
           id?: number;
+          likes?: number | null;
           parentsCommentId?: number | null;
-          postId: number;
-          userId: string;
+          postId?: number;
+          userId?: string;
         };
         Relationships: [
           {
@@ -135,33 +138,33 @@ export type Database = {
       };
       post: {
         Row: {
-          author: string | null;
           contents: string | null;
           createdAt: string;
           id: number;
           images: string[];
           likes: number;
+          userId: string;
         };
         Insert: {
-          author?: string | null;
           contents?: string | null;
           createdAt?: string;
           id?: number;
           images: string[];
           likes?: number;
+          userId?: string;
         };
         Update: {
-          author?: string | null;
           contents?: string | null;
           createdAt?: string;
           id?: number;
           images?: string[];
           likes?: number;
+          userId?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "post_author_fkey";
-            columns: ["author"];
+            foreignKeyName: "post_userId_fkey";
+            columns: ["userId"];
             isOneToOne: false;
             referencedRelation: "user";
             referencedColumns: ["id"];
@@ -206,8 +209,8 @@ export type Database = {
       };
       user: {
         Row: {
-          avatarUrl: string;
-          createdAt: string;
+          avatarUrl: string | null;
+          createdAt: string | null;
           description: string | null;
           email: string;
           id: string;

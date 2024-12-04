@@ -184,14 +184,13 @@ export async function createPost({
   images,
 }: { contents?: string; images: ImagePicker.ImagePickerAsset[] }) {
   try {
-    // 현재 로그인된 사용자 정보 가져오기
-    // const {
-    //   data: { user },
-    //   error: userError,
-    // } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    // if (userError) throw userError;
-    // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    if (userError) throw userError;
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
     // 내용이 빈 문자열이면 undefined로 설정
     const postContents = contents === "" ? undefined : contents;
@@ -211,13 +210,16 @@ export async function createPost({
       .from("post")
       .insert([
         {
-          // user_id: user.id,
-          contents: postContents || "",
+          userId: user.id,
           images: validImageUrls,
+          contents: postContents || "",
         },
       ])
-      .select()
+      .select("*, user: userId (id, username, avatarUrl)")
       .single();
+
+    if (postError) throw postError;
+    if (!newPost) throw new Error("게시물을 생성중 문제가 발생했습니다.");
 
     return newPost;
   } catch (error) {
@@ -242,7 +244,7 @@ export async function getPosts({
     const end = start + limit - 1;
 
     const {
-      data: posts,
+      data,
       error: postsError,
       count,
     } = await supabase
@@ -262,7 +264,37 @@ export async function getPosts({
       .range(start, end);
 
     if (postsError) throw postsError;
-    if (!posts) throw new Error("게시글을 불러올 수 없습니다.");
+    if (!data) throw new Error("게시글을 불러올 수 없습니다.");
+
+    const posts = await Promise.all(
+      data.map(async (post) => {
+        const {
+          data: comment,
+          error: commentError,
+          count,
+        } = await supabase
+          .from("comment")
+          .select(
+            "id, contents, likes, author:user (id, username, avatarUrl)",
+            { count: "exact" },
+          )
+          .eq("postId", post.id)
+          .order("likes", { ascending: false })
+          .order("createdAt", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (commentError && commentError.code !== "PGRST116") {
+          // 댓글이 없는 경우 오류 처리
+          throw commentError;
+        }
+
+        return {
+          ...post,
+          comment: { ...comment, totalComments: count },
+        };
+      }),
+    );
 
     return {
       posts,
@@ -294,7 +326,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
       .select(
         `
           id, 
-          content,
+          contents,
           userId, 
           createdAt, 
           user (id, username, avatarUrl)
@@ -325,15 +357,15 @@ export async function getComments(postId: number, page = 0, limit = 10) {
 export async function createComment({
   userId,
   postId,
-  content,
+  contents,
 }: {
   userId: string;
   postId: number;
-  content: string;
+  contents: string;
 }) {
   const { data, error } = await supabase
     .from("comment")
-    .insert({ postId, content, userId })
+    .insert({ postId, contents, userId })
     .single();
 
   if (error) throw error;

@@ -3,7 +3,6 @@ import {
   SafeAreaView,
   ActivityIndicator,
   FlatList,
-  View,
 } from "react-native";
 import PostItem from "../../components/PostItem";
 import { useState, useCallback } from "react";
@@ -14,9 +13,7 @@ import {
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-
-const AVATAR_URL =
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
+import { View } from "react-native";
 
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
@@ -26,9 +23,14 @@ export default function Home() {
 
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
-  const toggleComments = useCallback((postId: number) => {
+  const onOpenComments = useCallback((postId: number) => {
     setSelectedPostId(postId);
     setIsCommentsVisible(true);
+  }, []);
+
+  const onCloseComments = useCallback(() => {
+    setIsCommentsVisible(false);
+    setSelectedPostId(null);
   }, []);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -64,21 +66,24 @@ export default function Home() {
           <PostItem
             key={post.id}
             author={{
-              name: "John Doe",
-              avatar: AVATAR_URL,
+              name: post.user?.username ?? "",
+              avatar: post.user?.avatarUrl ?? "",
             }}
             images={post.images}
             liked={false}
-            likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL, AVATAR_URL]}
-            contents={post.contents ?? ""}
+            likedAuthorAvatar={[]}
+            contents={post.contents}
             createdAt={post.createdAt}
-            commentsCount={10}
+            commentsCount={post.comment.totalComments ?? 0}
             comment={{
-              author: { name: "Jane Doe", avatar: AVATAR_URL },
-              content: "Hello, World!",
+              author: {
+                name: post.comment?.author?.username ?? "",
+                avatar: post.comment?.author?.avatarUrl ?? "",
+              },
+              content: post.comment?.contents ?? "",
             }}
             postId={Number(post.id)}
-            onCommentsPress={toggleComments}
+            onCommentsPress={() => onOpenComments(Number(post.id))}
           />
         )}
         onEndReachedThreshold={0.5}
@@ -99,10 +104,7 @@ export default function Home() {
         <View className="flex-1">
           <CommentsSection
             visible={isCommentsVisible}
-            onClose={() => {
-              setIsCommentsVisible(false);
-              setSelectedPostId(null);
-            }}
+            onClose={onCloseComments}
             postId={selectedPostId}
           />
         </View>

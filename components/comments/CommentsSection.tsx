@@ -34,12 +34,6 @@ const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
 const DEFAULT_HEIGHT = MAX_HEIGHT * 0.8;
 const DURATION = 400;
 
-const ANIMATION_CONFIG = {
-  useNativeDriver: true,
-  duration: DURATION,
-  easing: Easing.bezier(0.16, 1, 0.3, 1),
-};
-
 interface CommentsSectionProps {
   visible: boolean;
   onClose: () => void;
@@ -120,9 +114,11 @@ export default function CommentsSection({
   }, [heightAnim]);
 
   useEffect(() => {
+    console.log("visible", visible);
     Animated.timing(slideAnim, {
       toValue: visible ? 1 : 0,
-      ...ANIMATION_CONFIG,
+      duration: DURATION,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: true,
     }).start();
   }, [visible, slideAnim]);
@@ -204,8 +200,8 @@ export default function CommentsSection({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -500}
+        style={{ flex: 1 }}
       >
         <View
           className="flex-1 justify-end bg-black/50"
@@ -284,7 +280,7 @@ export default function CommentsSection({
                       <CommentItem
                         key={item.id}
                         id={Number(item.id)}
-                        content={item.content}
+                        content={item.contents}
                         createdAt={item.createdAt}
                         likedAuthorAvatar={[]}
                         liked={false}
