@@ -13,6 +13,23 @@ import LoadingScreen from "@/components/LoadingScreen";
 const OFFSET = 0;
 const LIMIT = 12;
 
+interface FriendLayoutProps {
+  keyword: string;
+  onChangeText: (newKeyworkd: string) => void;
+  children: React.ReactNode;
+}
+
+function FriendLayout({ keyword, onChangeText, children }: FriendLayoutProps) {
+  return (
+    <SafeAreaView edges={[]} className="flex-1 bg-white">
+      <View className="flex-1 px-6 pt-6">
+        <SearchBar value={keyword} handleChangeText={onChangeText} />
+        {children}
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function Friend() {
   const [keyword, setKeyword] = useState("");
 
@@ -28,31 +45,25 @@ export default function Friend() {
 
   if (error) {
     return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="px-6 pt-6">
-          <SearchBar
-            value={keyword}
-            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-          />
-        </View>
+      <FriendLayout
+        keyword={keyword}
+        onChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+      >
         <ErrorScreen
           errorMessage={error?.message || "친구 조회에 실패했습니다."}
         />
-      </SafeAreaView>
+      </FriendLayout>
     );
   }
 
   if (isLoading || !friends) {
     return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="px-6 pt-6">
-          <SearchBar
-            value={keyword}
-            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-          />
-        </View>
+      <FriendLayout
+        keyword={keyword}
+        onChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+      >
         <LoadingScreen />
-      </SafeAreaView>
+      </FriendLayout>
     );
   }
 
