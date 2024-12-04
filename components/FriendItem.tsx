@@ -66,7 +66,7 @@ const FriendProfile = ({
 
 export function FriendItem({ fromUser, status }: FriendItemProps) {
   return (
-    <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
+    <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile {...fromUser} />
 
       <TouchableOpacity

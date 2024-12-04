@@ -1,4 +1,4 @@
-import { View, ScrollView } from "react-native";
+import { View, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendRequest } from "@/components/FriendItem";
@@ -36,18 +36,20 @@ export default function Request() {
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <ScrollView className="px-8 grow w-full">
-        {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
-        <View className="h-2" />
-        {requests.data.map((request) => (
+      <FlatList
+        data={requests.data}
+        keyExtractor={(request) => request.requestId}
+        renderItem={({ item: request }) => (
           <FriendRequest
             key={request.requestId}
             {...request}
             isLoading={isLoading}
           />
-        ))}
-        <View className="h-4" />
-      </ScrollView>
+        )}
+        className="px-8 grow w-full"
+        ListHeaderComponent={<View className="h-2" />}
+        ListFooterComponent={<View className="h-4" />}
+      />
     </SafeAreaView>
   );
 }
