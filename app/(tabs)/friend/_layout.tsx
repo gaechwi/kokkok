@@ -1,8 +1,9 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { Text } from "react-native";
+
+import colors from "@/constants/colors";
 import Friend from ".";
 import Request from "./request";
-import { Text } from "react-native";
-import colors from "@/constants/colors";
 
 const Tab = createMaterialTopTabNavigator();
 
