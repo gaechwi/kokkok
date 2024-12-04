@@ -6,6 +6,17 @@ import colors from "@/constants/colors";
 
 const Tab = createMaterialTopTabNavigator();
 
+const SCREEN_OPTIONS = {
+  tabBarStyle: {
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabBarIndicatorStyle: {
+    backgroundColor: colors.primary,
+  },
+} as const;
+
 const TabBarLabel = (title: string, focused: boolean) => (
   <Text className={`title-2 text-gray-90 ${focused ? "" : "font-pmedium"}`}>
     {title}
@@ -14,23 +25,13 @@ const TabBarLabel = (title: string, focused: boolean) => (
 
 export default function FriendLayout() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: {
-          height: 64,
-          alignItems: "center",
-          justifyContent: "center",
-        },
-        tabBarIndicatorStyle: {
-          backgroundColor: colors.primary,
-        },
-      }}
-    >
+    <Tab.Navigator screenOptions={SCREEN_OPTIONS}>
       <Tab.Screen
         name="index"
         component={Friend}
         options={{
           tabBarLabel: ({ focused }) => TabBarLabel("친구 목록", focused),
+          tabBarAccessibilityLabel: "친구 목록 탭",
         }}
       />
       <Tab.Screen
@@ -38,6 +39,7 @@ export default function FriendLayout() {
         component={Request}
         options={{
           tabBarLabel: ({ focused }) => TabBarLabel("친구 요청", focused),
+          tabBarAccessibilityLabel: "친구 요청 탭",
         }}
       />
     </Tab.Navigator>
