@@ -66,6 +66,7 @@ export default function Home() {
           <PostItem
             key={post.id}
             author={{
+              id: post.user?.id ?? "",
               name: post.user?.username ?? "",
               avatar: post.user?.avatarUrl ?? "",
             }}

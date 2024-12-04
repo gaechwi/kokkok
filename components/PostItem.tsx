@@ -1,15 +1,25 @@
-import { View, Text, Image, TouchableOpacity, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+} from "react-native";
 import Carousel from "./Carousel";
 import { diffDate } from "@/utils/formatDate";
 import { useState } from "react";
 import icons from "@/constants/icons";
-import CustomModal from "./Modal";
+import CustomModal, { DeleteModal } from "./Modal";
 import colors from "@/constants/colors";
 import { useTruncateText } from "@/hooks/useTruncateText";
-import { useMutation } from "@tanstack/react-query";
-import { toggleLikePost } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deletePost, getUser, toggleLikePost } from "@/utils/supabase";
+import useFetchData from "@/hooks/useFetchData";
+import { useRouter } from "expo-router";
 interface PostItemProps {
   author: {
+    id: string;
     name: string;
     avatar: string;
   };
@@ -46,12 +56,21 @@ export default function PostItem({
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const user = useFetchData(
+    ["user"],
+    getUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
 
-  const toggleModal = () => {
-    setIsModalVisible((prev) => !prev);
-  };
+  const toggleModal = () => setIsModalVisible((prev) => !prev);
+
+  const toggleDeleteModal = () => setIsDeleteModalVisible((prev) => !prev);
 
   const toggleLike = useMutation({
     mutationFn: () => toggleLikePost(postId),
@@ -60,6 +79,17 @@ export default function PostItem({
     },
     onError: () => {
       setIsLiked((prev) => !prev);
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: () => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      Alert.alert("삭제 성공", "게시물이 성공적으로 삭제되었습니다.");
+    },
+    onError: () => {
+      Alert.alert("삭제 실패", "게시물 삭제에 실패했습니다.");
     },
   });
 
@@ -79,24 +109,51 @@ export default function PostItem({
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={toggleModal}>
-            <icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
+          {user.data?.id === author.id && (
+            <TouchableOpacity onPress={toggleModal}>
+              <icons.MeatballIcon
+                width={24}
+                height={24}
+                color={colors.gray[70]}
+              />
 
-            <CustomModal
-              visible={isModalVisible}
-              onClose={toggleModal}
-              position="bottom"
-            >
-              <View className="items-center">
-                <TouchableOpacity className="h-[82px] w-full items-center justify-center border-gray-20 border-b">
-                  <Text className="title-2 text-gray-90">수정하기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className="h-[82px] w-full items-center justify-center">
-                  <Text className="title-2 text-gray-90">삭제하기</Text>
-                </TouchableOpacity>
-              </View>
-            </CustomModal>
-          </TouchableOpacity>
+              <CustomModal
+                visible={isModalVisible}
+                onClose={toggleModal}
+                position="bottom"
+              >
+                <View className="items-center">
+                  <TouchableOpacity
+                    onPress={() => {
+                      toggleModal();
+                      router.push(`/upload?postId=${postId}`);
+                    }}
+                    className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+                  >
+                    <Text className="title-2 text-gray-90">수정하기</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      toggleDeleteModal();
+                      toggleModal();
+                    }}
+                    className="h-[82px] w-full items-center justify-center"
+                  >
+                    <Text className="title-2 text-gray-90">삭제하기</Text>
+                  </TouchableOpacity>
+                </View>
+              </CustomModal>
+
+              <DeleteModal
+                isVisible={isDeleteModalVisible}
+                onClose={toggleDeleteModal}
+                onDelete={() => {
+                  deletePostMutation.mutate();
+                  setIsDeleteModalVisible(false);
+                }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* carousel */}

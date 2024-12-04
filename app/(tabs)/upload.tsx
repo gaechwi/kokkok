@@ -1,6 +1,6 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Text,
   TextInput,
@@ -11,17 +11,38 @@ import {
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import CustomModal from "@/components/Modal";
-import { createPost } from "@/utils/supabase";
+import { createPost, getPost, updatePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useFetchData from "@/hooks/useFetchData";
 
 export default function Upload() {
+  const params = useLocalSearchParams<{ postId?: string }>();
+  const postId = params.postId ? Number(params.postId) : undefined;
   const router = useRouter();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const queryClient = useQueryClient();
+
+  const post = useFetchData(
+    ["post", postId],
+    () => (postId ? getPost(postId) : Promise.resolve(null)),
+    "게시글을 불러오는 도중 에러가 발생했습니다.",
+    postId !== undefined,
+  );
+
+  useEffect(() => {
+    if (post.data !== null && post.data !== undefined) {
+      setImages(
+        post.data.images.map(
+          (uri: string) => ({ uri }) as ImagePicker.ImagePickerAsset,
+        ),
+      );
+      setContents(post.data.contents ?? "");
+    }
+  }, [post.data]);
 
   const uploadPostMutation = useMutation({
     mutationFn: () => createPost({ contents, images }),
@@ -30,11 +51,33 @@ export default function Upload() {
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
       Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
       router.back();
     },
-    onError: () => {},
+    onError: () => {
+      Alert.alert("업로드 실패", "게시물 업로드에 실패했습니다.");
+    },
+  });
+
+  const editPostMutation = useMutation({
+    mutationFn: () => {
+      if (!postId) {
+        throw new Error("게시물 ID가 없습니다.");
+      }
+      return updatePost({ postId, contents, images });
+    },
+    onSuccess: () => {
+      setImages([]);
+      setContents("");
+
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+
+      Alert.alert("수정 성공", "게시물이 성공적으로 수정되었습니다.");
+      router.back();
+    },
+    onError: () => {
+      Alert.alert("수정 실패", "게시물 수정에 실패했습니다.");
+    },
   });
 
   const handleUpload = async () => {
@@ -43,9 +86,13 @@ export default function Upload() {
       return;
     }
 
-    if (uploadPostMutation.isPending) return;
+    if (uploadPostMutation.isPending || editPostMutation.isPending) return;
 
-    uploadPostMutation.mutate();
+    if (postId) {
+      editPostMutation.mutate();
+    } else {
+      uploadPostMutation.mutate();
+    }
   };
 
   const imageOptions: ImagePicker.ImagePickerOptions = {

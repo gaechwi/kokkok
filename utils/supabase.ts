@@ -275,6 +275,79 @@ export async function getPosts({
   }
 }
 
+// 게시글 상세 조회
+export async function getPost(postId: number) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { data: post, error: postError } = await supabase
+      .from("post")
+      .select(
+        `
+        id,
+        images,
+        contents,
+        likes,
+        createdAt,
+        user (id, username, avatarUrl)
+      `,
+      )
+      .eq("id", postId)
+      .single();
+
+    if (postError) throw postError;
+    if (!post) throw new Error("게시글을 찾을 수 없습니다.");
+
+    const {
+      data: comment,
+      error: commentError,
+      count,
+    } = await supabase
+      .from("comment")
+      .select("id, contents, likes, author:user (id, username, avatarUrl)", {
+        count: "exact",
+      })
+      .eq("postId", postId)
+      .order("likes", { ascending: false })
+      .order("createdAt", { ascending: false })
+      .single();
+
+    if (commentError && commentError.code !== "PGRST116") {
+      // 댓글이 없는 경우 오류 처리
+      throw commentError;
+    }
+
+    let isLiked = false;
+
+    if (user) {
+      // postLike 테이블에서 좋아요 여부 확인
+      const { data: likeData, error: likeError } = await supabase
+        .from("postLike")
+        .select("id")
+        .eq("postId", postId)
+        .eq("userId", user.id)
+        .single();
+
+      if (likeError && likeError.code !== "PGRST116") {
+        throw likeError;
+      }
+      isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
+    }
+
+    return {
+      ...post,
+      comment: { ...comment, totalComments: count },
+      isLiked,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // 게시글 좋아요 토글
 export async function toggleLikePost(postId: number) {
   try {
@@ -361,6 +434,105 @@ export async function createPost({
       error instanceof Error
         ? `createPost: ${error.message}`
         : "게시물 생성에 실패했습니다.";
+    throw new Error(errorMessage);
+  }
+}
+
+// 게시글 수정
+export async function updatePost({
+  postId,
+  images,
+  contents,
+}: {
+  postId: number;
+  images: ImagePicker.ImagePickerAsset[];
+  contents: string;
+}) {
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+
+    // 기존 게시글 조회
+    const { data: existingPost, error: postError } = await supabase
+      .from("post")
+      .select("userId, contents, images")
+      .eq("id", postId)
+      .single();
+
+    if (postError) throw postError;
+    if (!existingPost) throw new Error("게시글을 찾을 수 없습니다.");
+
+    // 작성자 권한 체크
+    if (user.id !== existingPost.userId) {
+      throw new Error("게시글 작성자만 수정할 수 있습니다.");
+    }
+
+    // 변경사항 체크
+    const contentsChanged = contents !== existingPost.contents;
+    const imagesChanged = images.length !== existingPost.images.length;
+
+    // 변경사항이 없으면 기존 게시글 반환
+    if (!contentsChanged && !imagesChanged) {
+      return existingPost;
+    }
+
+    // 이미지가 변경된 경우에만 새로 업로드
+    let validImageUrls = existingPost.images;
+    if (imagesChanged) {
+      const imageUrls = await Promise.all(
+        images.map((image) => uploadImage(image)),
+      );
+      validImageUrls = imageUrls.filter(
+        (url): url is string => url !== undefined,
+      );
+    }
+
+    // 게시글 수정
+    const { data: updatedPost, error: updateError } = await supabase
+      .from("post")
+      .update({ contents, images: validImageUrls })
+      .eq("id", postId)
+      .select("*, user: userId (id, username, avatarUrl)")
+      .single();
+
+    if (updateError) throw updateError;
+    if (!updatedPost) throw new Error("게시글 수정에 실패했습니다.");
+
+    return updatedPost;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "게시글 수정에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 게시글 삭제
+export async function deletePost(postId: number) {
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+
+    // 게시글 작성자인지 확인
+    const { data: post, error: postError } = await supabase
+      .from("post")
+      .select("userId")
+      .eq("id", postId)
+      .single();
+
+    if (postError) throw postError;
+    if (!post) throw new Error("게시글을 찾을 수 없습니다.");
+
+    if (user.id !== post.userId) {
+      throw new Error("게시글 작성자만 삭제할 수 있습니다.");
+    }
+
+    await supabase.from("post").delete().eq("id", postId);
+
+    return { message: "게시글이 삭제되었습니다." };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "게시글 삭제에 실패했습니다";
     throw new Error(errorMessage);
   }
 }
