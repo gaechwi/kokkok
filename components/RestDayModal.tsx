@@ -9,6 +9,7 @@ import RestDayCalendar from "./RestDayCalendar";
 
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
+import { formatDate } from "@/utils/formatDate";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 
@@ -56,12 +57,7 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   };
 
   const handleSelectDate = (date: Date) => {
-    const formattedDate = `${date.getFullYear()}-${String(
-      date.getMonth() + 1,
-    ).padStart(
-      2,
-      "0",
-    )}-${String(date.getDate()).padStart(2, "0")}` as `${number}-${number}-${number}`;
+    const formattedDate = formatDate(date) as `${number}-${number}-${number}`;
 
     setRestDates((prev) => {
       const exists = prev.some((rd) => rd.date === formattedDate);
