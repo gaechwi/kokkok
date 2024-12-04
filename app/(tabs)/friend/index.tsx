@@ -4,18 +4,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FriendItem } from "@/components/FriendItem";
 import SearchBar from "@/components/SearchBar";
-import { getFriends } from "@/utils/supabase";
+import { getCurrentUser, getFriends } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
 import type { FriendResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import type { User } from "@/types/User.interface";
+import type { User, UserProfile } from "@/types/User.interface";
 
 const OFFSET = 0;
 const LIMIT = 12;
 
 interface FriendLayoutProps {
-  friends: User[];
+  friends: UserProfile[];
   emptyComponent: React.ReactElement;
 }
 
@@ -27,10 +27,9 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
       <FlatList
         data={friends}
         keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => (
-          <FriendItem key={friend.id} fromUser={friend} />
-        )}
+        renderItem={({ item: friend }) => <FriendItem fromUser={friend} />}
         className="px-6 grow w-full"
+        contentContainerStyle={friends.length ? {} : { flex: 1 }}
         ListHeaderComponent={
           <SearchBar
             value={keyword}
@@ -38,7 +37,6 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
             handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
           />
         }
-        contentContainerStyle={friends.length ? {} : { flex: 1 }}
         ListEmptyComponent={emptyComponent}
         ListFooterComponent={<View className="h-4" />}
       />
@@ -47,18 +45,28 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
 }
 
 export default function Friend() {
+  const { data: user, error: userError } = useFetchData<User>(
+    ["currentUser"],
+    getCurrentUser,
+    "로그인 정보 조회에 실패했습니다.",
+  );
+
   const {
     data: friends,
     isLoading,
-    error,
+    error: friendsError,
   } = useFetchData<FriendResponse>(
     ["friends", OFFSET],
-    () => getFriends({ offset: OFFSET, limit: LIMIT }),
+    () => getFriends(user?.id || ""),
     "친구 조회에 실패했습니다.",
+    !!user,
   );
 
-  if (error) {
-    const errorMessage = error?.message || "친구 조회에 실패했습니다.";
+  if (userError || friendsError) {
+    const errorMessage =
+      userError?.message ||
+      friendsError?.message ||
+      "친구 조회에 실패했습니다.";
     return (
       <FriendLayout
         friends={[]}

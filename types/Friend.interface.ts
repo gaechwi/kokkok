@@ -1,9 +1,9 @@
-import type { User } from "./User.interface";
+import type { UserProfile } from "./User.interface";
 
 export interface RequestInfo {
   requestId: string;
   toUserId: string;
-  fromUser: User;
+  fromUser: UserProfile;
 }
 
 export interface RequestResponse {
@@ -13,7 +13,7 @@ export interface RequestResponse {
 }
 
 export interface FriendResponse {
-  data: User[];
+  data: UserProfile[];
   total: number;
   hasMore: boolean;
 }
