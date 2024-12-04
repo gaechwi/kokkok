@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type Session } from "@supabase/supabase-js";
 import type * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
@@ -105,19 +105,40 @@ export async function signIn({
 // ============================================
 
 // 유저 정보 조회
-export async function getUser(id: string): Promise<User> {
+export async function getUser(userId: string): Promise<User> {
   try {
-    const { data, error } = await supabase.from("user").select().eq("id", id);
+    const { data, error } = await supabase
+      .from("user")
+      .select()
+      .eq("id", userId)
+      .single();
 
     if (error) throw error;
     if (!data) throw new Error("유저를 불러올 수 없습니다.");
 
-    return data[0];
+    return data;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "유저 정보 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
+}
+
+// 로그인한 유저 세션 정보 조회
+export async function getCurrentSession(): Promise<Session> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) throw new Error("세션 정보를 찾을 수 없습니다");
+
+  return session;
+}
+
+// 로그인한 유저 정보 조회
+export async function getCurrentUser(): Promise<User> {
+  const { user } = await getCurrentSession();
+  return await getUser(user.id);
 }
 
 // ============================================
@@ -278,15 +299,11 @@ export async function getPosts({
 // ============================================
 
 // 친구 조회
-export async function getFriends({
+export async function getFriends(
+  userId: string,
   offset = 0,
   limit = 12,
-}: {
-  offset?: number;
-  limit?: number;
-}): Promise<FriendResponse> {
-  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
-
+): Promise<FriendResponse> {
   const { data, error, count } = await supabase
     .from("friendRequest")
     .select(
@@ -295,7 +312,7 @@ export async function getFriends({
       `,
       { count: "exact" },
     )
-    .eq("from", user.id)
+    .eq("from", userId)
     .eq("isAccepted", true)
     .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
     .range(offset, offset + limit - 1);
@@ -311,15 +328,11 @@ export async function getFriends({
 }
 
 // 친구요청 조회 조회
-export async function getFriendRequests({
+export async function getFriendRequests(
+  userId: string,
   offset = 0,
   limit = 12,
-}: {
-  offset?: number;
-  limit?: number;
-}): Promise<RequestResponse> {
-  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
-
+): Promise<RequestResponse> {
   const { data, error, count } = await supabase
     .from("friendRequest")
     .select(
@@ -330,7 +343,7 @@ export async function getFriendRequests({
         `,
       { count: "exact" },
     )
-    .eq("to", user.id)
+    .eq("to", userId)
     .is("isAccepted", null)
     .order("createdAt", { ascending: false })
     .range(offset, offset + limit - 1);
