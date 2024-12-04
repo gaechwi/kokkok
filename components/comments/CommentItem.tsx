@@ -10,6 +10,7 @@ import CustomModal, { DeleteModal } from "../Modal";
 
 interface CommentItemProps {
   id: number;
+  postId: number;
   content: string;
   author: {
     id: string;
@@ -23,6 +24,7 @@ interface CommentItemProps {
 
 export default function CommentItem({
   id,
+  postId,
   content,
   author,
   liked = false,
@@ -61,7 +63,8 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments"] });
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: () => {
       Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");

@@ -303,6 +303,7 @@ export default function CommentsSection({
                       <CommentItem
                         key={item.id}
                         id={Number(item.id)}
+                        postId={postId}
                         content={item.contents}
                         createdAt={item.createdAt}
                         likedAuthorAvatar={[]}
