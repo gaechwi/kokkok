@@ -24,7 +24,8 @@ interface PostItemProps {
     };
     content: string;
   };
-  onCommentsPress: () => void; // 새로 추가
+  postId: number;
+  onCommentsPress: (postId: number) => void;
 }
 
 export default function PostItem({
@@ -36,7 +37,8 @@ export default function PostItem({
   createdAt,
   commentsCount = 0,
   comment,
-  onCommentsPress, // 새로 추가
+  postId,
+  onCommentsPress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
@@ -105,7 +107,7 @@ export default function PostItem({
 
             {/* likeAvatar */}
             {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
-              <TouchableOpacity className="ml-[2px] flex-row items-center">
+              <Pressable className="ml-[2px] flex-row items-center">
                 {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
@@ -125,12 +127,12 @@ export default function PostItem({
                     외 여러명
                   </Text>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             )}
 
             {/* comments */}
-            <TouchableOpacity
-              onPress={onCommentsPress} // 수정된 부분
+            <Pressable
+              onPress={() => onCommentsPress(postId)}
               className="ml-[10px] flex-row items-center gap-[4px]"
             >
               <icons.CommentIcon
@@ -143,7 +145,7 @@ export default function PostItem({
                   {commentsCount > 99 ? "99+" : commentsCount}
                 </Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* createdAt */}
@@ -174,8 +176,10 @@ export default function PostItem({
 
             {/* comments */}
             {comment && (
-              <Pressable onPress={onCommentsPress} className="mt-2 px-2">
-                {/* 수정된 부분 */}
+              <Pressable
+                onPress={() => onCommentsPress(postId)}
+                className="mt-2 px-2"
+              >
                 <View className="flex-row items-center gap-2">
                   <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
                     {comment.author.name}

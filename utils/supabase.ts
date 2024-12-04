@@ -7,11 +7,12 @@ import { decode } from "base64-arraybuffer";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
 import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 import type { User } from "@/types/User.interface";
+import type { Database } from "@/types/supabase";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -107,12 +108,20 @@ export async function signIn({
 // 유저 정보 조회
 export async function getUser(id: string): Promise<User> {
   try {
-    const { data, error } = await supabase.from("user").select().eq("id", id);
+    const { data, error } = await supabase
+      .from("user")
+      .select()
+      .eq("id", id)
+      .single();
 
     if (error) throw error;
     if (!data) throw new Error("유저를 불러올 수 없습니다.");
 
-    return data[0];
+    return {
+      ...data,
+      avatarUrl: data.avatarUrl || "",
+      description: data.description || "",
+    };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "유저 정보 조회에 실패했습니다";
@@ -203,7 +212,7 @@ export async function createPost({
       .insert([
         {
           // user_id: user.id,
-          contents: postContents,
+          contents: postContents || "",
           images: validImageUrls,
         },
       ])
@@ -222,13 +231,16 @@ export async function createPost({
 
 // 게시글 조회
 export async function getPosts({
-  offset = 0,
+  page = 0,
   limit = 10,
 }: {
-  offset?: number;
+  page?: number;
   limit?: number;
-}): Promise<{ posts: Post[]; total: number; hasMore: boolean }> {
+}) {
   try {
+    const start = page * limit;
+    const end = start + limit - 1;
+
     const {
       data: posts,
       error: postsError,
@@ -240,35 +252,94 @@ export async function getPosts({
         id,
         images,
         contents,
-        created_at,
-        likes
+        likes,
+        createdAt,
+        user (id, username, avatarUrl)
       `,
         { count: "exact" },
       )
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order("createdAt", { ascending: false })
+      .range(start, end);
 
     if (postsError) throw postsError;
     if (!posts) throw new Error("게시글을 불러올 수 없습니다.");
 
     return {
-      posts: posts.map(
-        (post): Post => ({
-          id: post.id,
-          images: post.images,
-          contents: post.contents,
-          createdAt: post.created_at,
-          likes: post.likes,
-        }),
-      ),
-      total: count || 0,
-      hasMore: count ? offset + limit < count : false,
+      posts,
+      total: count ?? 0,
+      hasNext: count ? end + 1 < count : false,
+      nextPage: page + 1,
     };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
+}
+
+// ============================================
+//
+//                    Comment
+//
+// ============================================
+
+// 댓글 조회
+export async function getComments(postId: number, page = 0, limit = 10) {
+  try {
+    const start = page * limit;
+    const end = start + limit - 1;
+
+    const { data, error, count } = await supabase
+      .from("comment")
+      .select(
+        `
+          id, 
+          content,
+          userId, 
+          createdAt, 
+          user (id, username, avatarUrl)
+        `,
+        { count: "exact" },
+      )
+      .eq("postId", postId)
+      // .order("likes", { ascending: false })
+      .order("createdAt", { ascending: false })
+      .range(start, end);
+
+    if (error) throw error;
+    if (!data) throw new Error("댓글을 가져올 수 없습니다.");
+
+    return {
+      comments: data,
+      total: count ?? 0,
+      hasNext: count ? end + 1 < count : false,
+      nextPage: page + 1,
+    };
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "댓글 조회에 실패했습니다",
+    );
+  }
+}
+
+export async function createComment({
+  userId,
+  postId,
+  content,
+}: {
+  userId: string;
+  postId: number;
+  content: string;
+}) {
+  const { data, error } = await supabase
+    .from("comment")
+    .insert({ postId, content, userId })
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("댓글을 생성할 수 없습니다.");
+
+  return data;
 }
 
 // ============================================
@@ -349,7 +420,7 @@ export async function getFriendRequests({
 
   return {
     data: data.map((request, idx) => ({
-      requestId: request.id,
+      requestId: request.id.toString(),
       toUserId: request.to,
       fromUser: fromUsers[idx],
     })),
@@ -397,20 +468,4 @@ export async function deleteFriendRequest(requestId: string) {
       error instanceof Error ? error.message : "친구 요청 삭제에 실패했습니다";
     throw new Error(errorMessage);
   }
-}
-
-// ============================================
-//
-//                    type
-//
-// ============================================
-
-// 게시글 타입 정의
-interface Post {
-  id: string;
-  images: string[];
-  contents: string;
-  createdAt: string;
-  likes: number;
-  // author: User;
 }

@@ -5,14 +5,13 @@ import { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 interface CommentItemProps {
-  id: string;
+  id: number;
   content: string;
-  user: {
+  author: {
     id: string;
     username: string;
-    avatar: string;
-  };
-  likes?: number;
+    avatarUrl: string | null;
+  } | null;
   liked?: boolean;
   likedAuthorAvatar: string[];
   createdAt: string;
@@ -21,8 +20,7 @@ interface CommentItemProps {
 export default function CommentItem({
   id,
   content,
-  user,
-  likes = 0,
+  author,
   liked = false,
   likedAuthorAvatar = [],
   createdAt,
@@ -31,20 +29,29 @@ export default function CommentItem({
 
   const diff = diffDate(new Date(createdAt));
 
+  if (!author) return null;
+  if (!author.avatarUrl) return null;
+
   return (
     <View className="mb-4 gap-[13px] border-gray-20 border-b">
       {/* header */}
       <View className="flex-row items-center justify-between">
         {/* user info */}
-        <TouchableOpacity>
-          <View className="flex-row items-center gap-2">
+        <TouchableOpacity className="flex-1">
+          <View className="flex-1 flex-row items-center gap-2 ">
             <Image
-              source={{ uri: user.avatar }}
+              source={{ uri: author.avatarUrl }}
               resizeMode="cover"
               className="size-12 rounded-full"
             />
-            <View>
-              <Text className="title-4 text-black">{user.username}</Text>
+            <View className="max-w-[80%]">
+              <Text
+                className="title-4 text-black"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {author.username}
+              </Text>
               <Text className="font-pmedium text-[10px] text-gray-50 leading-[150%]">
                 {diff}
               </Text>

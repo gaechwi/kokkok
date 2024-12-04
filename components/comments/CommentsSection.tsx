@@ -9,8 +9,6 @@ import {
   PanResponder,
   Dimensions,
   RefreshControl,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
   ActivityIndicator,
   TextInput,
   Image,
@@ -21,6 +19,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
 import { LinearGradient } from "expo-linear-gradient";
+import { getComments } from "@/utils/supabase";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 const { height: deviceHeight } = Dimensions.get("window");
 const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 90 : 82;
@@ -39,17 +43,15 @@ const ANIMATION_CONFIG = {
 interface CommentsSectionProps {
   visible: boolean;
   onClose: () => void;
-  comments: Parameters<typeof CommentItem>[0][];
+  postId: number;
 }
 
 export default function CommentsSection({
   visible,
   onClose,
-  comments,
+  postId,
 }: CommentsSectionProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
   const slideAnim = useMemo(() => new Animated.Value(0), []);
   const heightRef = useRef(DEFAULT_HEIGHT);
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
@@ -61,8 +63,25 @@ export default function CommentsSection({
   };
   const [comment, setComment] = useState("");
   const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
-
   const animationRef = useRef<Animated.CompositeAnimation>();
+  const queryClient = useQueryClient();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["comments", postId],
+      queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
+      getNextPageParam: (lastPage) =>
+        lastPage.hasNext ? lastPage.nextPage : undefined,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      placeholderData: keepPreviousData,
+      initialPageParam: 0,
+    });
+
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     const cleanupAnimations = () => animationRef.current?.stop();
@@ -104,6 +123,7 @@ export default function CommentsSection({
     Animated.timing(slideAnim, {
       toValue: visible ? 1 : 0,
       ...ANIMATION_CONFIG,
+      useNativeDriver: true,
     }).start();
   }, [visible, slideAnim]);
 
@@ -170,48 +190,10 @@ export default function CommentsSection({
   const AnimatedView = Animated.createAnimatedComponent(View);
 
   const onRefresh = useCallback(async () => {
-    //   setRefreshing(true);
-    //   setPage(0);
-    //   await fetchPosts();
-    //   setRefreshing(false);
-  }, []);
-
-  const loadMorePosts = useCallback(async () => {
-    // if (loading || !posts.hasMore) return;
-    // setLoading(true);
-    // const nextPage = page + 1;
-    // const morePosts = await getPosts({
-    //   offset: nextPage * LIMIT,
-    //   limit: LIMIT,
-    // });
-    // setPosts((prev) => {
-    //   const existingIds = new Set(prev.posts.map((post) => post.id));
-    //   const newPosts = morePosts.posts.filter(
-    //     (post) => !existingIds.has(post.id),
-    //   );
-    //   return {
-    //     posts: [...prev.posts, ...newPosts],
-    //     total: morePosts.total,
-    //     hasMore: morePosts.hasMore && newPosts.length > 0,
-    //   };
-    // });
-    // setPage(nextPage);
-    // setLoading(false);
-  }, []);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { layoutMeasurement, contentOffset, contentSize } =
-        event.nativeEvent;
-      const isEndReached =
-        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-
-      if (isEndReached) {
-        loadMorePosts();
-      }
-    },
-    [loadMorePosts],
-  );
+    setRefreshing(true);
+    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    setRefreshing(false);
+  }, [queryClient, postId]);
 
   return (
     <Modal
@@ -251,15 +233,15 @@ export default function CommentsSection({
               }}
             >
               <SafeAreaView
-                edges={["bottom"]}
-                className="h-full rounded-t-[20px] border border-gray-300 bg-white"
+                edges={[]}
+                className="h-full rounded-t-[20px] border border-gray-20 bg-white"
               >
                 <View className="flex-1">
                   <View
                     className="w-full items-center py-2.5"
                     {...panResponder.panHandlers}
                   >
-                    <View className="h-1 w-10 rounded-[2px] bg-gray-200" />
+                    <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
                   </View>
 
                   <View className="relative z-10 w-full pb-2.5">
@@ -283,34 +265,46 @@ export default function CommentsSection({
                   </View>
 
                   <FlatList
-                    className="px-8"
-                    data={comments}
+                    className="flex-1 px-8"
+                    maintainVisibleContentPosition={{
+                      minIndexForVisible: 0,
+                    }}
+                    ListHeaderComponent={<View className="h-4" />}
+                    data={data?.pages.flatMap((page) => page.comments) || []}
                     keyExtractor={(item) => item.id.toString()}
-                    initialNumToRender={10}
-                    removeClippedSubviews
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => <CommentItem {...item} />}
-                    ListHeaderComponent={<View className="pt-4" />}
-                    ListEmptyComponent={
-                      <Text className="heading-2 mt-5 text-center text-gray-90">
-                        아직 댓글이 없습니다.
-                      </Text>
-                    }
+                    onEndReachedThreshold={0.5}
+                    onEndReached={loadMore}
                     refreshControl={
                       <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                       />
                     }
-                    onEndReached={loadMorePosts}
-                    onEndReachedThreshold={0.5}
+                    renderItem={({ item }) => (
+                      <CommentItem
+                        key={item.id}
+                        id={Number(item.id)}
+                        content={item.content}
+                        createdAt={item.createdAt}
+                        likedAuthorAvatar={[]}
+                        liked={false}
+                        author={item.user}
+                      />
+                    )}
                     ListFooterComponent={
-                      loading ? (
+                      isFetchingNextPage ? (
                         <ActivityIndicator size="large" className="py-4" />
                       ) : null
                     }
-                    onScroll={handleScroll}
-                    keyboardShouldPersistTaps="always"
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
+                    ListEmptyComponent={
+                      <View className="flex-1 items-center justify-center">
+                        <Text className="title-3 text-gray-70">
+                          아직 댓글이 없어요.
+                        </Text>
+                      </View>
+                    }
                   />
                 </View>
               </SafeAreaView>
@@ -331,11 +325,8 @@ export default function CommentsSection({
           <TextInput
             className="z-10 max-h-[120px] min-h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
             placeholder="댓글을 입력해주세요."
-            keyboardType="default"
             autoCapitalize="words"
-            multiline={true}
-            numberOfLines={1}
-            maxLength={400}
+            keyboardType="default"
             textAlignVertical="center"
             accessibilityLabel="댓글 입력"
             accessibilityHint="댓글을 입력해주세요."
