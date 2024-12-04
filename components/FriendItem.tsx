@@ -72,6 +72,8 @@ export function FriendItem({ fromUser, status }: FriendItemProps) {
       <TouchableOpacity
         className="bg-primary disabled:bg-gray-40 w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center"
         disabled={!!status}
+        accessibilityLabel="친구 찌르기"
+        accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
       >
         {status === "DONE" ? (
           <View className="flex-row items-center justify-center">
@@ -147,6 +149,8 @@ export function FriendRequest({
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
           onPress={() => handleAccept(requestId, fromUser.id, toUserId)}
           disabled={isProcessing || isLoading}
+          accessibilityLabel="친구 요청 수락"
+          accessibilityHint="이 버튼을 누르면 친구 요청을 수락합니다"
         >
           <Text className="caption-1 font-pmedium text-white">수락</Text>
         </TouchableOpacity>
@@ -154,6 +158,8 @@ export function FriendRequest({
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
           onPress={() => handleRefuse(requestId)}
           disabled={isProcessing || isLoading}
+          accessibilityLabel="친구 요청 거절"
+          accessibilityHint="이 버튼을 누르면 친구 요청을 거절합니다"
         >
           <Text className="caption-1 font-pmedium text-gray-90">거절</Text>
         </TouchableOpacity>
