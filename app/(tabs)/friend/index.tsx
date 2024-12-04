@@ -9,30 +9,44 @@ import useFetchData from "@/hooks/useFetchData";
 import type { FriendResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
+import type { User } from "@/types/User.interface";
 
 const OFFSET = 0;
 const LIMIT = 12;
 
 interface FriendLayoutProps {
-  keyword: string;
-  onChangeText: (newKeyworkd: string) => void;
-  children: React.ReactNode;
+  friends: User[];
+  emptyComponent: React.ReactElement;
 }
 
-function FriendLayout({ keyword, onChangeText, children }: FriendLayoutProps) {
+function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
+  const [keyword, setKeyword] = useState("");
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <View className="flex-1 px-6 pt-6">
-        <SearchBar value={keyword} handleChangeText={onChangeText} />
-        {children}
-      </View>
+      <FlatList
+        data={friends}
+        keyExtractor={(friend) => friend.id}
+        renderItem={({ item: friend }) => (
+          <FriendItem key={friend.id} fromUser={friend} />
+        )}
+        className="px-6 grow w-full"
+        ListHeaderComponent={
+          <SearchBar
+            value={keyword}
+            customClassName="mt-6 mb-2"
+            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+          />
+        }
+        contentContainerStyle={friends.length ? {} : { flex: 1 }}
+        ListEmptyComponent={emptyComponent}
+        ListFooterComponent={<View className="h-4" />}
+      />
     </SafeAreaView>
   );
 }
 
 export default function Friend() {
-  const [keyword, setKeyword] = useState("");
-
   const {
     data: friends,
     isLoading,
@@ -44,47 +58,23 @@ export default function Friend() {
   );
 
   if (error) {
+    const errorMessage = error?.message || "친구 조회에 실패했습니다.";
     return (
       <FriendLayout
-        keyword={keyword}
-        onChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-      >
-        <ErrorScreen
-          errorMessage={error?.message || "친구 조회에 실패했습니다."}
-        />
-      </FriendLayout>
+        friends={[]}
+        emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
+      />
     );
   }
 
   if (isLoading || !friends) {
-    return (
-      <FriendLayout
-        keyword={keyword}
-        onChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-      >
-        <LoadingScreen />
-      </FriendLayout>
-    );
+    return <FriendLayout friends={[]} emptyComponent={<LoadingScreen />} />;
   }
 
   return (
-    <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <FlatList
-        data={friends.data}
-        keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => (
-          <FriendItem key={friend.id} fromUser={friend} />
-        )}
-        className="px-6 grow w-full"
-        ListHeaderComponent={
-          <SearchBar
-            value={keyword}
-            customClassName="mt-6"
-            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
-          />
-        }
-        ListFooterComponent={<View className="h-4" />}
-      />
-    </SafeAreaView>
+    <FriendLayout
+      friends={friends.data}
+      emptyComponent={<ErrorScreen errorMessage="아직 친구가 없습니다." />}
+    />
   );
 }
