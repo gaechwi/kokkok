@@ -1,54 +1,55 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { useState } from "react";
-import WorkoutCalendar from "@/components/WorkoutCalendar";
-import icons from "@/constants/icons";
-import colors from "@/constants/colors";
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  type TouchableOpacityProps,
+  View,
+} from "react-native";
+import { useCallback, useEffect, useState } from "react";
 
-type Status = "DONE" | "REST";
-interface Mock {
-  date: string;
-  status: Status;
-}
-const mock: Mock[] = [
-  { date: "2024-11-01T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-02T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-05T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-08T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-14T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-15T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-16T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-19T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-20T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-24T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-25T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-28T00:00:00.000Z", status: "DONE" },
-  { date: "2024-11-29T00:00:00.000Z", status: "REST" },
-  { date: "2024-11-30T00:00:00.000Z", status: "DONE" },
-  { date: "2024-12-01T00:00:00.000Z", status: "DONE" },
-  { date: "2024-12-10T00:00:00.000Z", status: "REST" },
-  { date: "2024-12-13T00:00:00.000Z", status: "DONE" },
-];
+import useCalendar from "@/hooks/useCalendar";
+import useModal from "@/hooks/useModal";
+
+import { getHistories } from "@/utils/supabase";
+
+import RestDayModal from "@/components/RestDayModal";
+import CalendarNavigator from "@/components/CalendarNavigator";
+import WorkoutCalendar from "@/components/WorkoutCalendar";
+
+import icons from "@/constants/icons";
+
+type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const month = currentDate.getMonth() + 1;
-
-  const workoutDays = mock.filter(
-    (item) =>
-      Number(item.date.split("-")[1]) === month && item.status === "DONE",
-  ).length;
+  const { date, year, month, currentYear, currentMonth, changeMonth } =
+    useCalendar();
+  const [histories, setHistories] = useState<History[]>([]);
+  const { isModalVisible, openModal, closeModal } = useModal();
 
   const handlePreviousMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() - 1);
-    setCurrentDate(newDate);
+    changeMonth(-1);
+  };
+  const handleNextMonth = () => {
+    changeMonth(1);
   };
 
-  const handleNextMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + 1);
-    setCurrentDate(newDate);
-  };
+  const loadHistory = useCallback(async () => {
+    try {
+      const data = await getHistories(year, month);
+      setHistories(data);
+    } catch (error) {
+      console.error("운동 기록 불러오기 에러:", error);
+    }
+  }, [year, month]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const workoutDays = histories.filter(
+    (item) =>
+      new Date(item.date).getMonth() + 1 === month && item.status === "done",
+  ).length;
 
   return (
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
@@ -58,18 +59,18 @@ export default function History() {
           완료!
         </Text>
 
-        <TouchableOpacity className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25">
-          <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
-        </TouchableOpacity>
+        <SetRestDayButton onPress={openModal} />
+        <RestDayModal visible={isModalVisible} onClose={closeModal} />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
         <CalendarNavigator
-          date={currentDate}
+          date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
+          isNextDisabled={year === currentYear && month >= currentMonth}
         />
-        <WorkoutCalendar date={currentDate} workoutStatus={mock} />
+        <WorkoutCalendar date={date} workoutStatuses={histories} />
       </View>
 
       <FaceExplanation />
@@ -77,51 +78,14 @@ export default function History() {
   );
 }
 
-interface CalendarNavigatorProps {
-  date: Date;
-  onPrevious: () => void;
-  onNext: () => void;
-}
-
-function CalendarNavigator({
-  date,
-  onPrevious,
-  onNext,
-}: CalendarNavigatorProps) {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-
-  const isNextDisabled = year === currentYear && month >= currentMonth;
-
+function SetRestDayButton({ onPress }: TouchableOpacityProps) {
   return (
-    <View className="flex-row items-center gap-[24px]">
-      {/* Previous Button */}
-      <TouchableOpacity onPress={onPrevious}>
-        <icons.ChevronLeftIcon width={20} height={20} color={colors.gray[90]} />
-      </TouchableOpacity>
-
-      {/* Month Display */}
-      <Text
-        className={`heading-2 text-center ${year === currentYear ? "w-[43px]" : "w-[87px]"}`}
-      >
-        {year === currentYear
-          ? `${month}월`
-          : `${String(year).slice(2)}년 ${month}월`}
-      </Text>
-
-      {/* Next Button */}
-      <TouchableOpacity onPress={onNext} disabled={isNextDisabled}>
-        <icons.ChevronRightIcon
-          width={20}
-          height={20}
-          color={isNextDisabled ? colors.gray[30] : colors.gray[90]}
-        />
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      className="h-[36px] w-[85px] items-center justify-center rounded-[8px] border border-gray-25"
+      onPress={onPress}
+    >
+      <Text className="body-5 text-gray-90">쉬는 날 설정</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -139,7 +103,7 @@ function FaceExplanation() {
 
       <View className="ml-auto flex-row gap-[8px]">
         {faces.map(({ icon, label }) => (
-          <View key={label} className="w-[32px] items-center">
+          <View key={label} className="w-[34px] items-center">
             {icon}
             <Text className="caption-3">{label}</Text>
           </View>

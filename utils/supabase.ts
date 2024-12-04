@@ -401,6 +401,104 @@ export async function deleteFriendRequest(requestId: string) {
 
 // ============================================
 //
+//                    history
+//
+// ============================================
+
+// 운동 기록 조희
+export async function getHistories(
+  year: number,
+  month: number,
+): Promise<History[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const startDateString = `${year}-${String(month).padStart(2, "0")}-01`;
+  const endDate = new Date(year, month, 0); // month+1의 0번째 날짜는 해당 월의 마지막 날
+  const endDateString = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(
+    endDate.getDate(),
+  ).padStart(2, "0")}`;
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date, status")
+    .eq("userId", userId)
+    .gte("date", startDateString)
+    .lte("date", endDateString)
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
+// 쉬는 날 조회
+export async function getRestDays(): Promise<Pick<History, "date">[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const currentDate = new Date();
+  const startOfMonth = `${currentDate.getFullYear()}-${String(
+    currentDate.getMonth() + 1,
+  ).padStart(2, "0")}-01`;
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .gte("date", startOfMonth)
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
+// 쉬는 날 추가
+export async function addRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const records = dates.map(({ date }) => ({
+    userId,
+    date,
+    status: "rest" as const,
+  }));
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .upsert(records, {
+      onConflict: "userId,date",
+      ignoreDuplicates: false,
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
+// 쉬는 날 제거
+export async function deleteRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const days = dates.map((item) => item.date);
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .delete()
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .in("date", days);
+
+  if (error) {
+    throw error;
+  }
+}
+
+// ============================================
+//
 //                    type
 //
 // ============================================
@@ -413,4 +511,11 @@ interface Post {
   createdAt: string;
   likes: number;
   // author: User;
+}
+
+// 운동 기록 타입 정의
+type HistoryDate = `${number}-${number}-${number}`;
+interface History {
+  date: HistoryDate;
+  status: "done" | "rest";
 }
