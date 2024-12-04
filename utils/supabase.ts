@@ -364,11 +364,17 @@ export async function getHistories(
 export async function getRestDays(): Promise<Pick<History, "date">[]> {
   const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
 
+  const currentDate = new Date();
+  const startOfMonth = `${currentDate.getFullYear()}-${String(
+    currentDate.getMonth() + 1,
+  ).padStart(2, "0")}-01`;
+
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date")
     .eq("userId", userId)
     .eq("status", "rest")
+    .gte("date", startOfMonth)
     .order("date", { ascending: true });
 
   if (error) throw error;
