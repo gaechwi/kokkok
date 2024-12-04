@@ -10,13 +10,6 @@ import {
 } from "@/utils/supabase";
 import type { UserProfile } from "@/types/User.interface";
 
-// 추후 적당한 위치로 이동
-const FIT_STATUS = {
-  DONE: "운동함",
-  REST: "쉬는 날",
-} as const;
-type StatusType = keyof typeof FIT_STATUS;
-
 /* Interfaces */
 
 interface FriendProfileProps {
@@ -27,7 +20,6 @@ interface FriendProfileProps {
 
 interface FriendItemProps {
   fromUser: UserProfile;
-  status?: StatusType;
 }
 
 interface FriendRequestProps {
@@ -63,23 +55,23 @@ const FriendProfile = ({
 
 /* Components */
 
-export function FriendItem({ fromUser, status }: FriendItemProps) {
+export function FriendItem({ fromUser }: FriendItemProps) {
   return (
     <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile {...fromUser} />
 
       <TouchableOpacity
-        className="bg-primary disabled:bg-gray-40 w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center"
-        disabled={!!status}
+        className={`${!fromUser.status ? "bg-primary" : "bg-gray-40"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
+        disabled={!!fromUser.status}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
       >
-        {status === "DONE" ? (
+        {fromUser.status === "done" ? (
           <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[5px]">운동 완료</Text>
             <icons.FaceDoneIcon width={19} height={19} />
           </View>
-        ) : status === "REST" ? (
+        ) : fromUser.status === "rest" ? (
           <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[8px]">쉬는 중</Text>
             <icons.FaceRestIcon width={19} height={19} />

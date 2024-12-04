@@ -5,8 +5,9 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
-import type { User } from "@/types/User.interface";
+import type { RequestResponse } from "@/types/Friend.interface";
+import type { StatusType, User, UserProfile } from "@/types/User.interface";
+import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -299,32 +300,35 @@ export async function getPosts({
 // ============================================
 
 // 친구 조회
-export async function getFriends(
-  userId: string,
-  offset = 0,
-  limit = 12,
-): Promise<FriendResponse> {
-  const { data, error, count } = await supabase
+export async function getFriends(userId: string): Promise<UserProfile[]> {
+  const { data, error } = await supabase
     .from("friendRequest")
     .select(
-      `
-      to: user!friendRequset_to_fkey (id, username, avatarUrl, description)
-      `,
-      { count: "exact" },
+      "to: user!friendRequset_to_fkey (id, username, avatarUrl, description)",
     )
     .eq("from", userId)
-    .eq("isAccepted", true)
-    .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
-    .range(offset, offset + limit - 1);
+    .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return {
-    data: data.map(({ to }) => to),
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
-  };
+  return data.map(({ to }) => to);
+}
+
+// 모든 친구의 운동 상태 조회
+export async function getFriendsStatus(
+  friendIds: string[],
+): Promise<Record<string, StatusType>[]> {
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("userId, status")
+    .filter("userId", "in", `(${friendIds})`)
+    .eq("date", formatDate(new Date()));
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 운동 상태를 불러올 수 없습니다.");
+
+  return data;
 }
 
 // 친구요청 조회 조회

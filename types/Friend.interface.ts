@@ -11,9 +11,3 @@ export interface RequestResponse {
   total: number;
   hasMore: boolean;
 }
-
-export interface FriendResponse {
-  data: UserProfile[];
-  total: number;
-  hasMore: boolean;
-}
