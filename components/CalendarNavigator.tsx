@@ -36,7 +36,7 @@ export default function CalendarNavigator({
 
       {/* Month Display */}
       <Text
-        className={`heading-2 text-center ${year === currentYear ? "w-[43px]" : "w-[87px]"}`}
+        className={`heading-2 text-center ${year === currentYear ? "w-[53px]" : "w-[101px]"}`}
       >
         {year === currentYear
           ? `${month}월`

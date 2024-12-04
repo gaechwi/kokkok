@@ -103,7 +103,7 @@ function FaceExplanation() {
 
       <View className="ml-auto flex-row gap-[8px]">
         {faces.map(({ icon, label }) => (
-          <View key={label} className="w-[32px] items-center">
+          <View key={label} className="w-[34px] items-center">
             {icon}
             <Text className="caption-3">{label}</Text>
           </View>
