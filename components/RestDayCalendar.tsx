@@ -2,7 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 interface RestDayCalendarProps {
   date: Date;
-  restDates: { date: string }[];
+  restDates: { date: `${number}-${number}-${number}` }[];
   onSelectDate: (date: Date) => void;
 }
 
@@ -25,10 +25,8 @@ export default function RestDayCalendar({
       const day = index - firstDayOfMonth + 1;
       const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(
         day,
-      ).padStart(2, "0")}`;
-      const isRest = !!restDates.some(
-        (rd) => rd.date.split("T")[0] === formattedDate,
-      );
+      ).padStart(2, "0")}` as `${number}-${number}-${number}`;
+      const isRest = !!restDates.some((rd) => rd.date === formattedDate);
 
       return { day, isRest };
     },
