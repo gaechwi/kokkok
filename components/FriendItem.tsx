@@ -92,6 +92,7 @@ export function FriendRequest({
 }: FriendRequestProps) {
   const queryClient = useQueryClient();
 
+  // 친구 요청 수락
   const { mutate: handleAccept, isPending: isAcceptPending } = useMutation({
     mutationFn: async () => {
       await Promise.all([
@@ -113,6 +114,7 @@ export function FriendRequest({
     },
   });
 
+  // 친구 요청 거절
   const { mutate: handleRefuse, isPending: isRefusePending } = useMutation({
     mutationFn: async () => {
       await deleteFriendRequest(requestId);
@@ -144,6 +146,7 @@ export function FriendRequest({
         >
           <Text className="caption-1 font-pmedium text-white">수락</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
           onPress={() => handleRefuse()}

@@ -17,12 +17,14 @@ const LIMIT = 12;
 export default function Request() {
   const queryClient = useQueryClient();
 
+  // 로그인한 유저 정보 조회
   const { data: user, error: userError } = useFetchData<User>(
     ["currentUser"],
     getCurrentUser,
     "로그인 정보 조회에 실패했습니다.",
   );
 
+  // 유저의 친구 요청 정보 조회
   const {
     data: requests,
     isLoading,
@@ -34,6 +36,7 @@ export default function Request() {
     !!user,
   );
 
+  // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
     const requestChannel = supabase
       .channel("friendRequest")
@@ -52,6 +55,7 @@ export default function Request() {
     };
   }, [user, queryClient.invalidateQueries]);
 
+  // 에러 스크린
   if (error || userError) {
     return (
       <ErrorScreen
@@ -62,6 +66,7 @@ export default function Request() {
     );
   }
 
+  // 로딩 스크린
   if (isLoading || !requests) {
     return <LoadingScreen />;
   }
