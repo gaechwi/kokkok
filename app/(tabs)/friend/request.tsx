@@ -35,15 +35,13 @@ export default function Request() {
   );
 
   useEffect(() => {
-    const userId = "8a49fc55-8604-4e9a-9c7d-b33a813f3344";
-
     const requestChannel = supabase
       .channel("friendRequest")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "friendRequest" },
         (payload) => {
-          if (!payload.new.isAccepted && payload.new.to === userId)
+          if (!payload.new.isAccepted && payload.new.to === user?.id)
             queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         },
       )
@@ -52,12 +50,14 @@ export default function Request() {
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [queryClient.invalidateQueries]);
+  }, [user, queryClient.invalidateQueries]);
 
-  if (error) {
+  if (error || userError) {
     return (
       <ErrorScreen
-        errorMessage={error?.message || "친구 조회에 실패했습니다."}
+        errorMessage={
+          error?.message || userError?.message || "친구 조회에 실패했습니다."
+        }
       />
     );
   }
