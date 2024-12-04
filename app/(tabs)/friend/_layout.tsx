@@ -11,6 +11,9 @@ const SCREEN_OPTIONS = {
     height: 64,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "transparent",
+    borderBottomColor: colors.gray[20],
+    borderBottomWidth: 1,
   },
   tabBarIndicatorStyle: {
     backgroundColor: colors.primary,
