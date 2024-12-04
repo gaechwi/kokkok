@@ -1,6 +1,5 @@
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -99,46 +98,45 @@ export function FriendRequest({
   fromUser,
   isLoading,
 }: FriendRequestProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
   const queryClient = useQueryClient();
 
-  const handleAccept = async (requestId: string, from: string, to: string) => {
-    try {
-      setIsProcessing(true);
+  const { mutate: handleAccept, isPending: isAcceptPending } = useMutation({
+    mutationFn: async () => {
       await Promise.all([
         putFriendRequest(requestId, true),
-        createFriendRequest(to, from, true),
+        createFriendRequest(toUserId, fromUser.id, true),
       ]);
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
       queryClient.invalidateQueries({ queryKey: ["friends"] });
-    } catch (error) {
+    },
+    onError: (error) => {
       Alert.alert(
         "친구 요청 수락 실패",
         error instanceof Error
           ? error.message
           : "친구 요청 수락에 실패했습니다",
       );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    },
+  });
 
-  const handleRefuse = async (requestId: string) => {
-    try {
-      setIsProcessing(true);
+  const { mutate: handleRefuse, isPending: isRefusePending } = useMutation({
+    mutationFn: async () => {
       await deleteFriendRequest(requestId);
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-    } catch (error) {
+    },
+    onError: (error) => {
       Alert.alert(
         "친구 요청 거절 실패",
         error instanceof Error
           ? error.message
           : "친구 요청 거절에 실패했습니다",
       );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    },
+  });
 
   return (
     <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
@@ -147,8 +145,8 @@ export function FriendRequest({
       <View className="flex-row gap-[11px]">
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
-          onPress={() => handleAccept(requestId, fromUser.id, toUserId)}
-          disabled={isProcessing || isLoading}
+          onPress={() => handleAccept()}
+          disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 수락"
           accessibilityHint="이 버튼을 누르면 친구 요청을 수락합니다"
         >
@@ -156,8 +154,8 @@ export function FriendRequest({
         </TouchableOpacity>
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
-          onPress={() => handleRefuse(requestId)}
-          disabled={isProcessing || isLoading}
+          onPress={() => handleRefuse()}
+          disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 거절"
           accessibilityHint="이 버튼을 누르면 친구 요청을 거절합니다"
         >
