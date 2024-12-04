@@ -103,14 +103,19 @@ export function FriendRequest({
   const handleAccept = async (requestId: string, from: string, to: string) => {
     try {
       setIsProcessing(true);
-      await putFriendRequest(requestId, true);
-      await createFriendRequest(to, from, true);
+      await Promise.all([
+        putFriendRequest(requestId, true),
+        createFriendRequest(to, from, true),
+      ]);
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
       queryClient.invalidateQueries({ queryKey: ["friends"] });
     } catch (error) {
-      error instanceof Error
-        ? Alert.alert(error.message)
-        : Alert.alert("친구 요청 수락에 실패했습니다");
+      Alert.alert(
+        "친구 요청 수락 실패",
+        error instanceof Error
+          ? error.message
+          : "친구 요청 수락에 실패했습니다",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -122,9 +127,12 @@ export function FriendRequest({
       await deleteFriendRequest(requestId);
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     } catch (error) {
-      error instanceof Error
-        ? Alert.alert(error.message)
-        : Alert.alert("친구 요청 삭제에 실패했습니다");
+      Alert.alert(
+        "친구 요청 거절 실패",
+        error instanceof Error
+          ? error.message
+          : "친구 요청 거절에 실패했습니다",
+      );
     } finally {
       setIsProcessing(false);
     }
