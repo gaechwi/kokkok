@@ -19,15 +19,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
 import { LinearGradient } from "expo-linear-gradient";
-import { getComments } from "@/utils/supabase";
+import { getComments, getUser } from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import useFetchData from "@/hooks/useFetchData";
 
 const { height: deviceHeight } = Dimensions.get("window");
-const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 90 : 82;
+const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 100 : 82;
 const MIN_HEIGHT = 0;
 const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
 const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
@@ -49,16 +50,16 @@ export default function CommentsSection({
   const slideAnim = useMemo(() => new Animated.Value(0), []);
   const heightRef = useRef(DEFAULT_HEIGHT);
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
-  const user = {
-    id: "151232aws2132",
-    username: "난이름",
-    avatar:
-      "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp",
-  };
+
   const [comment, setComment] = useState("");
   const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
   const animationRef = useRef<Animated.CompositeAnimation>();
   const queryClient = useQueryClient();
+
+  // 유저 정보 가져오기
+  const user = useFetchData(["user"], () => getUser(), "user");
+
+  // 댓글 가져오기 (무한 스크롤)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["comments", postId],
@@ -71,15 +72,19 @@ export default function CommentsSection({
       initialPageParam: 0,
     });
 
+  // 댓글 더 불러오기
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // 키보드 이벤트 처리
   useEffect(() => {
+    // 애니메이션 정리
     const cleanupAnimations = () => animationRef.current?.stop();
 
+    // 키보드가 나타나면 높이 조절
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
@@ -90,6 +95,7 @@ export default function CommentsSection({
       },
     );
 
+    // 키보드가 사라지면 높이 조절
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
@@ -113,15 +119,19 @@ export default function CommentsSection({
     };
   }, [heightAnim]);
 
+  // 댓글 목록 열기 애니메이션
   useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: visible ? 1 : 0,
-      duration: DURATION,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-      useNativeDriver: true,
-    }).start();
+    if (visible) {
+      Animated.timing(slideAnim, {
+        toValue: visible ? 1 : 0,
+        duration: DURATION,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: true,
+      }).start();
+    }
   }, [visible, slideAnim]);
 
+  // 댓글 목록 닫기
   const handleClose = useCallback(() => {
     Animated.timing(heightAnim, {
       toValue: 0,
@@ -309,10 +319,10 @@ export default function CommentsSection({
 
         {/* comment input */}
         <View
-          className={`z-10 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
+          className={`z-10 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-7" : "pb-4"}`}
         >
           <Image
-            source={{ uri: user.avatar }}
+            source={{ uri: user.data?.avatarUrl || undefined }}
             resizeMode="cover"
             className="size-12 rounded-full"
           />

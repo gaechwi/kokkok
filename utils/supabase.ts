@@ -5,8 +5,6 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
-import type { User } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 
 const supabaseUrl = SUPABASE_URL;
@@ -106,22 +104,21 @@ export async function signIn({
 // ============================================
 
 // 유저 정보 조회
-export async function getUser(id: string): Promise<User> {
+export async function getUser() {
   try {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) throw new Error("유저 ID를 찾을 수 없습니다.");
+
     const { data, error } = await supabase
       .from("user")
       .select()
-      .eq("id", id)
+      .eq("id", userId)
       .single();
 
     if (error) throw error;
     if (!data) throw new Error("유저를 불러올 수 없습니다.");
 
-    return {
-      ...data,
-      avatarUrl: data.avatarUrl || "",
-      description: data.description || "",
-    };
+    return data;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "유저 정보 조회에 실패했습니다";
@@ -516,7 +513,7 @@ export async function getFriends({
 }: {
   offset?: number;
   limit?: number;
-}): Promise<FriendResponse> {
+}) {
   const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
 
   const { data, error, count } = await supabase
@@ -530,7 +527,7 @@ export async function getFriends({
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  const friends = await Promise.all(data.map((request) => getUser(request.to)));
+  const friends = await Promise.all(data.map(() => getUser()));
 
   return {
     data: friends,
@@ -546,7 +543,7 @@ export async function getFriendRequests({
 }: {
   offset?: number;
   limit?: number;
-}): Promise<RequestResponse> {
+}) {
   // 현재 로그인된 사용자 정보 가져오기
   // const {
   //   data: { user },
@@ -575,9 +572,7 @@ export async function getFriendRequests({
   if (error) throw error;
 
   // FIXME 개선 필요
-  const fromUsers = await Promise.all(
-    data.map((request) => getUser(request.from)),
-  );
+  const fromUsers = await Promise.all(data.map(() => getUser()));
 
   return {
     data: data.map((request, idx) => ({

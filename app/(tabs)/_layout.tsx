@@ -8,6 +8,7 @@ import {
   HeaderWithBack,
   HeaderWithNotification,
   HeaderWithSettingAndNotification,
+  HeaderTypo,
 } from "@/components/Header";
 
 /* constants */
@@ -75,7 +76,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            header: () => <HeaderWithNotification name="HOME" />,
+            header: () => <HeaderTypo />,
             title: "Home",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}

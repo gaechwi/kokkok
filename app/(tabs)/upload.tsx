@@ -14,39 +14,38 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import CustomModal from "@/components/Modal";
 import { createPost } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Upload() {
   const router = useRouter();
-  const [isUploading, setIsUploading] = useState(false);
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleUpload = async () => {
-    try {
-      if (images.length === 0) {
-        Alert.alert("알림", "이미지를 추가해주세요.");
-        return;
-      }
-
-      setIsUploading(true);
-
-      await createPost({
-        contents,
-        images,
-      });
-
+  const uploadPostMutation = useMutation({
+    mutationFn: () => createPost({ contents, images }),
+    onSuccess: () => {
       setImages([]);
       setContents("");
 
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+
       Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
       router.back();
-    } catch (error) {
-      console.log(error);
-      Alert.alert("업로드 실패", "게시물 업로드에 실패했습니다.");
-    } finally {
-      setIsUploading(false);
+    },
+    onError: () => {},
+  });
+
+  const handleUpload = async () => {
+    if (images.length === 0) {
+      Alert.alert("알림", "이미지를 추가해주세요.");
+      return;
     }
+
+    if (uploadPostMutation.isPending) return;
+
+    uploadPostMutation.mutate();
   };
 
   const imageOptions: ImagePicker.ImagePickerOptions = {
@@ -58,7 +57,8 @@ export default function Upload() {
   };
 
   const pickImage = async () => {
-    if (isUploading) return;
+    if (uploadPostMutation.isPending) return;
+
     if (images.length >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
@@ -79,7 +79,8 @@ export default function Upload() {
   };
 
   const takePhoto = async () => {
-    if (isUploading) return;
+    if (uploadPostMutation.isPending) return;
+
     if (images.length >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
@@ -100,7 +101,7 @@ export default function Upload() {
   };
 
   const handleDeleteImage = (indexToDelete: number) => {
-    if (isUploading) return;
+    if (uploadPostMutation.isPending) return;
     setImages(images.filter((_, index) => index !== indexToDelete));
   };
 
@@ -126,7 +127,7 @@ export default function Upload() {
               <TouchableOpacity
                 className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
                 onPress={() => handleDeleteImage(index)}
-                disabled={isUploading}
+                disabled={uploadPostMutation.isPending}
               >
                 <Icons.XIcon width={16} height={16} color={colors.white} />
               </TouchableOpacity>
@@ -138,7 +139,7 @@ export default function Upload() {
               <TouchableOpacity
                 className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
                 onPress={() => setIsModalVisible(true)}
-                disabled={isUploading}
+                disabled={uploadPostMutation.isPending}
               >
                 <Icons.PlusIcon width={24} height={24} color={colors.white} />
               </TouchableOpacity>
@@ -184,7 +185,7 @@ export default function Upload() {
           textAlignVertical="top"
           value={contents}
           onChangeText={setContents}
-          editable={!isUploading}
+          editable={!uploadPostMutation.isPending}
         />
       </View>
 
@@ -192,10 +193,10 @@ export default function Upload() {
         <TouchableOpacity
           className="mt-8 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary disabled:bg-gray-20"
           onPress={handleUpload}
-          disabled={isUploading || images.length === 0}
+          disabled={uploadPostMutation.isPending || images.length === 0}
         >
           <Text className="heading-2 text-white">
-            {isUploading ? "인증중..." : "인증"}
+            {uploadPostMutation.isPending ? "인증중..." : "인증"}
           </Text>
         </TouchableOpacity>
       </View>
