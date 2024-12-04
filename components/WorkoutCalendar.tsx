@@ -30,8 +30,7 @@ export default function WorkoutCalendar({
         day,
       ).padStart(2, "0")}`;
       const status =
-        workoutStatuses.find((ws) => ws.date.split("T")[0] === formattedDate)
-          ?.status ?? null;
+        workoutStatuses.find((ws) => ws.date === formattedDate)?.status ?? null;
 
       return { day, status };
     },

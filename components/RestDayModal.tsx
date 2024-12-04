@@ -19,6 +19,9 @@ interface RestDayModalProps {
 
 export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   const [date, setDate] = useState<Date>(new Date());
+  const [defaultDates, setDefaultDates] = useState<RestDay[]>([]);
+  const [restDates, setRestDates] = useState<RestDay[]>([]);
+
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
 
@@ -26,8 +29,6 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
-  const [defaultDates, setDefaultDates] = useState<RestDay[]>([]);
-  const [restDates, setRestDates] = useState<RestDay[]>([]);
   const loadRestDates = useCallback(async () => {
     try {
       const data = await getRestDays();
@@ -42,17 +43,15 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
     loadRestDates();
   }, [loadRestDates]);
 
-  const isPreviousDisabled = year === currentYear && month <= currentMonth;
-
   const handlePreviousMonth = () => {
     const newDate = new Date(date);
-    newDate.setMonth(date.getMonth() - 1);
+    newDate.setMonth(month - 2);
     setDate(newDate);
   };
 
   const handleNextMonth = () => {
     const newDate = new Date(date);
-    newDate.setMonth(date.getMonth() + 1);
+    newDate.setMonth(month);
     setDate(newDate);
   };
 
@@ -112,7 +111,7 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
           date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
-          isPreviousDisabled={isPreviousDisabled}
+          isPreviousDisabled={year === currentYear && month <= currentMonth}
         />
 
         <RestDayCalendar

@@ -19,6 +19,9 @@ type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
   const [date, setDate] = useState<Date>(new Date());
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [histories, setHistories] = useState<History[]>([]);
+
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
 
@@ -26,21 +29,18 @@ export default function History() {
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
-  const isNextDisabled = year === currentYear && month >= currentMonth;
-
   const handlePreviousMonth = () => {
     const newDate = new Date(date);
-    newDate.setMonth(date.getMonth() - 1);
+    newDate.setMonth(month - 2);
     setDate(newDate);
   };
 
   const handleNextMonth = () => {
     const newDate = new Date(date);
-    newDate.setMonth(date.getMonth() + 1);
+    newDate.setMonth(month);
     setDate(newDate);
   };
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -48,7 +48,6 @@ export default function History() {
     setIsModalOpen(false);
   };
 
-  const [histories, setHistories] = useState<History[]>([]);
   const loadHistory = useCallback(async () => {
     try {
       const data = await getHistories();
@@ -58,14 +57,14 @@ export default function History() {
     }
   }, []);
 
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
   const workoutDays = histories.filter(
     (item) =>
       new Date(item.date).getMonth() + 1 === month && item.status === "done",
   ).length;
-
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
 
   return (
     <ScrollView className="flex-1 bg-white px-[24px] pt-[18px]">
@@ -84,7 +83,7 @@ export default function History() {
           date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
-          isNextDisabled={isNextDisabled}
+          isNextDisabled={year === currentYear && month >= currentMonth}
         />
         <WorkoutCalendar date={date} workoutStatuses={histories} />
       </View>
