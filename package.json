@@ -39,7 +39,8 @@
     "react-native-svg": "15.8.0",
     "react-native-web": "~0.19.13",
     "tailwindcss": "^3.4.15",
-    "react-native-pager-view": "6.5.1"
+    "react-native-pager-view": "6.5.1",
+    "expo-linear-gradient": "~14.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
