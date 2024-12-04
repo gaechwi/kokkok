@@ -35,12 +35,12 @@ export default function History() {
 
   const loadHistory = useCallback(async () => {
     try {
-      const data = await getHistories();
+      const data = await getHistories(year, month);
       setHistories(data);
     } catch (error) {
       console.error("운동 기록 불러오기 에러:", error);
     }
-  }, []);
+  }, [year, month]);
 
   useEffect(() => {
     loadHistory();

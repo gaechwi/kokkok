@@ -336,13 +336,24 @@ export async function getFriendRequests({
 //
 // ============================================
 
-export async function getHistories(): Promise<History[]> {
+export async function getHistories(
+  year: number,
+  month: number,
+): Promise<History[]> {
   const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const startDateString = `${year}-${String(month).padStart(2, "0")}-01`;
+  const endDate = new Date(year, month, 0); // month+1의 0번째 날짜는 해당 월의 마지막 날
+  const endDateString = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(
+    endDate.getDate(),
+  ).padStart(2, "0")}`;
 
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date, status")
     .eq("userId", userId)
+    .gte("date", startDateString)
+    .lte("date", endDateString)
     .order("date", { ascending: true });
 
   if (error) throw error;
