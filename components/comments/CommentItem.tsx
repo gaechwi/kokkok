@@ -1,6 +1,8 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { diffDate } from "@/utils/formatDate";
+import { toggleLikeComment } from "@/utils/supabase";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
@@ -25,7 +27,17 @@ export default function CommentItem({
   likedAuthorAvatar = [],
   createdAt,
 }: CommentItemProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(liked);
+
+  const toggleLike = useMutation({
+    mutationFn: () => toggleLikeComment(id),
+    onMutate: () => {
+      setIsLiked((prev) => !prev);
+    },
+    onError: () => {
+      setIsLiked((prev) => !prev);
+    },
+  });
 
   const diff = diffDate(new Date(createdAt));
 
@@ -61,7 +73,11 @@ export default function CommentItem({
 
         <View className="flex-row items-center">
           {/* like */}
-          <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
+          <TouchableOpacity
+            onPress={() => {
+              if (!toggleLike.isPending) toggleLike.mutate();
+            }}
+          >
             <Icons.HeartIcon
               width={24}
               height={24}

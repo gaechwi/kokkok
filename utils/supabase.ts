@@ -400,8 +400,38 @@ export async function getComments(postId: number, page = 0, limit = 10) {
     if (error) throw error;
     if (!data) throw new Error("댓글을 가져올 수 없습니다.");
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const comments = await Promise.all(
+      data.map(async (comment) => {
+        let isLiked = false;
+
+        if (user) {
+          // commentLike 테이블에서 좋아요 여부 확인
+          const { data: likeData, error: likeError } = await supabase
+            .from("commentLike")
+            .select("id")
+            .eq("commentId", comment.id)
+            .eq("userId", user.id)
+            .single();
+
+          if (likeError && likeError.code !== "PGRST116") {
+            throw likeError;
+          }
+          isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
+        }
+
+        return {
+          ...comment,
+          isLiked,
+        };
+      }),
+    );
+
     return {
-      comments: data,
+      comments: comments,
       total: count ?? 0,
       hasNext: count ? end + 1 < count : false,
       nextPage: page + 1,
@@ -413,6 +443,46 @@ export async function getComments(postId: number, page = 0, limit = 10) {
   }
 }
 
+// 댓글 좋아요 토글
+export async function toggleLikeComment(commentId: number) {
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) throw userError;
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+
+    // commentLike 테이블에서 좋아요 여부 확인
+    const { data: likeData, error: likeError } = await supabase
+      .from("commentLike")
+      .select("id")
+      .eq("commentId", commentId)
+      .eq("userId", user.id)
+      .single();
+
+    if (likeError && likeError.code !== "PGRST116") {
+      throw likeError;
+    }
+
+    if (likeData) {
+      // 좋아요 취소
+      await supabase.from("commentLike").delete().eq("id", likeData.id);
+    } else {
+      // 좋아요
+      await supabase.from("commentLike").insert({ commentId, userId: user.id });
+    }
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "댓글 좋아요 토글에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 댓글 작성
 export async function createComment({
   userId,
   postId,

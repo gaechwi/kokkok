@@ -114,7 +114,6 @@ export default function CommentsSection({
   }, [heightAnim]);
 
   useEffect(() => {
-    console.log("visible", visible);
     Animated.timing(slideAnim, {
       toValue: visible ? 1 : 0,
       duration: DURATION,
@@ -283,7 +282,7 @@ export default function CommentsSection({
                         content={item.contents}
                         createdAt={item.createdAt}
                         likedAuthorAvatar={[]}
-                        liked={false}
+                        liked={item.isLiked}
                         author={item.user}
                       />
                     )}
