@@ -8,7 +8,7 @@ import {
   deleteFriendRequest,
   putFriendRequest,
 } from "@/utils/supabase";
-import type { User } from "@/types/User.interface";
+import type { UserProfile } from "@/types/User.interface";
 
 // 추후 적당한 위치로 이동
 const FIT_STATUS = {
@@ -26,14 +26,14 @@ interface FriendProfileProps {
 }
 
 interface FriendItemProps {
-  fromUser: User;
+  fromUser: UserProfile;
   status?: StatusType;
 }
 
 interface FriendRequestProps {
   requestId: string;
   toUserId: string;
-  fromUser: User;
+  fromUser: UserProfile;
   isLoading: boolean;
 }
 

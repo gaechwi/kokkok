@@ -289,7 +289,12 @@ export async function getFriends({
 
   const { data, error, count } = await supabase
     .from("friendRequest")
-    .select("to", { count: "exact" })
+    .select(
+      `
+      to: user!friendRequset_to_fkey (id, username, avatarUrl, description)
+      `,
+      { count: "exact" },
+    )
     .eq("from", user.id)
     .eq("isAccepted", true)
     .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
@@ -298,10 +303,8 @@ export async function getFriends({
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  const friends = await Promise.all(data.map((request) => getUser(request.to)));
-
   return {
-    data: friends,
+    data: data.map(({ to }) => to),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
   };
@@ -315,14 +318,6 @@ export async function getFriendRequests({
   offset?: number;
   limit?: number;
 }): Promise<RequestResponse> {
-  // 현재 로그인된 사용자 정보 가져오기
-  // const {
-  //   data: { user },
-  //   error: userError,
-  // } = await supabase.auth.getUser();
-
-  // if (userError) throw userError;
-  // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
   const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
 
   const { data, error, count } = await supabase
@@ -330,7 +325,7 @@ export async function getFriendRequests({
     .select(
       `
           id,
-          from,
+          from: user!friendRequset_from_fkey (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
@@ -342,16 +337,11 @@ export async function getFriendRequests({
 
   if (error) throw error;
 
-  // FIXME 개선 필요
-  const fromUsers = await Promise.all(
-    data.map((request) => getUser(request.from)),
-  );
-
   return {
-    data: data.map((request, idx) => ({
+    data: data.map((request) => ({
       requestId: request.id,
       toUserId: request.to,
-      fromUser: fromUsers[idx],
+      fromUser: request.from,
     })),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,

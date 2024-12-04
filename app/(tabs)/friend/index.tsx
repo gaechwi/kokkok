@@ -9,13 +9,13 @@ import useFetchData from "@/hooks/useFetchData";
 import type { FriendResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import type { User } from "@/types/User.interface";
+import type { UserProfile } from "@/types/User.interface";
 
 const OFFSET = 0;
 const LIMIT = 12;
 
 interface FriendLayoutProps {
-  friends: User[];
+  friends: UserProfile[];
   emptyComponent: React.ReactElement;
 }
 
@@ -27,9 +27,7 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
       <FlatList
         data={friends}
         keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => (
-          <FriendItem key={friend.id} fromUser={friend} />
-        )}
+        renderItem={({ item: friend }) => <FriendItem fromUser={friend} />}
         className="px-6 grow w-full"
         ListHeaderComponent={
           <SearchBar

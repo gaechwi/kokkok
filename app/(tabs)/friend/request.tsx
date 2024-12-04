@@ -40,11 +40,7 @@ export default function Request() {
         data={requests.data}
         keyExtractor={(request) => request.requestId}
         renderItem={({ item: request }) => (
-          <FriendRequest
-            key={request.requestId}
-            {...request}
-            isLoading={isLoading}
-          />
+          <FriendRequest {...request} isLoading={isLoading} />
         )}
         className="px-8 grow w-full"
         ListHeaderComponent={<View className="h-2" />}
