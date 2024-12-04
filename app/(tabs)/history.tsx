@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 
+import useCalendar from "@/hooks/useCalendar";
 import useModal from "@/hooks/useModal";
 
 import { getHistories } from "@/utils/supabase";
@@ -20,27 +21,16 @@ import icons from "@/constants/icons";
 type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
-  const [date, setDate] = useState<Date>(new Date());
+  const { date, year, month, currentYear, currentMonth, changeMonth } =
+    useCalendar();
   const [histories, setHistories] = useState<History[]>([]);
   const { isModalVisible, openModal, closeModal } = useModal();
 
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-
   const handlePreviousMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(month - 2);
-    setDate(newDate);
+    changeMonth(-1);
   };
-
   const handleNextMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(month);
-    setDate(newDate);
+    changeMonth(1);
   };
 
   const loadHistory = useCallback(async () => {

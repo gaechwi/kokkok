@@ -1,7 +1,10 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 
+import useCalendar from "@/hooks/useCalendar";
+
 import { addRestDay, deleteRestDay, getRestDays } from "@/utils/supabase";
+import { formatDate } from "@/utils/formatDate";
 
 import CustomModal from "./Modal";
 import CalendarNavigator from "./CalendarNavigator";
@@ -9,7 +12,6 @@ import RestDayCalendar from "./RestDayCalendar";
 
 import icons from "@/constants/icons";
 import colors from "@/constants/colors";
-import { formatDate } from "@/utils/formatDate";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 
@@ -19,16 +21,17 @@ interface RestDayModalProps {
 }
 
 export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
-  const [date, setDate] = useState<Date>(new Date());
+  const { date, year, month, currentYear, currentMonth, changeMonth } =
+    useCalendar();
   const [defaultDates, setDefaultDates] = useState<RestDay[]>([]);
   const [restDates, setRestDates] = useState<RestDay[]>([]);
 
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
+  const handlePreviousMonth = () => {
+    changeMonth(-1);
+  };
+  const handleNextMonth = () => {
+    changeMonth(1);
+  };
 
   const loadRestDates = useCallback(async () => {
     try {
@@ -43,18 +46,6 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   useEffect(() => {
     loadRestDates();
   }, [loadRestDates]);
-
-  const handlePreviousMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(month - 2);
-    setDate(newDate);
-  };
-
-  const handleNextMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(month);
-    setDate(newDate);
-  };
 
   const handleSelectDate = (date: Date) => {
     const formattedDate = formatDate(date) as `${number}-${number}-${number}`;
