@@ -19,6 +19,20 @@ const Step1 = () => {
   const router = useRouter();
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
 
+  const handleSendEmail = async () => {
+    try {
+      await resetPassword(resetEmail.email);
+      router.replace("/password-reset/step2");
+    } catch (error: unknown) {
+      Alert.alert(
+        "비밀번호 재설정 실패",
+        error instanceof Error
+          ? error.message
+          : "비밀번호 재설정에 실패했습니다.",
+      );
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -44,19 +58,7 @@ const Step1 = () => {
 
           <TouchableOpacity
             className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-            onPress={async () => {
-              try {
-                await resetPassword(resetEmail.email);
-                router.replace("/password-reset/step2");
-              } catch (error: unknown) {
-                Alert.alert(
-                  "비밀번호 재설정 실패",
-                  error instanceof Error
-                    ? error.message
-                    : "비밀번호 재설정에 실패했습니다.",
-                );
-              }
-            }}
+            onPress={handleSendEmail}
           >
             <Text className="heading-2 text-white">인증번호 발송</Text>
           </TouchableOpacity>

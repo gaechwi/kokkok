@@ -29,7 +29,7 @@ const Step1 = () => {
   const handleContinue = async () => {
     const { data: userData, error: userError } = await supabase
       .from("user")
-      .select("isOAuth")
+      .select("isOAuth, email")
       .eq("email", signUpForm.email)
       .single();
 
@@ -66,6 +66,11 @@ const Step1 = () => {
 
     if (userData?.isOAuth) {
       Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
+      return;
+    }
+
+    if (userData?.email) {
+      Alert.alert("알림", "이미 가입된 이메일입니다.");
       return;
     }
 
