@@ -70,7 +70,7 @@ export default function Home() {
               avatar: post.user?.avatarUrl ?? "",
             }}
             images={post.images}
-            liked={false}
+            liked={post.isLiked}
             likedAuthorAvatar={[]}
             contents={post.contents}
             createdAt={post.createdAt}

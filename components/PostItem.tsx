@@ -6,6 +6,8 @@ import icons from "@/constants/icons";
 import CustomModal from "./Modal";
 import colors from "@/constants/colors";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import { useMutation } from "@tanstack/react-query";
+import { toggleLikePost } from "@/utils/supabase";
 interface PostItemProps {
   author: {
     name: string;
@@ -50,6 +52,16 @@ export default function PostItem({
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
   };
+
+  const toggleLike = useMutation({
+    mutationFn: () => toggleLikePost(postId),
+    onMutate: () => {
+      setIsLiked((prev) => !prev);
+    },
+    onError: () => {
+      setIsLiked((prev) => !prev);
+    },
+  });
 
   return (
     <View className="grow bg-gray-10 pb-[10px]">
@@ -96,7 +108,11 @@ export default function PostItem({
         <View className="flex-row items-center justify-between bg-white px-4 pb-6">
           <View className="flex-row items-center pr-[2px]">
             {/* like */}
-            <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!toggleLike.isPending) toggleLike.mutate();
+              }}
+            >
               <icons.HeartIcon
                 width={24}
                 height={24}
