@@ -66,22 +66,22 @@ export default function Home() {
           <PostItem
             key={post.id}
             author={{
-              id: post.user?.id ?? "",
-              name: post.user?.username ?? "",
-              avatar: post.user?.avatarUrl ?? "",
+              id: post.userData?.id ?? "",
+              name: post.userData?.username ?? "",
+              avatar: post.userData?.avatarUrl ?? "",
             }}
             images={post.images}
-            liked={post.isLiked}
-            likedAuthorAvatar={[]}
+            liked={post.isLikedByUser}
+            likedAuthorAvatar={post.likedAvatars ?? []}
             contents={post.contents}
             createdAt={post.createdAt}
-            commentsCount={post.comment.totalComments ?? 0}
+            commentsCount={post.totalComments ?? 0}
             comment={{
               author: {
-                name: post.comment?.author?.username ?? "",
-                avatar: post.comment?.author?.avatarUrl ?? "",
+                name: post.commentData?.author?.username ?? "",
+                avatar: post.commentData?.author?.avatarUrl ?? "",
               },
-              content: post.comment?.contents ?? "",
+              content: post.commentData?.contents ?? "",
             }}
             postId={Number(post.id)}
             onCommentsPress={() => onOpenComments(Number(post.id))}

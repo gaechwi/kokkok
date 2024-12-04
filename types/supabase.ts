@@ -97,6 +97,42 @@ export type Database = {
           },
         ];
       };
+      friendHistory: {
+        Row: {
+          createAt: string | null;
+          historyId: number | null;
+          id: number;
+          userId: string | null;
+        };
+        Insert: {
+          createAt?: string | null;
+          historyId?: number | null;
+          id?: number;
+          userId?: string | null;
+        };
+        Update: {
+          createAt?: string | null;
+          historyId?: number | null;
+          id?: number;
+          userId?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "friendHistory_historyId_fkey";
+            columns: ["historyId"];
+            isOneToOne: false;
+            referencedRelation: "workoutHistory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "friendHistory_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       friendRequest: {
         Row: {
           createdAt: string;
@@ -245,21 +281,21 @@ export type Database = {
           createdAt: string;
           date: string;
           id: number;
-          status: string;
+          status: Database["public"]["Enums"]["workoutstatus"];
           userId: string;
         };
         Insert: {
           createdAt?: string;
           date: string;
           id?: number;
-          status: string;
+          status: Database["public"]["Enums"]["workoutstatus"];
           userId: string;
         };
         Update: {
           createdAt?: string;
           date?: string;
           id?: number;
-          status?: string;
+          status?: Database["public"]["Enums"]["workoutstatus"];
           userId?: string;
         };
         Relationships: [
@@ -277,10 +313,40 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_posts_with_details: {
+        Args: {
+          startindex: number;
+          endindex: number;
+        };
+        Returns: {
+          id: number;
+          images: string[];
+          contents: string;
+          createdAt: string;
+          userData: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
+          commentData: {
+            id: number;
+            contents: string;
+            createdAt: string;
+            userId: string;
+            author: {
+              id: string;
+              username: string;
+              avatarUrl: string | null;
+            };
+          };
+          totalComments: number;
+          likedAvatars: string[];
+          isLikedByUser: boolean;
+        }[];
+      };
     };
     Enums: {
-      [_ in never]: never;
+      workoutstatus: "done" | "rest";
     };
     CompositeTypes: {
       [_ in never]: never;

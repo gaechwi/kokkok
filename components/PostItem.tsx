@@ -80,6 +80,9 @@ export default function PostItem({
     onError: () => {
       setIsLiked((prev) => !prev);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
   });
 
   const deletePostMutation = useMutation({
@@ -99,13 +102,16 @@ export default function PostItem({
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
           <TouchableOpacity>
-            <View className="h-14 flex-row items-center gap-4">
+            <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
                 resizeMode="cover"
                 className="size-8 rounded-full"
               />
-              <Text className="body-3 text-gray-80">{author.name}</Text>
+              {/* username */}
+              <Text className="font-psemibold text-[13px] text-gray-80 leading-[150%]">
+                {author.name}
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -196,7 +202,7 @@ export default function PostItem({
                   />
                 ))}
                 {likedAuthorAvatar.length > 2 && (
-                  <Text className="pl-[2px] font-pbold text-[13px] text-gray-90 leading-[150%]">
+                  <Text className="pl-[2px] font-psemibold text-[13px] text-gray-90 leading-[150%]">
                     외 여러명
                   </Text>
                 )}
@@ -214,7 +220,7 @@ export default function PostItem({
                 color={colors.gray[90]}
               />
               {commentsCount > 0 && (
-                <Text className="font-pbold text-[13px] text-gray-90 leading-[150%]">
+                <Text className="font-psemibold text-[13px] text-gray-90 leading-[150%]">
                   {commentsCount > 99 ? "99+" : commentsCount}
                 </Text>
               )}

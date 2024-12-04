@@ -176,104 +176,32 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
 // ============================================
 
 // 게시글 조회
-export async function getPosts({
-  page = 0,
-  limit = 10,
-}: {
-  page?: number;
-  limit?: number;
-}) {
+export const getPosts = async ({ page = 0, limit = 10 }) => {
   try {
-    const start = page * limit;
-    const end = start + limit - 1;
-
-    const {
-      data,
-      error: postsError,
-      count,
-    } = await supabase
-      .from("post")
-      .select(
-        `
-        id,
-        images,
-        contents,
-        likes,
-        createdAt,
-        user (id, username, avatarUrl)
-      `,
-        { count: "exact" },
-      )
-      .order("createdAt", { ascending: false })
-      .range(start, end);
-
-    if (postsError) throw postsError;
-    if (!data) throw new Error("게시글을 불러올 수 없습니다.");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const posts = await Promise.all(
-      data.map(async (post) => {
-        const {
-          data: comment,
-          error: commentError,
-          count,
-        } = await supabase
-          .from("comment")
-          .select(
-            "id, contents, likes, author:user (id, username, avatarUrl)",
-            { count: "exact" },
-          )
-          .eq("postId", post.id)
-          .order("likes", { ascending: false })
-          .order("createdAt", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (commentError && commentError.code !== "PGRST116") {
-          // 댓글이 없는 경우 오류 처리
-          throw commentError;
-        }
-
-        let isLiked = false;
-
-        if (user) {
-          // postLike 테이블에서 좋아요 여부 확인
-          const { data: likeData, error: likeError } = await supabase
-            .from("postLike")
-            .select("id")
-            .eq("postId", post.id)
-            .eq("userId", user.id)
-            .single();
-
-          if (likeError && likeError.code !== "PGRST116") {
-            throw likeError;
-          }
-          isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
-        }
-
-        return {
-          ...post,
-          comment: { ...comment, totalComments: count },
-          isLiked,
-        };
-      }),
+    const { data, error, count } = await supabase.rpc(
+      "get_posts_with_details",
+      {
+        startindex: page * limit,
+        endindex: (page + 1) * limit - 1,
+      },
     );
 
+    if (error) {
+      console.error("Error fetching posts:", error);
+      throw new Error("게시글을 가져오는데 실패했습니다.");
+    }
+
     return {
-      posts,
-      total: count ?? 0,
+      posts: data,
+      total: count ?? data.length,
       hasNext: data.length === limit,
       nextPage: page + 1,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
-    throw new Error(errorMessage);
+    console.error("Error in getPosts:", error);
+    throw new Error("게시글을 가져오는데 실패했습니다.");
   }
-}
+};
 
 // 게시글 상세 조회
 export async function getPost(postId: number) {
