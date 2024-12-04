@@ -1,14 +1,22 @@
+import { useReactQueryDevTools } from "@dev-plugins/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Session } from "@supabase/supabase-js";
 
 import "../global.css";
 import { useFonts } from "expo-font";
-import { useEffect, useState } from "react";
 import { HeaderWithBack } from "@/components/Header";
-import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
+import { useOnlineManager } from "@/hooks/useOnlineManager";
+import { useAppState } from "@/hooks/useAppState";
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1 } },
+});
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,6 +32,11 @@ export default function RootLayout() {
     "Pretendard-SemiBold": require("../assets/fonts/Pretendard-SemiBold.otf"),
     "Pretendard-Thin": require("../assets/fonts/Pretendard-Thin.otf"),
   });
+
+  useOnlineManager();
+  useAppState();
+  // shift+m 누르고 Open @dev-plugins/react-query 선택
+  useReactQueryDevTools(queryClient);
 
   useEffect(() => {
     if (loaded || error) {
@@ -45,18 +58,20 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="notification"
-        options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
-      />
-      <Stack.Screen
-        name="setting"
-        options={{ header: () => <HeaderWithBack name="SETTING" /> }}
-      />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="notification"
+          options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
+        />
+        <Stack.Screen
+          name="setting"
+          options={{ header: () => <HeaderWithBack name="SETTING" /> }}
+        />
+      </Stack>
+    </QueryClientProvider>
   );
 }
