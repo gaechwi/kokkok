@@ -1,4 +1,5 @@
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -33,6 +34,7 @@ interface FriendRequestProps {
   requestId: string;
   toUserId: string;
   fromUser: User;
+  isLoading: boolean;
 }
 
 /* SubComponent */
@@ -63,12 +65,14 @@ const FriendProfile = ({
 
 export function FriendItem({ fromUser, status }: FriendItemProps) {
   return (
-    <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
+    <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile {...fromUser} />
 
       <TouchableOpacity
         className="bg-primary disabled:bg-gray-40 w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center"
         disabled={!!status}
+        accessibilityLabel="친구 찌르기"
+        accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
       >
         {status === "DONE" ? (
           <View className="flex-row items-center justify-center">
@@ -92,27 +96,47 @@ export function FriendRequest({
   requestId,
   toUserId,
   fromUser,
+  isLoading,
 }: FriendRequestProps) {
-  const handleAccept = async (requestId: string, from: string, to: string) => {
-    try {
-      await putFriendRequest(requestId, true);
-      await createFriendRequest(to, from, true);
-    } catch (error) {
-      error instanceof Error
-        ? Alert.alert(error.message)
-        : Alert.alert("친구 요청 수락에 실패했습니다");
-    }
-  };
+  const queryClient = useQueryClient();
 
-  const handleRefuse = async (requestId: string) => {
-    try {
+  const { mutate: handleAccept, isPending: isAcceptPending } = useMutation({
+    mutationFn: async () => {
+      await Promise.all([
+        putFriendRequest(requestId, true),
+        createFriendRequest(toUserId, fromUser.id, true),
+      ]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+    },
+    onError: (error) => {
+      Alert.alert(
+        "친구 요청 수락 실패",
+        error instanceof Error
+          ? error.message
+          : "친구 요청 수락에 실패했습니다",
+      );
+    },
+  });
+
+  const { mutate: handleRefuse, isPending: isRefusePending } = useMutation({
+    mutationFn: async () => {
       await deleteFriendRequest(requestId);
-    } catch (error) {
-      error instanceof Error
-        ? Alert.alert(error.message)
-        : Alert.alert("친구 요청 삭제에 실패했습니다");
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    },
+    onError: (error) => {
+      Alert.alert(
+        "친구 요청 거절 실패",
+        error instanceof Error
+          ? error.message
+          : "친구 요청 거절에 실패했습니다",
+      );
+    },
+  });
 
   return (
     <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
@@ -121,13 +145,19 @@ export function FriendRequest({
       <View className="flex-row gap-[11px]">
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
-          onPress={() => handleAccept(requestId, fromUser.id, toUserId)}
+          onPress={() => handleAccept()}
+          disabled={isAcceptPending || isRefusePending || isLoading}
+          accessibilityLabel="친구 요청 수락"
+          accessibilityHint="이 버튼을 누르면 친구 요청을 수락합니다"
         >
           <Text className="caption-1 font-pmedium text-white">수락</Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
-          onPress={() => handleRefuse(requestId)}
+          onPress={() => handleRefuse()}
+          disabled={isAcceptPending || isRefusePending || isLoading}
+          accessibilityLabel="친구 요청 거절"
+          accessibilityHint="이 버튼을 누르면 친구 요청을 거절합니다"
         >
           <Text className="caption-1 font-pmedium text-gray-90">거절</Text>
         </TouchableOpacity>
