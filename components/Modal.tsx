@@ -82,7 +82,7 @@ export function DeleteModal({
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
       <View className="items-center p-6">
-        <Icons.TrashCan width={30} height={38} />
+        <Icons.TrashCanIcon width={30} height={38} />
 
         <Text className="title-3 mt-4 text-center text-gray-90">
           삭제하면 되돌릴 수 없어요{"\n"}그래도 삭제하시겠어요?

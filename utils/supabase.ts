@@ -630,6 +630,37 @@ export async function createComment({
   }
 }
 
+// 댓글 삭제
+export async function deleteComment(commentId: number) {
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+
+    // 댓글 작성자인지 확인
+    const { data: comment, error: commentError } = await supabase
+      .from("comment")
+      .select("userId")
+      .eq("id", commentId)
+      .single();
+
+    if (commentError) throw commentError;
+    if (!comment) throw new Error("댓글을 찾을 수 없습니다.");
+
+    if (user.id !== comment.userId) {
+      throw new Error("댓글 작성자만 삭제할 수 있습니다.");
+    }
+
+    await supabase.from("comment").delete().eq("id", commentId);
+
+    return { message: "댓글이 삭제되었습니다." };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "댓글 삭제에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // ============================================
 //
 //                    friend

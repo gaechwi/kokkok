@@ -1,10 +1,12 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
+import useFetchData from "@/hooks/useFetchData";
 import { diffDate } from "@/utils/formatDate";
-import { toggleLikeComment } from "@/utils/supabase";
-import { useMutation } from "@tanstack/react-query";
+import { deleteComment, getUser, toggleLikeComment } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import CustomModal, { DeleteModal } from "../Modal";
 
 interface CommentItemProps {
   id: number;
@@ -28,6 +30,17 @@ export default function CommentItem({
   createdAt,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const queryClient = useQueryClient();
+
+  const toggleModal = () => {
+    setIsModalVisible((prev) => !prev);
+  };
+
+  const toggleDeleteModal = () => {
+    setIsDeleteModalVisible((prev) => !prev);
+  };
 
   const toggleLike = useMutation({
     mutationFn: () => toggleLikeComment(id),
@@ -36,6 +49,22 @@ export default function CommentItem({
     },
     onError: () => {
       setIsLiked((prev) => !prev);
+    },
+  });
+
+  const user = useFetchData(
+    ["user"],
+    getUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: () => deleteComment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
+    },
+    onError: () => {
+      Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");
     },
   });
 
@@ -108,6 +137,45 @@ export default function CommentItem({
                   외 여러명
                 </Text>
               )}
+            </TouchableOpacity>
+          )}
+
+          {/* kebab menu */}
+          {user.data?.id === author.id && (
+            <TouchableOpacity onPress={toggleDeleteModal}>
+              <Icons.KebabMenuIcon
+                width={24}
+                height={24}
+                color={colors.black}
+              />
+
+              <CustomModal
+                visible={isModalVisible}
+                onClose={toggleModal}
+                position="bottom"
+              >
+                <View className="items-center">
+                  <TouchableOpacity
+                    onPress={() => {
+                      toggleDeleteModal();
+                      toggleModal();
+                    }}
+                    className="h-[82px] w-full items-center justify-center"
+                  >
+                    <Text className="title-2 text-gray-90">삭제하기</Text>
+                  </TouchableOpacity>
+                </View>
+              </CustomModal>
+
+              <DeleteModal
+                isVisible={isDeleteModalVisible}
+                onClose={toggleDeleteModal}
+                onDelete={() => {
+                  if (deleteCommentMutation.isPending) return;
+                  deleteCommentMutation.mutate();
+                  toggleDeleteModal();
+                }}
+              />
             </TouchableOpacity>
           )}
         </View>

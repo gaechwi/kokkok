@@ -22,7 +22,8 @@ import HeartIcon from "@/assets/icons/heart.svg";
 import CommentIcon from "@/assets/icons/comment.svg";
 import BackIcon from "@/assets/icons/back.svg";
 import XIcon from "@/assets/icons/x.svg";
-import TrashCan from "@/assets/icons/trash_can.svg";
+import TrashCanIcon from "@/assets/icons/trash_can.svg";
+import KebabMenuIcon from "@/assets/icons/kebab.svg";
 
 export default {
   BellIcon,
@@ -49,5 +50,6 @@ export default {
   XIcon,
   SearchIcon,
   SettingIcon,
-  TrashCan,
+  TrashCanIcon,
+  KebabMenuIcon,
 };
