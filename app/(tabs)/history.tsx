@@ -7,6 +7,8 @@ import {
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 
+import useModal from "@/hooks/useModal";
+
 import { getHistories } from "@/utils/supabase";
 
 import RestDayModal from "@/components/RestDayModal";
@@ -19,8 +21,8 @@ type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
   const [date, setDate] = useState<Date>(new Date());
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [histories, setHistories] = useState<History[]>([]);
+  const { isModalVisible, openModal, closeModal } = useModal();
 
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
@@ -39,13 +41,6 @@ export default function History() {
     const newDate = new Date(date);
     newDate.setMonth(month);
     setDate(newDate);
-  };
-
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-  const closeModal = () => {
-    setIsModalOpen(false);
   };
 
   const loadHistory = useCallback(async () => {
@@ -75,7 +70,7 @@ export default function History() {
         </Text>
 
         <SetRestDayButton onPress={openModal} />
-        <RestDayModal visible={isModalOpen} onClose={closeModal} />
+        <RestDayModal visible={isModalVisible} onClose={closeModal} />
       </View>
 
       <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
