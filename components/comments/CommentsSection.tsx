@@ -15,14 +15,16 @@ import {
   Platform,
   KeyboardAvoidingView,
   Keyboard,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
 import { LinearGradient } from "expo-linear-gradient";
-import { getComments, getUser } from "@/utils/supabase";
+import { createComment, getComments, getUser } from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
 import useFetchData from "@/hooks/useFetchData";
@@ -200,6 +202,18 @@ export default function CommentsSection({
     setRefreshing(false);
   }, [queryClient, postId]);
 
+  const writeCommentMutation = useMutation({
+    mutationFn: () => createComment({ postId, contents: comment }),
+    onSuccess: () => {
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: () => {
+      Alert.alert("댓글 작성 실패", "댓글 작성에 실패했습니다.");
+    },
+  });
+
   return (
     <Modal
       transparent
@@ -337,6 +351,14 @@ export default function CommentsSection({
             accessibilityHint="댓글을 입력해주세요."
             value={comment}
             onChangeText={(text) => setComment(text)}
+            returnKeyType="send"
+            onSubmitEditing={() => {
+              if (comment.trim()) {
+                if (writeCommentMutation.isPending) return;
+                writeCommentMutation.mutate();
+              }
+            }}
+            blurOnSubmit={false}
           />
         </View>
       </KeyboardAvoidingView>

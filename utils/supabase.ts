@@ -581,23 +581,53 @@ export async function toggleLikeComment(commentId: number) {
 
 // 댓글 작성
 export async function createComment({
-  userId,
   postId,
   contents,
 }: {
-  userId: string;
   postId: number;
   contents: string;
 }) {
-  const { data, error } = await supabase
-    .from("comment")
-    .insert({ postId, contents, userId })
-    .single();
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  if (error) throw error;
-  if (!data) throw new Error("댓글을 생성할 수 없습니다.");
+    if (userError) throw userError;
+    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
-  return data;
+    console.log("user", user, "postId", postId, "contents", contents);
+    console.log("userError", userError);
+
+    const { data: newComment, error: commentError } = await supabase
+      .from("comment")
+      .insert({
+        postId,
+        userId: user.id,
+        contents,
+      })
+      .select(
+        `
+          id, 
+          contents, 
+          userId, 
+          createdAt, 
+          user (id, username, avatarUrl)
+        `,
+      )
+      .single();
+
+    console.log("newComment", newComment, "commentError", commentError);
+
+    if (commentError) throw commentError;
+    if (!newComment) throw new Error("댓글을 생성하는데 실패했습니다.");
+
+    return newComment;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "댓글 생성에 실패했습니다";
+    throw new Error(errorMessage);
+  }
 }
 
 // ============================================
