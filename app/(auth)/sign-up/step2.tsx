@@ -14,36 +14,16 @@ import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
 import { signUp, verifySignUpOTP } from "@/utils/supabase";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatTime } from "@/utils/formatTime";
+import { useTimeLeft } from "@/hooks/useTimeLeft";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
   const [otpcode, setOtpcode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(3600);
 
   const router = useRouter();
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearInterval(timer);
-    } else {
-      Alert.alert(
-        "인증 시간 만료",
-        "인증 시간이 만료되었습니다. 다시 시도해주세요.",
-        [
-          {
-            text: "확인",
-            onPress: () => router.replace("/sign-up/step1"),
-          },
-        ],
-      );
-    }
-  }, [timeLeft, router]);
+  const timeLeft = useTimeLeft();
 
   const handleSignUp = async () => {
     if (!signUpForm.username) {

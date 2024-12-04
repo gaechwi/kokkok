@@ -15,11 +15,14 @@ import { useState } from "react";
 import { verifyResetToken } from "@/utils/supabase";
 import { useAtom } from "jotai";
 import { passwordResetFormAtom } from "@/contexts/auth";
+import { formatTime } from "@/utils/formatTime";
+import { useTimeLeft } from "@/hooks/useTimeLeft";
 
 const Step2 = () => {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
+  const timeLeft = useTimeLeft();
 
   const handleVerifyToken = async () => {
     try {
@@ -56,7 +59,7 @@ const Step2 = () => {
               onChangeText={(text) => setToken(text)}
             />
             <Text className="-translate-y-1/2 body-1 absolute top-1/2 right-4 text-gray-40">
-              nn : nn
+              {formatTime(timeLeft)}
             </Text>
           </View>
 
