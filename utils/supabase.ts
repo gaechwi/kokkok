@@ -477,22 +477,25 @@ export async function getComments(postId: number, page = 0, limit = 10) {
     const start = page * limit;
     const end = start + limit - 1;
 
-    const { data, error, count } = await supabase.rpc(
-      "get_comments_with_top_reply",
-      {
-        postid: postId,
-        startindex: start,
-        endindex: end,
-      },
-    );
+    const { count } = await supabase
+      .from("comment")
+      .select("*", { count: "exact", head: true })
+      .eq("postId", postId)
+      .is("parentsCommentId", null);
+
+    const { data, error } = await supabase.rpc("get_comments_with_top_reply", {
+      postid: postId,
+      startindex: start,
+      endindex: end,
+    });
 
     if (error) throw error;
     if (!data) throw new Error("댓글을 가져올 수 없습니다.");
 
     return {
       comments: data,
-      total: count ?? 0,
-      hasNext: count ? end + 1 < count : false,
+      total: count ?? data.length,
+      hasNext: data.length === limit,
       nextPage: page + 1,
     };
   } catch (error) {
