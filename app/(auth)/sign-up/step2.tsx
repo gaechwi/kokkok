@@ -14,9 +14,12 @@ import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
 import { signUp, verifySignUpOTP } from "@/utils/supabase";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatTime } from "@/utils/formatTime";
-import { alertExpirationOnTimeout, useTimeLeft } from "@/hooks/useTimeLeft";
+import {
+  alertExpirationOnTimeout,
+  useTimerWithDuration,
+} from "@/hooks/useTimeLeft";
 import { OTP_TIME } from "@/constants/time";
 
 const Step2 = () => {
@@ -24,9 +27,7 @@ const Step2 = () => {
   const [otpcode, setOtpcode] = useState("");
 
   const router = useRouter();
-  const { timeLeft, start } = useTimeLeft(OTP_TIME, () =>
-    alertExpirationOnTimeout("/sign-up/step1"),
-  );
+  const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
 
   const handleSignUp = async () => {
     if (!signUpForm.username) {
@@ -62,10 +63,6 @@ const Step2 = () => {
       }
     }
   };
-
-  useEffect(() => {
-    start();
-  }, [start]);
 
   return (
     <KeyboardAvoidingView

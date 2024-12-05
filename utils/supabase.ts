@@ -579,6 +579,25 @@ export async function deleteRestDay(
 //
 // ============================================
 
+// 가장 최근 특정 친구를 찌른 기록 조회
+export async function getLatestStabForFriend(
+  myId: string,
+  friendId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select("createdAt")
+    .eq("from", myId)
+    .eq("to", friendId)
+    .order("createdAt", { ascending: false })
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("콕 찌르기 정보를 가져올 수 없습니다.");
+
+  return data.createdAt;
+}
+
 // 알림 생성
 export async function createNotification(notification: Notification) {
   const { error } = await supabase.from("notification").insert(notification);

@@ -1,5 +1,6 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -8,12 +9,16 @@ import {
   createNotification,
   deleteFriendRequest,
   getCurrentUser,
+  getLatestStabForFriend,
   putFriendRequest,
 } from "@/utils/supabase";
 import type { User, UserProfile } from "@/types/User.interface";
 import useFetchData from "@/hooks/useFetchData";
 import { showToast } from "./ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
+import { useTimerWithStartAndDuration } from "@/hooks/useTimeLeft";
+import { formatTime } from "@/utils/formatTime";
+import { POKE_TIME } from "@/constants/time";
 
 /* Interfaces */
 
@@ -61,12 +66,24 @@ const FriendProfile = ({
 /* Components */
 
 export function FriendItem({ friend }: FriendItemProps) {
+  const queryClient = useQueryClient();
+
   // 로그인한 유저 정보 조회
-  const { data: user, error: userError } = useFetchData<User>(
+  const { data: user } = useFetchData<User>(
     ["currentUser"],
     getCurrentUser,
     "로그인 정보 조회에 실패했습니다.",
   );
+
+  const { data: lastPokeCreatedAt } = useFetchData<string>(
+    ["poke", user?.id, friend.id],
+    () => getLatestStabForFriend(user?.id || "", friend.id),
+    "찌르기 정보 조회에 실패했습니다.",
+    !!user?.id,
+  );
+
+  const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();
+  const isPokeDisable = !!friend.status || !!timeLeft;
 
   // 친구 콕 찌르기
   const { mutate: handlePoke } = useMutation({
@@ -78,7 +95,9 @@ export function FriendItem({ friend }: FriendItemProps) {
       });
     },
     onSuccess: () => {
-      // TODO 1시간 제한 추가
+      queryClient.invalidateQueries({
+        queryKey: ["poke", user?.id, friend.id],
+      });
       showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
     },
     onError: (error) => {
@@ -87,13 +106,17 @@ export function FriendItem({ friend }: FriendItemProps) {
     },
   });
 
+  useEffect(() => {
+    if (lastPokeCreatedAt) timerStart(Date.parse(lastPokeCreatedAt), POKE_TIME);
+  }, [lastPokeCreatedAt, timerStart]);
+
   return (
     <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
       <FriendProfile {...friend} />
 
       <TouchableOpacity
-        className={`${!friend.status ? "bg-primary" : "bg-gray-40"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
-        disabled={!!friend.status}
+        className={`${isPokeDisable ? "bg-gray-40" : "bg-primary"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
+        disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
         onPress={() => handlePoke()}
@@ -109,7 +132,9 @@ export function FriendItem({ friend }: FriendItemProps) {
             <icons.FaceRestIcon width={19} height={19} />
           </View>
         ) : (
-          <Text className="body-5 text-white">👈 콕 찌르기</Text>
+          <Text className="body-5 text-white">
+            {!timeLeft ? "👈 콕 찌르기" : formatTime(timeLeft)}
+          </Text>
         )}
       </TouchableOpacity>
     </View>

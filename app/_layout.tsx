@@ -17,7 +17,7 @@ import { ToastConfig } from "@/components/ToastConfig";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1 } },
+  defaultOptions: { queries: { retry: 0 } },
 });
 
 // 보호된 라우트 체크를 위한 함수
