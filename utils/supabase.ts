@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type Session } from "@supabase/supabase-js";
 import type * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
@@ -28,46 +28,41 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // 회원가입
 export async function signUp({
+  id,
   email,
   password,
   username,
   description,
 }: {
+  id: string | undefined;
   email: string;
   password: string;
   username: string;
   description?: string;
 }) {
   try {
-    // 1. 계정 생성
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: email,
+    const { error: updateError } = await supabase.auth.updateUser({
       password: password,
     });
 
-    if (authError)
-      throw new Error(`계정 생성에 실패했습니다: ${authError.message}`);
-    if (!authData.user)
-      throw new Error(
-        "계정 생성에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.",
-      );
+    if (updateError) throw updateError;
 
-    // 2. 프로필 정보 저장
     const { data: profileData, error: profileError } = await supabase
       .from("user")
       .insert([
         {
-          id: authData.user.id,
+          id,
           email,
           username,
           avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
           description: description || null,
+          isOAuth: false,
         },
       ])
       .select()
       .single();
 
-    if (profileError) throw profileError;
+    if (profileError) throw profileError.message;
     return profileData;
   } catch (error: unknown) {
     const errorMessage =
@@ -87,7 +82,7 @@ export async function signIn({
       password,
     });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     if (!data.session) throw new Error("로그인에 실패했습니다");
 
     return data.session;
@@ -98,6 +93,89 @@ export async function signIn({
   }
 }
 
+// OTP 인증 전송
+export async function sendUpOTP(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+    },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// OTP 인증 확인
+export async function verifySignUpOTP(email: string, token: string) {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "email",
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "OTP 인증에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// Step 1: 비밀번호 재설정 이메일 전송
+export async function resetPassword(email: string) {
+  try {
+    // isOAuth 확인
+    const { data: userData, error: userError } = await supabase
+      .from("user")
+      .select("isOAuth")
+      .eq("email", email)
+      .single();
+
+    if (userError) throw userError;
+
+    // OAuth 사용자인 경우 비밀번호 재설정 불가
+    if (userData?.isOAuth) {
+      throw new Error(
+        "소셜 로그인으로 가입된 계정입니다. 소셜 로그인을 이용해주세요.",
+      );
+    }
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "비밀번호 재설정에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// Step 2: OTP 검증만 수행
+export async function verifyResetToken(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "recovery",
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Step 3: 비밀번호 변경
+export async function updateNewPassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 // ============================================
 //
 //                    user
@@ -105,19 +183,40 @@ export async function signIn({
 // ============================================
 
 // 유저 정보 조회
-export async function getUser(id: string): Promise<User> {
+export async function getUser(userId: string): Promise<User> {
   try {
-    const { data, error } = await supabase.from("user").select().eq("id", id);
+    const { data, error } = await supabase
+      .from("user")
+      .select()
+      .eq("id", userId)
+      .single();
 
     if (error) throw error;
     if (!data) throw new Error("유저를 불러올 수 없습니다.");
 
-    return data[0];
+    return data;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "유저 정보 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
+}
+
+// 로그인한 유저 세션 정보 조회
+export async function getCurrentSession(): Promise<Session> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) throw new Error("세션 정보를 찾을 수 없습니다");
+
+  return session;
+}
+
+// 로그인한 유저 정보 조회
+export async function getCurrentUser(): Promise<User> {
+  const { user } = await getCurrentSession();
+  return await getUser(user.id);
 }
 
 // ============================================
@@ -278,19 +377,20 @@ export async function getPosts({
 // ============================================
 
 // 친구 조회
-export async function getFriends({
+export async function getFriends(
+  userId: string,
   offset = 0,
   limit = 12,
-}: {
-  offset?: number;
-  limit?: number;
-}): Promise<FriendResponse> {
-  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
-
+): Promise<FriendResponse> {
   const { data, error, count } = await supabase
     .from("friendRequest")
-    .select("to", { count: "exact" })
-    .eq("from", user.id)
+    .select(
+      `
+      to: user!friendRequset_to_fkey (id, username, avatarUrl, description)
+      `,
+      { count: "exact" },
+    )
+    .eq("from", userId)
     .eq("isAccepted", true)
     .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
     .range(offset, offset + limit - 1);
@@ -298,60 +398,41 @@ export async function getFriends({
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  const friends = await Promise.all(data.map((request) => getUser(request.to)));
-
   return {
-    data: friends,
+    data: data.map(({ to }) => to),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
   };
 }
 
 // 친구요청 조회 조회
-export async function getFriendRequests({
+export async function getFriendRequests(
+  userId: string,
   offset = 0,
   limit = 12,
-}: {
-  offset?: number;
-  limit?: number;
-}): Promise<RequestResponse> {
-  // 현재 로그인된 사용자 정보 가져오기
-  // const {
-  //   data: { user },
-  //   error: userError,
-  // } = await supabase.auth.getUser();
-
-  // if (userError) throw userError;
-  // if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
-  const user = { id: "8a49fc55-8604-4e9a-9c7d-b33a813f3344" };
-
+): Promise<RequestResponse> {
   const { data, error, count } = await supabase
     .from("friendRequest")
     .select(
       `
           id,
-          from,
+          from: user!friendRequset_from_fkey (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
     )
-    .eq("to", user.id)
+    .eq("to", userId)
     .is("isAccepted", null)
     .order("createdAt", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
 
-  // FIXME 개선 필요
-  const fromUsers = await Promise.all(
-    data.map((request) => getUser(request.from)),
-  );
-
   return {
-    data: data.map((request, idx) => ({
+    data: data.map((request) => ({
       requestId: request.id,
       toUserId: request.to,
-      fromUser: fromUsers[idx],
+      fromUser: request.from,
     })),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
@@ -461,6 +542,104 @@ export async function updateMyProfile(
 
 // ============================================
 //
+//                    history
+//
+// ============================================
+
+// 운동 기록 조희
+export async function getHistories(
+  year: number,
+  month: number,
+): Promise<History[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const startDateString = `${year}-${String(month).padStart(2, "0")}-01`;
+  const endDate = new Date(year, month, 0); // month+1의 0번째 날짜는 해당 월의 마지막 날
+  const endDateString = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(
+    endDate.getDate(),
+  ).padStart(2, "0")}`;
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date, status")
+    .eq("userId", userId)
+    .gte("date", startDateString)
+    .lte("date", endDateString)
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
+// 쉬는 날 조회
+export async function getRestDays(): Promise<Pick<History, "date">[]> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const currentDate = new Date();
+  const startOfMonth = `${currentDate.getFullYear()}-${String(
+    currentDate.getMonth() + 1,
+  ).padStart(2, "0")}-01`;
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .gte("date", startOfMonth)
+    .order("date", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
+// 쉬는 날 추가
+export async function addRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const records = dates.map(({ date }) => ({
+    userId,
+    date,
+    status: "rest" as const,
+  }));
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .upsert(records, {
+      onConflict: "userId,date",
+      ignoreDuplicates: false,
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
+// 쉬는 날 제거
+export async function deleteRestDay(
+  dates: Pick<History, "date">[],
+): Promise<void> {
+  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+
+  const days = dates.map((item) => item.date);
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .delete()
+    .eq("userId", userId)
+    .eq("status", "rest")
+    .in("date", days);
+
+  if (error) {
+    throw error;
+  }
+}
+
+// ============================================
+//
 //                    type
 //
 // ============================================
@@ -473,4 +652,11 @@ interface Post {
   createdAt: string;
   likes: number;
   // author: User;
+}
+
+// 운동 기록 타입 정의
+type HistoryDate = `${number}-${number}-${number}`;
+interface History {
+  date: HistoryDate;
+  status: "done" | "rest";
 }
