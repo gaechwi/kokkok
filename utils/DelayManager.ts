@@ -28,28 +28,33 @@ const debounce = <T extends (...args: any[]) => void>(fn: T, delay: number) => {
  * @param {number} limit - 제한 시간(ms)
  * @returns {(...args: Parameters<T>) => void} - 쓰로틀링된 함수
  */
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny:
 const throttle = <T extends (...args: any[]) => void>(fn: T, limit: number) => {
-  let lastRan: number | null = null;
+  let lastRan = 0;
   let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return (...args: Parameters<T>): void => {
+  const throttledFn = (...args: Parameters<T>): void => {
     const now = Date.now();
-
-    if (lastRan === null || now - lastRan >= limit) {
+    if (now - lastRan >= limit) {
       fn(...args);
-      lastRan = now; // 마지막 실행 시간을 현재 시간으로 업데이트
+      lastRan = now;
     } else if (!timeout) {
       timeout = setTimeout(
         () => {
-          fn(...args); // 지연된 함수 실행
-          lastRan = Date.now(); // 마지막 실행 시간을 현재 시간으로 업데이트
-          timeout = null; // 타이머 초기화
+          fn(...args);
+          lastRan = Date.now();
+          timeout = null;
         },
         limit - (now - lastRan),
-      ); // 남은 시간을 계산하여 타이머 설정
+      );
     }
   };
+  throttledFn.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  return throttledFn;
 };
 
 export { debounce, throttle };

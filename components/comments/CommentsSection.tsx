@@ -86,6 +86,7 @@ export default function CommentsSection({
   useEffect(() => {
     // 애니메이션 정리
     const cleanupAnimations = () => animationRef.current?.stop();
+
     // 키보드가 나타나면 높이 조절
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -96,11 +97,13 @@ export default function CommentsSection({
         heightAnim.setValue(heightRef.current);
       },
     );
+
     // 키보드가 사라지면 높이 조절
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
         animationRef.current?.stop();
+
         heightRef.current = MAX_HEIGHT;
         setMaxHeight(heightRef.current);
         animationRef.current = Animated.timing(heightAnim, {

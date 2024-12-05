@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ScrollView,
+  Linking,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -111,9 +112,20 @@ export default function Upload() {
       return;
     }
     // 권한 요청
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("갤러리 접근 권한이 필요합니다.");
+    const { status, accessPrivileges } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted" && accessPrivileges !== "limited") {
+      Alert.alert(
+        "전체 사진 접근 권한 필요",
+        "앱에서 모든 사진에 접근하려면 설정에서 권한을 변경해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          {
+            text: "설정으로 이동",
+            onPress: () => Linking.openURL("app-settings:"),
+          },
+        ],
+      );
       return;
     }
 
