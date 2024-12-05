@@ -46,7 +46,7 @@ export default function MyPage() {
   return (
     <>
       <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="w-full">
+        <View className="w-full flex-1">
           <View className="mt-6 px-5">
             <View className="flex-row justify-between">
               <View className="flex-row items-center gap-6">
@@ -101,11 +101,11 @@ export default function MyPage() {
               className="mt-[32px]"
             />
           ) : (
-            <View className="mt-8 flex">
+            <View className="mt-8 flex-1 items-center justify-center bg-gray-5">
               <Image
                 source={images.NoPost}
-                className="size-full"
-                resizeMode="cover"
+                className="h-[178px] w-[234px]"
+                resizeMode="contain"
               />
             </View>
           )}
