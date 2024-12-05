@@ -5,8 +5,12 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { RequestResponse } from "@/types/Friend.interface";
-import type { StatusType, User, UserProfile } from "@/types/User.interface";
+import type {
+  FriendResponse,
+  RequestResponse,
+  StatusInfo,
+} from "@/types/Friend.interface";
+import type { User, UserProfile } from "@/types/User.interface";
 import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
@@ -318,7 +322,7 @@ export async function getFriends(userId: string): Promise<UserProfile[]> {
 // 모든 친구의 운동 상태 조회
 export async function getFriendsStatus(
   friendIds: string[],
-): Promise<Record<string, StatusType>[]> {
+): Promise<StatusInfo[]> {
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("userId, status")

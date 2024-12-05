@@ -14,7 +14,8 @@ import {
 import useFetchData from "@/hooks/useFetchData";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import type { StatusType, User, UserProfile } from "@/types/User.interface";
+import type { User, UserProfile } from "@/types/User.interface";
+import { StatusInfo } from "@/types/Friend.interface";
 import { formatDate } from "@/utils/formatDate";
 
 interface FriendLayoutProps {
@@ -77,7 +78,7 @@ export default function Friend() {
     data: statusData,
     isLoading: isStatusLoading,
     error: statusError,
-  } = useFetchData<Record<string, StatusType>[]>(
+  } = useFetchData<StatusInfo[]>(
     ["friendsStatus"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
