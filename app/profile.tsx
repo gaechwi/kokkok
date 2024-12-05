@@ -11,45 +11,35 @@ import {
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getMyProfile, supabase, updateMyProfile } from "@/utils/supabase";
+import { getCurrentUser, updateMyProfile } from "@/utils/supabase";
+import useFetchData from "@/hooks/useFetchData";
 
 const Profile = () => {
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      return session;
-    },
-  });
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: () => getMyProfile(session?.user?.id!),
-    enabled: !!session?.user?.id,
-  });
+  const { data: currentUser } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
 
   const [profileInput, setProfileInput] = useState({
-    username: profile?.username || "",
-    description: profile?.description || "",
+    username: currentUser?.username || "",
+    description: currentUser?.description || "",
   });
 
   // profile 데이터가 로드되면 input 값을 업데이트
   useEffect(() => {
-    if (profile) {
+    if (currentUser) {
       setProfileInput({
-        username: profile.username || "",
-        description: profile.description || "",
+        username: currentUser.username || "",
+        description: currentUser.description || "",
       });
     }
-  }, [profile]);
+  }, [currentUser]);
 
   const router = useRouter();
 
   const handleEditProfile = async () => {
-    await updateMyProfile(session?.user?.id!, profileInput);
+    await updateMyProfile(currentUser?.id!, profileInput);
     router.replace("/mypage");
   };
 
