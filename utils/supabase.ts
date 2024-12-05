@@ -491,7 +491,7 @@ export async function getHistories(
   year: number,
   month: number,
 ): Promise<History[]> {
-  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+  const { user } = await getCurrentSession();
 
   const startDateString = `${year}-${String(month).padStart(2, "0")}-01`;
   const endDate = new Date(year, month, 0); // month+1의 0번째 날짜는 해당 월의 마지막 날
@@ -502,7 +502,7 @@ export async function getHistories(
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date, status")
-    .eq("userId", userId)
+    .eq("userId", user.id)
     .gte("date", startDateString)
     .lte("date", endDateString)
     .order("date", { ascending: true });
@@ -514,7 +514,7 @@ export async function getHistories(
 
 // 쉬는 날 조회
 export async function getRestDays(): Promise<Pick<History, "date">[]> {
-  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+  const { user } = await getCurrentSession();
 
   const currentDate = new Date();
   const startOfMonth = `${currentDate.getFullYear()}-${String(
@@ -524,7 +524,7 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date")
-    .eq("userId", userId)
+    .eq("userId", user.id)
     .eq("status", "rest")
     .gte("date", startOfMonth)
     .order("date", { ascending: true });
@@ -538,10 +538,10 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
 export async function addRestDay(
   dates: Pick<History, "date">[],
 ): Promise<void> {
-  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+  const { user } = await getCurrentSession();
 
   const records = dates.map(({ date }) => ({
-    userId,
+    userId: user.id,
     date,
     status: "rest" as const,
   }));
@@ -562,14 +562,14 @@ export async function addRestDay(
 export async function deleteRestDay(
   dates: Pick<History, "date">[],
 ): Promise<void> {
-  const userId = "bc329999-5b57-40ed-8d9d-dba4e88ca608";
+  const { user } = await getCurrentSession();
 
   const days = dates.map((item) => item.date);
 
   const { data, error } = await supabase
     .from("workoutHistory")
     .delete()
-    .eq("userId", userId)
+    .eq("userId", user.id)
     .eq("status", "rest")
     .in("date", days);
 
