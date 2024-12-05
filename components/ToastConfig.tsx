@@ -21,7 +21,7 @@ export const showToast = (type: ToastType, text1: string) => {
   Toast.show({
     type,
     text1,
-    visibilityTime: 700,
+    visibilityTime: 1000,
     topOffset: 90,
   });
 };

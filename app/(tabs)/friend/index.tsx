@@ -15,7 +15,7 @@ import useFetchData from "@/hooks/useFetchData";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { User, UserProfile } from "@/types/User.interface";
-import { StatusInfo } from "@/types/Friend.interface";
+import type { StatusInfo } from "@/types/Friend.interface";
 import { formatDate } from "@/utils/formatDate";
 
 interface FriendLayoutProps {
@@ -31,7 +31,7 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
       <FlatList
         data={friends}
         keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => <FriendItem fromUser={friend} />}
+        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
         className="px-6 grow w-full"
         contentContainerStyle={friends.length ? {} : { flex: 1 }}
         ListHeaderComponent={

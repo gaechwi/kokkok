@@ -5,10 +5,15 @@ import icons from "@/constants/icons";
 import images from "@/constants/images";
 import {
   createFriendRequest,
+  createNotification,
   deleteFriendRequest,
+  getCurrentUser,
   putFriendRequest,
 } from "@/utils/supabase";
-import type { UserProfile } from "@/types/User.interface";
+import type { User, UserProfile } from "@/types/User.interface";
+import useFetchData from "@/hooks/useFetchData";
+import { showToast } from "./ToastConfig";
+import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 
 /* Interfaces */
 
@@ -19,7 +24,7 @@ interface FriendProfileProps {
 }
 
 interface FriendItemProps {
-  fromUser: UserProfile;
+  friend: UserProfile;
 }
 
 interface FriendRequestProps {
@@ -55,23 +60,50 @@ const FriendProfile = ({
 
 /* Components */
 
-export function FriendItem({ fromUser }: FriendItemProps) {
+export function FriendItem({ friend }: FriendItemProps) {
+  // 로그인한 유저 정보 조회
+  const { data: user, error: userError } = useFetchData<User>(
+    ["currentUser"],
+    getCurrentUser,
+    "로그인 정보 조회에 실패했습니다.",
+  );
+
+  // 친구 콕 찌르기
+  const { mutate: handlePoke } = useMutation({
+    mutationFn: async () => {
+      await createNotification({
+        from: user?.id || "",
+        to: friend.id,
+        type: NOTIFICATION_TYPE.POKE,
+      });
+    },
+    onSuccess: () => {
+      // TODO 1시간 제한 추가
+      showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
+    },
+    onError: (error) => {
+      const errorMessage = error?.message || "친구 요청 수락에 실패했습니다";
+      showToast("fail", errorMessage);
+    },
+  });
+
   return (
     <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
-      <FriendProfile {...fromUser} />
+      <FriendProfile {...friend} />
 
       <TouchableOpacity
-        className={`${!fromUser.status ? "bg-primary" : "bg-gray-40"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
-        disabled={!!fromUser.status}
+        className={`${!friend.status ? "bg-primary" : "bg-gray-40"} w-[89px] h-[36px] rounded-[10px] flex-row items-center justify-center`}
+        disabled={!!friend.status}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
+        onPress={() => handlePoke()}
       >
-        {fromUser.status === "done" ? (
+        {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[5px]">운동 완료</Text>
             <icons.FaceDoneIcon width={19} height={19} />
           </View>
-        ) : fromUser.status === "rest" ? (
+        ) : friend.status === "rest" ? (
           <View className="flex-row items-center justify-center">
             <Text className="body-5 text-white mr-[8px]">쉬는 중</Text>
             <icons.FaceRestIcon width={19} height={19} />

@@ -5,12 +5,9 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type {
-  FriendResponse,
-  RequestResponse,
-  StatusInfo,
-} from "@/types/Friend.interface";
+import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
 import type { User, UserProfile } from "@/types/User.interface";
+import type { Notification } from "@/types/Notification.interface";
 import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
@@ -495,6 +492,18 @@ export async function deleteRestDay(
   if (error) {
     throw error;
   }
+}
+
+// ============================================
+//
+//                 notification
+//
+// ============================================
+
+// 알림 생성
+export async function createNotification(notification: Notification) {
+  const { error } = await supabase.from("notification").insert(notification);
+  if (error) throw error;
 }
 
 // ============================================
