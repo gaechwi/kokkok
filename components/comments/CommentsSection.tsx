@@ -31,7 +31,7 @@ import {
 import useFetchData from "@/hooks/useFetchData";
 
 const { height: deviceHeight } = Dimensions.get("window");
-const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 100 : 83;
+const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 112 : 74;
 const MIN_HEIGHT = 0;
 const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
 const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
@@ -139,6 +139,7 @@ export default function CommentsSection({
     Animated.timing(heightAnim, {
       toValue: 0,
       duration: DURATION,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: false,
     }).start(() => {
       onClose();
@@ -169,11 +170,7 @@ export default function CommentsSection({
 
           if (finalHeight < CLOSE_THRESHOLD) {
             // 최소 높이보다 작으면 닫힘
-            onClose();
-            setTimeout(() => {
-              heightRef.current = DEFAULT_HEIGHT;
-              heightAnim.setValue(heightRef.current);
-            }, DURATION);
+            handleClose();
           } else if (finalHeight > maxHeight) {
             // 최대 높이보다 크면 최대 높이로 돌아감
             heightRef.current = maxHeight;
@@ -192,12 +189,12 @@ export default function CommentsSection({
           }
         },
       }),
-    [heightAnim, onClose, maxHeight, clampHeight],
+    [heightAnim, maxHeight, clampHeight, handleClose],
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    await queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     setRefreshing(false);
   }, [queryClient, postId]);
 
@@ -226,9 +223,11 @@ export default function CommentsSection({
       >
         <TouchableWithoutFeedback
           onPressOut={(e) => {
-            Keyboard.dismiss(); // 키보드를 명시적으로 닫아 부작용 방지
-            handleClose();
-            e.stopPropagation();
+            if (e.target === e.currentTarget) {
+              Keyboard.dismiss();
+              handleClose();
+              e.stopPropagation();
+            }
           }}
         >
           <View className="flex-1 justify-end bg-black/50">
@@ -239,7 +238,7 @@ export default function CommentsSection({
                   {
                     translateY: slideAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [deviceHeight, 0],
+                      outputRange: [MAX_HEIGHT, 0],
                     }),
                   },
                 ],
@@ -253,7 +252,6 @@ export default function CommentsSection({
                 <SafeAreaView
                   edges={["bottom"]}
                   className="h-full rounded-t-[20px] border border-gray-20 bg-white"
-                  onStartShouldSetResponder={() => true}
                 >
                   <View className="flex-1">
                     <View
@@ -304,7 +302,6 @@ export default function CommentsSection({
                       removeClippedSubviews={false}
                       maxToRenderPerBatch={10}
                       windowSize={5}
-                      keyboardShouldPersistTaps="handled"
                       getItemLayout={(data, index) => ({
                         length: 100,
                         offset: 100 * index,
@@ -315,7 +312,7 @@ export default function CommentsSection({
                           key={item.id}
                           id={Number(item.id)}
                           postId={postId}
-                          content={item.contents}
+                          contents={item.contents}
                           createdAt={item.createdAt}
                           likedAuthorAvatar={[]}
                           liked={item.isLiked}
@@ -346,7 +343,7 @@ export default function CommentsSection({
 
         {/* comment input */}
         <View
-          className={`z-10 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-7" : "pb-4"}`}
+          className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
         >
           <Image
             source={{ uri: user.data?.avatarUrl || undefined }}
@@ -355,7 +352,7 @@ export default function CommentsSection({
           />
 
           <TextInput
-            className="z-10 flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
+            className="z-10 h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
             placeholder="댓글을 입력해주세요."
             autoCapitalize="words"
             keyboardType="default"

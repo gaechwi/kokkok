@@ -7,11 +7,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
+import { useTruncateText } from "@/hooks/useTruncateText";
 
 interface CommentItemProps {
   id: number;
   postId: number;
-  content: string;
+  contents: string;
   author: {
     id: string;
     username: string;
@@ -25,7 +26,7 @@ interface CommentItemProps {
 export default function CommentItem({
   id,
   postId,
-  content,
+  contents,
   author,
   liked = false,
   likedAuthorAvatar = [],
@@ -34,7 +35,10 @@ export default function CommentItem({
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isMore, setIsMore] = useState(false);
   const queryClient = useQueryClient();
+
+  const { truncateText, calculateMaxChars } = useTruncateText();
 
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
@@ -145,7 +149,7 @@ export default function CommentItem({
 
           {/* kebab menu */}
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleDeleteModal}>
+            <TouchableOpacity onPress={toggleModal}>
               <Icons.KebabMenuIcon
                 width={24}
                 height={24}
@@ -184,8 +188,24 @@ export default function CommentItem({
         </View>
       </View>
 
-      {/* content */}
-      <Text className="text-gray-90">{content}</Text>
+      {/* contents */}
+      <View className="flex-1 flex-row flex-wrap">
+        <Text
+          onPress={() => {
+            if (contents.length > calculateMaxChars) {
+              setIsMore(!isMore);
+            }
+          }}
+          className="title-5 flex-1 text-gray-90"
+        >
+          {isMore ? contents : truncateText(contents)}
+          {contents.length > calculateMaxChars && (
+            <Text className="title-5 -mb-[3px] text-gray-45">
+              {isMore ? " 접기" : "더보기"}
+            </Text>
+          )}
+        </Text>
+      </View>
 
       <TouchableOpacity className="mb-[16px]">
         <Text className="caption-2 text-gray-60">답글달기</Text>

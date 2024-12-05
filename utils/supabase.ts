@@ -596,9 +596,6 @@ export async function createComment({
     if (userError) throw userError;
     if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
-    console.log("user", user, "postId", postId, "contents", contents);
-    console.log("userError", userError);
-
     const { data: newComment, error: commentError } = await supabase
       .from("comment")
       .insert({

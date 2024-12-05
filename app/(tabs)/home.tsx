@@ -53,9 +53,10 @@ export default function Home() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    queryClient.invalidateQueries({ queryKey: ["posts"] });
+    await queryClient.invalidateQueries({ queryKey: ["posts"] });
     setRefreshing(false);
   }, [queryClient]);
+
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">

@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "사용자가 사진을 선택할 수 있도록 앨범 접근 권한이 필요합니다.",
+        "NSCameraUsageDescription": "사진 촬영을 위해 카메라 접근 권한이 필요합니다.",
         "UIViewControllerBasedStatusBarAppearance": true
       }
     },

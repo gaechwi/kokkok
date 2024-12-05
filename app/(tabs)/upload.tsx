@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import CustomModal from "@/components/Modal";
+import CustomModal, { OneButtonModal } from "@/components/Modal";
 import { createPost, getPost, updatePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useFetchData from "@/hooks/useFetchData";
@@ -25,7 +25,9 @@ export default function Upload() {
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const queryClient = useQueryClient();
+
 
   const post = useFetchData(
     ["post", postId],
@@ -56,7 +58,7 @@ export default function Upload() {
       router.back();
     },
     onError: () => {
-      Alert.alert("업로드 실패", "게시물 업로드에 실패했습니다.");
+      setIsInfoModalVisible(true);
     },
   });
 
@@ -116,8 +118,8 @@ export default function Upload() {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted" && accessPrivileges !== "limited") {
       Alert.alert(
-        "전체 사진 접근 권한 필요",
-        "앱에서 모든 사진에 접근하려면 설정에서 권한을 변경해주세요.",
+        "사진 접근 권한 필요",
+        "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
         [
           { text: "취소", style: "cancel" },
           {
@@ -147,7 +149,17 @@ export default function Upload() {
     // 카메라 권한 요청
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      alert("카메라 접근 권한이 필요합니다.");
+      Alert.alert(
+        "카메라 접근 권한 필요",
+        "앱에서 카메라에 접근하려면 설정에서 권한을 변경해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          {
+            text: "설정으로 이동",
+            onPress: () => Linking.openURL("app-settings:"),
+          },
+        ],
+      );
       return;
     }
 
@@ -259,6 +271,8 @@ export default function Upload() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <OneButtonModal buttonText="확인" contents={`업로드에 실패했습니다 \n 다시한번 시도해주세요`} isVisible={isInfoModalVisible} onClose={() => setIsInfoModalVisible(false)} onPress={() => setIsInfoModalVisible(false)} emoji="sad" key={`upload-info-modal`} />
     </View>
   );
 }
