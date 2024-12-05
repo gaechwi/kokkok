@@ -34,12 +34,7 @@ export default function History() {
   } = useCalendar();
   const { isModalVisible, openModal, closeModal } = useModal();
 
-  const {
-    data: histories = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
+  const { data: histories = [], refetch } = useQuery({
     queryKey: ["histories", year, month],
     queryFn: () => getHistories(year, month),
   });
@@ -57,22 +52,6 @@ export default function History() {
       refetch();
     }, [refetch, resetDate]),
   );
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>Error</Text>
-      </View>
-    );
-  }
 
   const workoutDays = histories.filter(
     (item) =>
