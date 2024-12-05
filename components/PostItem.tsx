@@ -1,22 +1,22 @@
+import colors from "@/constants/colors";
+import icons from "@/constants/icons";
+import useFetchData from "@/hooks/useFetchData";
+import { useTruncateText } from "@/hooks/useTruncateText";
+import { diffDate } from "@/utils/formatDate";
+import { deletePost, getUser, toggleLikePost } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Pressable,
   Alert,
+  Image,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Carousel from "./Carousel";
-import { diffDate } from "@/utils/formatDate";
-import { useState } from "react";
-import icons from "@/constants/icons";
 import CustomModal, { DeleteModal } from "./Modal";
-import colors from "@/constants/colors";
-import { useTruncateText } from "@/hooks/useTruncateText";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deletePost, getUser, toggleLikePost } from "@/utils/supabase";
-import useFetchData from "@/hooks/useFetchData";
-import { useRouter } from "expo-router";
 interface PostItemProps {
   author: {
     id: string;
@@ -260,11 +260,11 @@ export default function PostItem({
                 className="mt-2 px-2"
               >
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
+                  <Text className="text-nowrap font-pbold text-[14px] text-gray-70 leading-[150%]">
                     {comment.author.name}
                   </Text>
                   <Text
-                    className="body-2 flex-1 text-gray-90"
+                    className="body-3 flex-1 text-gray-90"
                     numberOfLines={1}
                   >
                     {comment.content}

@@ -23,6 +23,7 @@ export default function Upload() {
   const postId = params.postId ? Number(params.postId) : undefined;
   const router = useRouter();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [prevImages, setPrevImages] = useState<string[]>([]);
   const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
@@ -37,11 +38,7 @@ export default function Upload() {
 
   useEffect(() => {
     if (post.data !== null && post.data !== undefined) {
-      setImages(
-        post.data.images.map(
-          (uri: string) => ({ uri }) as ImagePicker.ImagePickerAsset,
-        ),
-      );
+      setPrevImages(post.data.images ?? []);
       setContents(post.data.contents ?? "");
     }
   }, [post.data]);
@@ -66,7 +63,8 @@ export default function Upload() {
       if (!postId) {
         throw new Error("게시물 ID가 없습니다.");
       }
-      return updatePost({ postId, contents, images });
+
+      return updatePost({ postId, contents, images, prevImages });
     },
     onSuccess: () => {
       setImages([]);
@@ -108,7 +106,8 @@ export default function Upload() {
   const pickImage = async () => {
     if (uploadPostMutation.isPending) return;
 
-    if (images.length >= 5) {
+    const totalImages = images.length + prevImages.length;
+    if (totalImages >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
     }
@@ -141,7 +140,8 @@ export default function Upload() {
   const takePhoto = async () => {
     if (uploadPostMutation.isPending) return;
 
-    if (images.length >= 5) {
+    const totalImages = images.length + prevImages.length;
+    if (totalImages >= 5) {
       Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
       return;
     }
@@ -175,6 +175,11 @@ export default function Upload() {
     setImages(images.filter((_, index) => index !== indexToDelete));
   };
 
+  const handleDeletePrevImage = (indexToDelete: number) => {
+    if (uploadPostMutation.isPending) return;
+    setPrevImages(prevImages.filter((_, index) => index !== indexToDelete));
+  };
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView
@@ -183,10 +188,29 @@ export default function Upload() {
         className="flex-shrink-0 flex-grow-0"
       >
         <View className="w-full flex-row gap-4 p-6">
-          {/* 선택된 이미지 표시 */}
+          {/* 이전 이미지 표시 */}
+          {prevImages.map((image, index) => (
+            <View
+              key={`prev-image-${index}`}
+              className="relative"
+            >
+              <Image
+                source={{ uri: image }}
+                className="size-[152px] rounded-[10px]"
+              />
+              <TouchableOpacity
+                className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
+                onPress={() => handleDeletePrevImage(index)}
+                disabled={uploadPostMutation.isPending}
+              >
+                <Icons.XIcon width={16} height={16} color={colors.white} />
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {/* 새로 선택된 이미지 표시 */}
           {images.map((image, index) => (
             <View
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={`upload-image-${index}`}
               className="relative"
             >
@@ -204,7 +228,8 @@ export default function Upload() {
             </View>
           ))}
 
-          {images.length < 5 && (
+          {/* 이미지 추가 버튼 - 총 이미지 개수가 5개 미만일 때만 표시 */}
+          {images.length + prevImages.length < 5 && (
             <>
               <TouchableOpacity
                 className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"

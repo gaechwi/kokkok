@@ -1,13 +1,13 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import { deleteComment, getUser, toggleLikeComment } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
-import { useTruncateText } from "@/hooks/useTruncateText";
 
 interface CommentItemProps {
   id: number;
@@ -166,7 +166,7 @@ export default function CommentItem({
 
           {/* kebab menu */}
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleModal}>
+            <TouchableOpacity onPress={toggleModal} className="ml-2">
               <Icons.KebabMenuIcon
                 width={24}
                 height={24}

@@ -366,10 +366,12 @@ export async function createPost({
 export async function updatePost({
   postId,
   images,
+  prevImages,
   contents,
 }: {
   postId: number;
   images: ImagePicker.ImagePickerAsset[];
+  prevImages: string[];
   contents: string;
 }) {
   try {
@@ -393,23 +395,30 @@ export async function updatePost({
 
     // 변경사항 체크
     const contentsChanged = contents !== existingPost.contents;
-    const imagesChanged = images.length !== existingPost.images.length;
+    const hasNewImages = images.length > 0;
 
     // 변경사항이 없으면 기존 게시글 반환
-    if (!contentsChanged && !imagesChanged) {
+    if (
+      !contentsChanged &&
+      !hasNewImages &&
+      prevImages.length === existingPost.images.length
+    ) {
       return existingPost;
     }
 
-    // 이미지가 변경된 경우에만 새로 업로드
-    let validImageUrls = existingPost.images;
-    if (imagesChanged) {
-      const imageUrls = await Promise.all(
+    // 새로운 이미지만 업로드
+    let newImageUrls: string[] = [];
+    if (hasNewImages) {
+      const uploadedUrls = await Promise.all(
         images.map((image) => uploadImage(image)),
       );
-      validImageUrls = imageUrls.filter(
+      newImageUrls = uploadedUrls.filter(
         (url): url is string => url !== undefined,
       );
     }
+
+    // 이전 이미지와 새로운 이미지 합치기
+    const validImageUrls = [...prevImages, ...newImageUrls];
 
     // 게시글 수정
     const { data: updatedPost, error: updateError } = await supabase
