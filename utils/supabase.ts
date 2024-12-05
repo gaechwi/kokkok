@@ -477,58 +477,20 @@ export async function getComments(postId: number, page = 0, limit = 10) {
     const start = page * limit;
     const end = start + limit - 1;
 
-    const { data, error, count } = await supabase
-      .from("comment")
-      .select(
-        `
-          id, 
-          contents,
-          userId, 
-          createdAt, 
-          user (id, username, avatarUrl)
-        `,
-        { count: "exact" },
-      )
-      .eq("postId", postId)
-      .order("likes", { ascending: false })
-      .order("createdAt", { ascending: false })
-      .range(start, end);
+    const { data, error, count } = await supabase.rpc(
+      "get_comments_with_top_reply",
+      {
+        postid: postId,
+        startindex: start,
+        endindex: end,
+      },
+    );
 
     if (error) throw error;
     if (!data) throw new Error("댓글을 가져올 수 없습니다.");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const comments = await Promise.all(
-      data.map(async (comment) => {
-        let isLiked = false;
-
-        if (user) {
-          // commentLike 테이블에서 좋아요 여부 확인
-          const { data: likeData, error: likeError } = await supabase
-            .from("commentLike")
-            .select("id")
-            .eq("commentId", comment.id)
-            .eq("userId", user.id)
-            .single();
-
-          if (likeError && likeError.code !== "PGRST116") {
-            throw likeError;
-          }
-          isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
-        }
-
-        return {
-          ...comment,
-          isLiked,
-        };
-      }),
-    );
-
     return {
-      comments: comments,
+      comments: data,
       total: count ?? 0,
       hasNext: count ? end + 1 < count : false,
       nextPage: page + 1,

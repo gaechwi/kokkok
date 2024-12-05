@@ -314,9 +314,10 @@ export default function CommentsSection({
                           postId={postId}
                           contents={item.contents}
                           createdAt={item.createdAt}
-                          likedAuthorAvatar={[]}
+                          likedAvatars={item.likedAvatars}
                           liked={item.isLiked}
-                          author={item.user}
+                          author={item.userData}
+                          topReply={item.topReply}
                         />
                       )}
                       ListFooterComponent={

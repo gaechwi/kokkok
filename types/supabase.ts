@@ -361,6 +361,40 @@ export type Database = {
         };
         Returns: undefined;
       };
+      get_comments_with_top_reply: {
+        Args: {
+          postid: number;
+          startindex: number;
+          endindex: number;
+        };
+        Returns: {
+          id: number;
+          contents: string;
+          userId: string;
+          createdAt: string;
+          userData: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
+          likes: number;
+          isLiked: boolean;
+          likedAvatars: string[];
+          topReply: {
+            id: number;
+            contents: string;
+            userId: string;
+            createdAt: string;
+            user: {
+              id: string;
+              username: string;
+              avatarUrl: string | null;
+            };
+            isLiked: boolean;
+            likedAvatars: string[];
+          } | null;
+        }[];
+      };
       get_posts_with_details: {
         Args: {
           startindex: number;

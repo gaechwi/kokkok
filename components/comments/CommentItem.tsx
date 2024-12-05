@@ -19,8 +19,21 @@ interface CommentItemProps {
     avatarUrl: string | null;
   } | null;
   liked?: boolean;
-  likedAuthorAvatar: string[];
+  likedAvatars: string[];
   createdAt: string;
+  topReply?: {
+    id: number;
+    contents: string;
+    userId: string;
+    createdAt: string;
+    user: {
+      id: string;
+      username: string;
+      avatarUrl: string | null;
+    };
+    isLiked: boolean;
+    likedAvatars: string[];
+  } | null;
 }
 
 export default function CommentItem({
@@ -29,8 +42,9 @@ export default function CommentItem({
   contents,
   author,
   liked = false,
-  likedAuthorAvatar = [],
+  likedAvatars,
   createdAt,
+  topReply,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -52,6 +66,9 @@ export default function CommentItem({
     mutationFn: () => toggleLikeComment(id),
     onMutate: () => {
       setIsLiked((prev) => !prev);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: () => {
       setIsLiked((prev) => !prev);
@@ -123,9 +140,9 @@ export default function CommentItem({
           </TouchableOpacity>
 
           {/* likeAvatar */}
-          {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
+          {likedAvatars && likedAvatars.length > 0 && (
             <TouchableOpacity className="ml-[2px] flex-row items-center">
-              {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
+              {likedAvatars.slice(0, 2).map((avatar, index) => (
                 <Image
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   key={`avatar-${index}`}
@@ -139,7 +156,7 @@ export default function CommentItem({
                   }}
                 />
               ))}
-              {likedAuthorAvatar.length > 2 && (
+              {likedAvatars.length > 2 && (
                 <Text className="pl-[2px] font-pbold text-[13px] text-gray-90 leading-[150%]">
                   외 여러명
                 </Text>
@@ -210,6 +227,21 @@ export default function CommentItem({
       <TouchableOpacity className="mb-[16px]">
         <Text className="caption-2 text-gray-60">답글달기</Text>
       </TouchableOpacity>
+
+      {/* reply */}
+      {topReply && (
+        <View className="px-4">
+          <CommentItem
+            id={topReply.id}
+            postId={postId}
+            author={topReply.user}
+            contents={topReply.contents}
+            createdAt={topReply.createdAt}
+            liked={topReply.isLiked}
+            likedAvatars={topReply.likedAvatars}
+          />
+        </View>
+      )}
     </View>
   );
 }
