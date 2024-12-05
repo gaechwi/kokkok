@@ -307,9 +307,7 @@ export async function getPosts({
 export async function getFriends(userId: string): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
-    .select(
-      "to: user!friendRequset_to_fkey (id, username, avatarUrl, description)",
-    )
+    .select("to: to (id, username, avatarUrl, description)")
     .eq("from", userId)
     .eq("isAccepted", true);
 
@@ -346,7 +344,7 @@ export async function getFriendRequests(
     .select(
       `
           id,
-          from: user!friendRequset_from_fkey (id, username, avatarUrl, description),
+          from: from (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
