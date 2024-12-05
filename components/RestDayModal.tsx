@@ -22,15 +22,8 @@ interface RestDayModalProps {
 }
 
 export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
-  const {
-    date,
-    year,
-    month,
-    currentYear,
-    currentMonth,
-    changeMonth,
-    resetDate,
-  } = useCalendar();
+  const { date, year, month, currentYear, currentMonth, changeMonth } =
+    useCalendar();
   const [restDates, setRestDates] = useState<RestDay[]>([]);
 
   const { data: defaultDates = [], isSuccess } = useQuery({
@@ -78,13 +71,6 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       setRestDates(defaultDates);
     }
   }, [isSuccess, defaultDates]);
-
-  useEffect(() => {
-    if (!visible) {
-      resetDate();
-      setRestDates(defaultDates);
-    }
-  }, [visible, resetDate, defaultDates]);
 
   const handleSelectDate = (date: Date) => {
     const formattedDate = formatDate(date) as `${number}-${number}-${number}`;
