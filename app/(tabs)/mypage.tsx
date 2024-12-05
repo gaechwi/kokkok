@@ -15,9 +15,10 @@ import Icons from "@/constants/icons";
 import colors from "@/constants/colors";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 
 export default function MyPage() {
+  const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const { data: session } = useQuery({
