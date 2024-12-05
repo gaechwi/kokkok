@@ -29,12 +29,6 @@ const AuthLayout = () => {
           }}
         />
         <Stack.Screen
-          name="profile"
-          options={{
-            header: () => <HeaderWithBack name="EDIT_PROFILE" />,
-          }}
-        />
-        <Stack.Screen
           name="password-reset/step1"
           options={{
             header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,

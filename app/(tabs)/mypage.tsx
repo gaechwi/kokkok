@@ -7,37 +7,33 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/utils/supabase";
-import { getMyProfile } from "@/utils/supabase";
+import { getCurrentUser, getMyPosts } from "@/utils/supabase";
 import images from "@/constants/images";
 import Icons from "@/constants/icons";
 import colors from "@/constants/colors";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import { useRouter } from "expo-router";
+import useFetchData from "@/hooks/useFetchData";
 
 export default function MyPage() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      return session;
-    },
-  });
+  const { data: currentUser, isLoading: isUserLoading } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: () => getMyProfile(session?.user?.id!),
-    enabled: !!session?.user?.id,
-  });
+  const { data: posts, isLoading: isPostsLoading } = useFetchData(
+    ["userPosts", currentUser?.id],
+    () => getMyPosts(currentUser?.id!),
+    "게시물을 불러올 수 없습니다.",
+    !!currentUser?.id,
+  );
 
-  if (isLoading || !session?.user?.id) {
+  if (isUserLoading || isPostsLoading) {
     return (
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="flex-1 items-center justify-center">
@@ -56,13 +52,13 @@ export default function MyPage() {
               <View className="flex-row items-center gap-6">
                 <Image
                   source={
-                    profile?.avatarUrl
-                      ? { uri: profile.avatarUrl }
+                    currentUser?.avatarUrl
+                      ? { uri: currentUser.avatarUrl }
                       : images.AvaTarDefault
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{profile?.username}</Text>
+                <Text className="title-3">{currentUser?.username}</Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
@@ -77,14 +73,14 @@ export default function MyPage() {
 
             <View className="mt-4 rounded-[10px] bg-[#f0f0f0] p-4">
               <Text className="body-5 text-gray-80">
-                {profile?.description || ""}
+                {currentUser?.description || ""}
               </Text>
             </View>
           </View>
 
-          {profile?.posts && profile.posts.length > 0 ? (
+          {posts && posts.length > 0 ? (
             <FlatList
-              data={profile.posts}
+              data={posts}
               renderItem={({ item }) => {
                 const size = Dimensions.get("window").width / 3;
                 return (

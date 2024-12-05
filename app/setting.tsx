@@ -1,6 +1,6 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "@/utils/supabase";
 
@@ -48,7 +48,15 @@ export default function Setting() {
         <Text className="heading-2 text-gray-80">문의하기</Text>
       </View>
       <View className="border-gray-5 border-b-8 px-6 py-[22px]">
-        <Text className="heading-2 text-gray-80">우리 앱 깃허브 놀러가기</Text>
+        <TouchableOpacity
+          onPress={() =>
+            Linking.openURL("https://github.com/Epilogue-1/kokkok")
+          }
+        >
+          <Text className="heading-2 text-gray-80">
+            우리 앱 깃허브 놀러가기
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

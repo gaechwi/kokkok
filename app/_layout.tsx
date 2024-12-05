@@ -98,6 +98,12 @@ export default function RootLayout() {
           name="setting"
           options={{ header: () => <HeaderWithBack name="SETTING" /> }}
         />
+        <Stack.Screen
+          name="profile"
+          options={{
+            header: () => <HeaderWithBack name="EDIT_PROFILE" />,
+          }}
+        />
       </Stack>
     </QueryClientProvider>
   );
