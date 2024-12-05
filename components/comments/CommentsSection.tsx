@@ -23,12 +23,13 @@ import {
   Platform,
   RefreshControl,
   Text,
-  TextInput,
+  type TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
+import MentionInput from "./MentionInput";
 
 const { height: deviceHeight } = Dimensions.get("window");
 const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 112 : 74;
@@ -55,9 +56,14 @@ export default function CommentsSection({
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
 
   const [comment, setComment] = useState("");
+  const [replyTo, setReplyTo] = useState<{
+    username: string;
+    parentId: number;
+  } | null>(null);
   const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
   const animationRef = useRef<Animated.CompositeAnimation>();
   const queryClient = useQueryClient();
+  const inputRef = useRef<TextInput>(null);
 
   // 유저 정보 가져오기
   const user = useFetchData(["user"], () => getUser(), "user");
@@ -198,10 +204,18 @@ export default function CommentsSection({
     setRefreshing(false);
   }, [queryClient, postId]);
 
+  // 답글달기 핸들러
+  const handleReply = (username: string, parentId: number) => {
+    setReplyTo({ username, parentId });
+    inputRef.current?.focus();
+  };
+
   const writeCommentMutation = useMutation({
-    mutationFn: () => createComment({ postId, contents: comment }),
+    mutationFn: () =>
+      createComment({ postId, contents: comment, parentId: replyTo?.parentId }),
     onSuccess: () => {
       setComment("");
+      setReplyTo(null); // 답글 상태 초기화
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
@@ -318,6 +332,7 @@ export default function CommentsSection({
                           liked={item.isLiked}
                           author={item.userData}
                           topReply={item.topReply}
+                          onReply={handleReply}
                         />
                       )}
                       ListFooterComponent={
@@ -352,22 +367,23 @@ export default function CommentsSection({
             className="size-12 rounded-full"
           />
 
-          <TextInput
-            className="z-10 h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
-            placeholder="댓글을 입력해주세요."
-            autoCapitalize="words"
-            keyboardType="default"
-            textAlignVertical="center"
-            accessibilityLabel="댓글 입력"
-            accessibilityHint="댓글을 입력해주세요."
+          <MentionInput
+            ref={inputRef}
             value={comment}
-            onChangeText={(text) => setComment(text)}
-            returnKeyType="send"
-            onSubmitEditing={() => {
+            onChangeText={(text) => {
+              setComment(text);
+              if (text.trim() === "" && replyTo) setReplyTo(null);
+            }}
+            placeholder={
+              replyTo ? `${replyTo.username}님에게 답글` : "댓글 달기"
+            }
+            mentionUser={replyTo}
+            onSubmit={() => {
               if (comment.trim() && !writeCommentMutation.isPending) {
                 writeCommentMutation.mutate();
               }
             }}
+            isPending={writeCommentMutation.isPending}
           />
         </View>
       </KeyboardAvoidingView>

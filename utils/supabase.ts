@@ -576,9 +576,11 @@ export async function toggleLikeComment(commentId: number) {
 export async function createComment({
   postId,
   contents,
+  parentId,
 }: {
   postId: number;
   contents: string;
+  parentId?: number;
 }) {
   try {
     const {
@@ -595,6 +597,7 @@ export async function createComment({
         postId,
         userId: user.id,
         contents,
+        parentsCommentId: parentId || null,
       })
       .select(
         `

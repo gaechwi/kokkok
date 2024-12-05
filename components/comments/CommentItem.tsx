@@ -34,6 +34,7 @@ interface CommentItemProps {
     isLiked: boolean;
     likedAvatars: string[];
   } | null;
+  onReply: (username: string, parentId: number) => void;
 }
 
 export default function CommentItem({
@@ -45,6 +46,7 @@ export default function CommentItem({
   likedAvatars,
   createdAt,
   topReply,
+  onReply,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -224,7 +226,10 @@ export default function CommentItem({
         </Text>
       </View>
 
-      <TouchableOpacity className="mb-[16px]">
+      <TouchableOpacity
+        className="mb-[16px]"
+        onPress={() => onReply(author.username, id)}
+      >
         <Text className="caption-2 text-gray-60">답글달기</Text>
       </TouchableOpacity>
 
@@ -239,6 +244,7 @@ export default function CommentItem({
             createdAt={topReply.createdAt}
             liked={topReply.isLiked}
             likedAvatars={topReply.likedAvatars}
+            onReply={onReply}
           />
         </View>
       )}
