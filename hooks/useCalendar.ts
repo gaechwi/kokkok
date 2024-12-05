@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export default function useCalendar() {
   const [date, setDate] = useState<Date>(new Date());
@@ -16,6 +16,10 @@ export default function useCalendar() {
     setDate(newDate);
   };
 
+  const resetDate = useCallback(() => {
+    setDate(new Date());
+  }, []);
+
   return {
     date,
     year,
@@ -24,5 +28,6 @@ export default function useCalendar() {
     currentYear,
     currentMonth,
     changeMonth,
+    resetDate,
   };
 }

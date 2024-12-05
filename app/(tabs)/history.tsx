@@ -5,6 +5,8 @@ import {
   type TouchableOpacityProps,
   View,
 } from "react-native";
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 
 import useCalendar from "@/hooks/useCalendar";
@@ -21,14 +23,22 @@ import icons from "@/constants/icons";
 type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
-  const { date, year, month, currentYear, currentMonth, changeMonth } =
-    useCalendar();
+  const {
+    date,
+    year,
+    month,
+    currentYear,
+    currentMonth,
+    changeMonth,
+    resetDate,
+  } = useCalendar();
   const { isModalVisible, openModal, closeModal } = useModal();
 
   const {
     data: histories = [],
     isLoading,
     isError,
+    refetch,
   } = useQuery({
     queryKey: ["histories", year, month],
     queryFn: () => getHistories(year, month),
@@ -40,6 +50,13 @@ export default function History() {
   const handleNextMonth = () => {
     changeMonth(1);
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      resetDate();
+      refetch();
+    }, [refetch, resetDate]),
+  );
 
   if (isLoading) {
     return (
