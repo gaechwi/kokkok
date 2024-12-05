@@ -40,16 +40,23 @@ export default function Upload() {
     if (post.data !== null && post.data !== undefined) {
       setPrevImages(post.data.images ?? []);
       setContents(post.data.contents ?? "");
+    } else {
+      setPrevImages([]);
+      setContents("");
     }
   }, [post.data]);
 
   const uploadPostMutation = useMutation({
-    mutationFn: () => createPost({ contents, images }),
+    mutationFn: () => {
+      return createPost({ contents, images });
+    },
     onSuccess: () => {
       setImages([]);
+      setPrevImages([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
       Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
       router.back();
     },
@@ -68,10 +75,11 @@ export default function Upload() {
     },
     onSuccess: () => {
       setImages([]);
+      setPrevImages([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
       Alert.alert("수정 성공", "게시물이 성공적으로 수정되었습니다.");
       router.back();
     },
@@ -81,7 +89,7 @@ export default function Upload() {
   });
 
   const handleUpload = async () => {
-    if (images.length === 0) {
+    if (images.length === 0 && prevImages.length === 0) {
       Alert.alert("알림", "이미지를 추가해주세요.");
       return;
     }
@@ -180,6 +188,12 @@ export default function Upload() {
     setPrevImages(prevImages.filter((_, index) => index !== indexToDelete));
   };
 
+  const hasContentChanged = post.data?.contents !== contents;
+  const hasImagesChanged =
+    images.length > 0 ||
+    prevImages.length !== post.data?.images?.length ||
+    prevImages.some((img, idx) => img !== post.data?.images?.[idx]);
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView
@@ -191,6 +205,7 @@ export default function Upload() {
           {/* 이전 이미지 표시 */}
           {prevImages.map((image, index) => (
             <View
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={`prev-image-${index}`}
               className="relative"
             >
@@ -210,10 +225,8 @@ export default function Upload() {
 
           {/* 새로 선택된 이미지 표시 */}
           {images.map((image, index) => (
-            <View
-              key={`upload-image-${index}`}
-              className="relative"
-            >
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            <View key={`upload-image-${index}`} className="relative">
               <Image
                 source={{ uri: image.uri }}
                 className="size-[152px] rounded-[10px]"
@@ -288,7 +301,16 @@ export default function Upload() {
         <TouchableOpacity
           className="mt-8 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary disabled:bg-gray-20"
           onPress={handleUpload}
-          disabled={uploadPostMutation.isPending || images.length === 0}
+          disabled={
+            uploadPostMutation.isPending ||
+            (postId
+              ? // 수정 모드일 때
+                !hasContentChanged && !hasImagesChanged
+              : // 새 게시물 작성 모드일 때
+                images.length === 0 &&
+                prevImages.length === 0 &&
+                contents === "")
+          }
         >
           <Text className="heading-2 text-white">
             {uploadPostMutation.isPending ? "인증중..." : "인증"}

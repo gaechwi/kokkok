@@ -100,6 +100,7 @@ export default function TabsLayout() {
                 <icons.PlusIcon width={24} height={24} color={colors.white} />
               </View>
             ),
+            href: "/upload",
           }}
         />
         <Tabs.Screen
