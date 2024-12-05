@@ -1,5 +1,6 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import { useCallback, useEffect, useState } from "react";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useCalendar from "@/hooks/useCalendar";
 
@@ -23,8 +24,40 @@ interface RestDayModalProps {
 export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   const { date, year, month, currentYear, currentMonth, changeMonth } =
     useCalendar();
-  const [defaultDates, setDefaultDates] = useState<RestDay[]>([]);
   const [restDates, setRestDates] = useState<RestDay[]>([]);
+
+  const { data: defaultDates = [], isSuccess } = useQuery({
+    queryKey: ["restDates"],
+    queryFn: getRestDays,
+  });
+
+  const queryClient = useQueryClient();
+  const { mutate: handleSubmit } = useMutation({
+    mutationFn: async () => {
+      const addedDays = restDates
+        .filter((rest) => !defaultDates.some((def) => def.date === rest.date))
+        .map((item) => ({ date: item.date }));
+
+      const deletedDays = defaultDates
+        .filter((def) => !restDates.some((rest) => rest.date === def.date))
+        .map((item) => ({ date: item.date }));
+
+      if (addedDays.length > 0) {
+        await addRestDay(addedDays);
+      }
+      if (deletedDays.length > 0) {
+        await deleteRestDay(deletedDays);
+      }
+      onClose();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["histories"] });
+      queryClient.invalidateQueries({ queryKey: ["restDates"] });
+    },
+    onError: (error) => {
+      Alert.alert("쉬는 날 설정 실패: ", error.message);
+    },
+  });
 
   const handlePreviousMonth = () => {
     changeMonth(-1);
@@ -33,19 +66,11 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
     changeMonth(1);
   };
 
-  const loadRestDates = useCallback(async () => {
-    try {
-      const data = await getRestDays();
-      setDefaultDates(data);
-      setRestDates(data);
-    } catch (error) {
-      console.error("쉬는 날 불러오기 에러:", error);
-    }
-  }, []);
-
   useEffect(() => {
-    loadRestDates();
-  }, [loadRestDates]);
+    if (isSuccess) {
+      setRestDates(defaultDates);
+    }
+  }, [isSuccess, defaultDates]);
 
   const handleSelectDate = (date: Date) => {
     const formattedDate = formatDate(date) as `${number}-${number}-${number}`;
@@ -58,28 +83,6 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       }
       return [...prev, { date: formattedDate }];
     });
-  };
-
-  const handleSubmit = async () => {
-    const addedDays = restDates
-      .filter((rest) => !defaultDates.some((def) => def.date === rest.date))
-      .map((item) => ({ date: item.date }));
-
-    const deletedDays = defaultDates
-      .filter((def) => !restDates.some((rest) => rest.date === def.date))
-      .map((item) => ({ date: item.date }));
-
-    try {
-      if (addedDays.length > 0) {
-        await addRestDay(addedDays);
-      }
-      if (deletedDays.length > 0) {
-        await deleteRestDay(deletedDays);
-      }
-      onClose();
-    } catch (error) {
-      console.error("쉬는 날 설정 에러:", error);
-    }
   };
 
   return (
@@ -109,7 +112,9 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
 
         <TouchableOpacity
           className="mt-[16px] h-[52px] w-[256px] items-center justify-center rounded-[10px] bg-primary"
-          onPress={handleSubmit}
+          onPress={() => {
+            handleSubmit();
+          }}
         >
           <Text className="title-2 text-white">완료</Text>
         </TouchableOpacity>
