@@ -373,39 +373,30 @@ export async function createFriendRequest(
   to: string,
   isAccepted: boolean,
 ) {
-  try {
-    const { error } = await supabase
-      .from("friendRequest")
-      .insert({ from, to, isAccepted });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 생성에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .insert({ from, to, isAccepted });
+
+  if (error) throw error;
 }
 
 // 친구요청 반응 업데이트
 export async function putFriendRequest(requestId: string, isAccepted: boolean) {
-  try {
-    const { error } = await supabase
-      .from("friendRequest")
-      .update({ isAccepted })
-      .eq("id", requestId);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 수정에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .update({ isAccepted })
+    .eq("id", requestId);
+
+  if (error) throw error;
 }
 
 export async function deleteFriendRequest(requestId: string) {
-  try {
-    await supabase.from("friendRequest").delete().eq("id", requestId);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 삭제에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .delete()
+    .eq("id", requestId);
+
+  if (error) throw error;
 }
 
 // ============================================
