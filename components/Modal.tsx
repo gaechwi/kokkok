@@ -1,8 +1,8 @@
-import { Modal, Animated, Easing, TouchableOpacity, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useRef } from "react";
-import { View } from "react-native";
 import Icons from "@/constants/icons";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, Modal, Text, TouchableOpacity } from "react-native";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface BottomModalProps {
   children: React.ReactNode;
@@ -139,8 +139,8 @@ export function OneButtonModal({
 
         <TouchableOpacity
           onPress={() => {
-            onClose();
             onPress();
+            onClose();
           }}
           className="mt-5 h-[52px] grow flex-row items-center justify-center rounded-[8px] bg-primary"
         >

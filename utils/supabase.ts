@@ -1,11 +1,10 @@
+import type { Database } from "@/types/supabase";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
-import type * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
-
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { Database } from "@/types/supabase";
+import * as FileSystem from "expo-file-system";
+import type * as ImagePicker from "expo-image-picker";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -186,10 +185,7 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
       },
     );
 
-    if (error) {
-      console.error("Error fetching posts:", error);
-      throw new Error("게시글을 가져오는데 실패했습니다.");
-    }
+    if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 
     return {
       posts: data,

@@ -1,26 +1,4 @@
-import { useEffect, useMemo, useRef, useCallback, useState } from "react";
-import {
-  Modal,
-  Animated,
-  Easing,
-  FlatList,
-  View,
-  Text,
-  PanResponder,
-  Dimensions,
-  RefreshControl,
-  ActivityIndicator,
-  TextInput,
-  Image,
-  Platform,
-  KeyboardAvoidingView,
-  Keyboard,
-  Alert,
-  TouchableWithoutFeedback,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import CommentItem from "./CommentItem";
-import { LinearGradient } from "expo-linear-gradient";
+import useFetchData from "@/hooks/useFetchData";
 import { createComment, getComments, getUser } from "@/utils/supabase";
 import {
   keepPreviousData,
@@ -28,7 +6,29 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import useFetchData from "@/hooks/useFetchData";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Easing,
+  FlatList,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  RefreshControl,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import CommentItem from "./CommentItem";
 
 const { height: deviceHeight } = Dimensions.get("window");
 const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 112 : 74;

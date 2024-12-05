@@ -1,22 +1,22 @@
+import CustomModal, { OneButtonModal } from "@/components/Modal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
+import useFetchData from "@/hooks/useFetchData";
+import { createPost, getPost, updatePost } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
+  Image,
+  Linking,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Alert,
-  ScrollView,
-  Linking,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import CustomModal, { OneButtonModal } from "@/components/Modal";
-import { createPost, getPost, updatePost } from "@/utils/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useFetchData from "@/hooks/useFetchData";
 
 export default function Upload() {
   const params = useLocalSearchParams<{ postId?: string }>();

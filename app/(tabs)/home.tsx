@@ -1,19 +1,19 @@
-import {
-  RefreshControl,
-  SafeAreaView,
-  ActivityIndicator,
-  FlatList,
-} from "react-native";
-import PostItem from "../../components/PostItem";
-import { useState, useCallback } from "react";
-import { getPosts } from "@/utils/supabase";
 import CommentsSection from "@/components/comments/CommentsSection";
+import { getPosts } from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  SafeAreaView,
+} from "react-native";
 import { View } from "react-native";
+import PostItem from "../../components/PostItem";
 
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
