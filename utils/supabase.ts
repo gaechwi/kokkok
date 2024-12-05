@@ -430,6 +430,7 @@ export async function getFriendRequests(
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
 
   return {
     data: data.map((request) => ({

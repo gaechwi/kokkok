@@ -1,4 +1,4 @@
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import icons from "@/constants/icons";
@@ -82,8 +82,8 @@ export function FriendItem({ friend }: FriendItemProps) {
       showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
     },
     onError: (error) => {
-      const errorMessage = error?.message || "친구 요청 수락에 실패했습니다";
-      showToast("fail", errorMessage);
+      console.error("콕 찌르기 실패:", error);
+      showToast("fail", "콕 찌르기에 실패했어요!");
     },
   });
 
@@ -137,12 +137,8 @@ export function FriendRequest({
       queryClient.invalidateQueries({ queryKey: ["friends"] });
     },
     onError: (error) => {
-      Alert.alert(
-        "친구 요청 수락 실패",
-        error instanceof Error
-          ? error.message
-          : "친구 요청 수락에 실패했습니다",
-      );
+      console.error("친구 요청 수락 실패:", error);
+      showToast("fail", "요청 수락에 실패했어요!");
     },
   });
 
@@ -155,12 +151,8 @@ export function FriendRequest({
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     },
     onError: (error) => {
-      Alert.alert(
-        "친구 요청 거절 실패",
-        error instanceof Error
-          ? error.message
-          : "친구 요청 거절에 실패했습니다",
-      );
+      console.error("친구 요청 거절 실패:", error);
+      showToast("fail", "요청 거절에 실패했어요!");
     },
   });
 
