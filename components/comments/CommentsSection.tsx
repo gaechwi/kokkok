@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Alert,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
@@ -30,7 +31,7 @@ import {
 import useFetchData from "@/hooks/useFetchData";
 
 const { height: deviceHeight } = Dimensions.get("window");
-const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 100 : 82;
+const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 100 : 83;
 const MIN_HEIGHT = 0;
 const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
 const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
@@ -85,7 +86,6 @@ export default function CommentsSection({
   useEffect(() => {
     // 애니메이션 정리
     const cleanupAnimations = () => animationRef.current?.stop();
-
     // 키보드가 나타나면 높이 조절
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -96,7 +96,6 @@ export default function CommentsSection({
         heightAnim.setValue(heightRef.current);
       },
     );
-
     // 키보드가 사라지면 높이 조절
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
@@ -113,7 +112,6 @@ export default function CommentsSection({
         animationRef.current.start();
       },
     );
-
     return () => {
       cleanupAnimations();
       keyboardDidShowListener.remove();
@@ -194,8 +192,6 @@ export default function CommentsSection({
     [heightAnim, onClose, maxHeight, clampHeight],
   );
 
-  const AnimatedView = Animated.createAnimatedComponent(View);
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -222,115 +218,128 @@ export default function CommentsSection({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -500}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View
-          className="flex-1 justify-end bg-black/50"
-          onTouchEnd={(e) => {
-            if (e.target === e.currentTarget) handleClose();
+        <TouchableWithoutFeedback
+          onPressOut={(e) => {
+            Keyboard.dismiss(); // 키보드를 명시적으로 닫아 부작용 방지
+            handleClose();
+            e.stopPropagation();
           }}
         >
-          {/* comment list */}
-          <AnimatedView
-            style={{
-              transform: [
-                {
-                  translateY: slideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [deviceHeight, 0],
-                  }),
-                },
-              ],
-            }}
-          >
+          <View className="flex-1 justify-end bg-black/50">
+            {/* comment list */}
             <Animated.View
               style={{
-                height: heightAnim,
-                overflow: "hidden",
+                transform: [
+                  {
+                    translateY: slideAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [deviceHeight, 0],
+                    }),
+                  },
+                ],
               }}
             >
-              <SafeAreaView
-                edges={[]}
-                className="h-full rounded-t-[20px] border border-gray-20 bg-white"
+              <Animated.View
+                style={{
+                  height: heightAnim,
+                }}
               >
-                <View className="flex-1">
-                  <View
-                    className="w-full items-center py-2.5"
-                    {...panResponder.panHandlers}
-                  >
-                    <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
-                  </View>
+                <SafeAreaView
+                  edges={["bottom"]}
+                  className="h-full rounded-t-[20px] border border-gray-20 bg-white"
+                  onStartShouldSetResponder={() => true}
+                >
+                  <View className="flex-1">
+                    <View
+                      className="w-full items-center py-2.5"
+                      {...panResponder.panHandlers}
+                    >
+                      <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
+                    </View>
 
-                  <View className="relative z-10 w-full pb-2.5">
-                    <LinearGradient
-                      colors={[
-                        "rgba(255, 255, 255, 1)",
-                        "rgba(255, 255, 255, 0)",
-                      ]}
-                      start={[0, 0]}
-                      end={[0, 1]}
-                      style={{
-                        position: "absolute",
-                        top: 36,
-                        left: 0,
-                        right: 0,
-                        height: 10,
-                        zIndex: 1,
+                    <View className="relative z-10 w-full pb-2.5">
+                      <LinearGradient
+                        colors={[
+                          "rgba(255, 255, 255, 1)",
+                          "rgba(255, 255, 255, 0)",
+                        ]}
+                        start={[0, 0]}
+                        end={[0, 1]}
+                        style={{
+                          position: "absolute",
+                          top: 36,
+                          left: 0,
+                          right: 0,
+                          height: 10,
+                          zIndex: 1,
+                        }}
+                      />
+                      <Text className="heading-2 text-center">댓글</Text>
+                    </View>
+
+                    <FlatList
+                      className="flex-1 px-8"
+                      maintainVisibleContentPosition={{
+                        minIndexForVisible: 0,
                       }}
+                      ListHeaderComponent={<View className="h-4" />}
+                      data={data?.pages.flatMap((page) => page.comments) || []}
+                      keyExtractor={(item) => item.id.toString()}
+                      onEndReachedThreshold={0.5}
+                      onEndReached={() => {
+                        if (!isFetchingNextPage) loadMore();
+                      }}
+                      refreshControl={
+                        <RefreshControl
+                          refreshing={refreshing}
+                          onRefresh={onRefresh}
+                        />
+                      }
+                      removeClippedSubviews={false}
+                      maxToRenderPerBatch={10}
+                      windowSize={5}
+                      keyboardShouldPersistTaps="handled"
+                      getItemLayout={(data, index) => ({
+                        length: 100,
+                        offset: 100 * index,
+                        index,
+                      })}
+                      renderItem={({ item }) => (
+                        <CommentItem
+                          key={item.id}
+                          id={Number(item.id)}
+                          postId={postId}
+                          content={item.contents}
+                          createdAt={item.createdAt}
+                          likedAuthorAvatar={[]}
+                          liked={item.isLiked}
+                          author={item.user}
+                        />
+                      )}
+                      ListFooterComponent={
+                        isFetchingNextPage ? (
+                          <ActivityIndicator size="large" className="py-4" />
+                        ) : null
+                      }
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                      ListEmptyComponent={
+                        <View className="flex-1 items-center justify-center">
+                          <Text className="title-3 text-gray-70">
+                            아직 댓글이 없어요.
+                          </Text>
+                        </View>
+                      }
                     />
-                    <Text className="heading-2 text-center">댓글</Text>
                   </View>
-
-                  <FlatList
-                    className="flex-1 px-8"
-                    maintainVisibleContentPosition={{
-                      minIndexForVisible: 0,
-                    }}
-                    ListHeaderComponent={<View className="h-4" />}
-                    data={data?.pages.flatMap((page) => page.comments) || []}
-                    keyExtractor={(item) => item.id.toString()}
-                    onEndReachedThreshold={0.5}
-                    onEndReached={loadMore}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                      />
-                    }
-                    renderItem={({ item }) => (
-                      <CommentItem
-                        key={item.id}
-                        id={Number(item.id)}
-                        postId={postId}
-                        content={item.contents}
-                        createdAt={item.createdAt}
-                        likedAuthorAvatar={[]}
-                        liked={item.isLiked}
-                        author={item.user}
-                      />
-                    )}
-                    ListFooterComponent={
-                      isFetchingNextPage ? (
-                        <ActivityIndicator size="large" className="py-4" />
-                      ) : null
-                    }
-                    showsVerticalScrollIndicator={false}
-                    showsHorizontalScrollIndicator={false}
-                    ListEmptyComponent={
-                      <View className="flex-1 items-center justify-center">
-                        <Text className="title-3 text-gray-70">
-                          아직 댓글이 없어요.
-                        </Text>
-                      </View>
-                    }
-                  />
-                </View>
-              </SafeAreaView>
+                </SafeAreaView>
+              </Animated.View>
             </Animated.View>
-          </AnimatedView>
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
 
         {/* comment input */}
         <View
@@ -343,7 +352,7 @@ export default function CommentsSection({
           />
 
           <TextInput
-            className="z-10 max-h-[120px] min-h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
+            className="z-10 flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
             placeholder="댓글을 입력해주세요."
             autoCapitalize="words"
             keyboardType="default"
@@ -354,12 +363,10 @@ export default function CommentsSection({
             onChangeText={(text) => setComment(text)}
             returnKeyType="send"
             onSubmitEditing={() => {
-              if (comment.trim()) {
-                if (writeCommentMutation.isPending) return;
+              if (comment.trim() && !writeCommentMutation.isPending) {
                 writeCommentMutation.mutate();
               }
             }}
-            blurOnSubmit={false}
           />
         </View>
       </KeyboardAvoidingView>

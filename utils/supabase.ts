@@ -617,8 +617,6 @@ export async function createComment({
       )
       .single();
 
-    console.log("newComment", newComment, "commentError", commentError);
-
     if (commentError) throw commentError;
     if (!newComment) throw new Error("댓글을 생성하는데 실패했습니다.");
 
