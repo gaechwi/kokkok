@@ -22,7 +22,7 @@ const Step1 = () => {
   const handleSendEmail = async () => {
     try {
       await resetPassword(resetEmail.email);
-      router.replace("/password-reset/step2");
+      router.push("/password-reset/step2");
     } catch (error: unknown) {
       Alert.alert(
         "비밀번호 재설정 실패",
