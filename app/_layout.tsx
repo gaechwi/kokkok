@@ -12,6 +12,7 @@ import { supabase } from "@/utils/supabase";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import { useAppState } from "@/hooks/useAppState";
 import Toast from "react-native-toast-message";
+import { ToastConfig } from "@/components/ToastConfig";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -73,7 +74,7 @@ export default function RootLayout() {
           options={{ header: () => <HeaderWithBack name="SETTING" /> }}
         />
       </Stack>
-      <Toast />
+      <Toast config={ToastConfig} />
     </QueryClientProvider>
   );
 }
