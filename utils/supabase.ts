@@ -490,7 +490,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
         { count: "exact" },
       )
       .eq("postId", postId)
-      // .order("likes", { ascending: false })
+      .order("likes", { ascending: false })
       .order("createdAt", { ascending: false })
       .range(start, end);
 
@@ -564,11 +564,34 @@ export async function toggleLikeComment(commentId: number) {
     }
 
     if (likeData) {
-      // 좋아요 취소
-      await supabase.from("commentLike").delete().eq("id", likeData.id);
+      // 좋아요 취소 및 likes 감소
+      const { error: deleteError } = await supabase.rpc(
+        "decrement_comment_likes",
+        {
+          p_comment_id: commentId,
+        },
+      );
+      if (deleteError) throw deleteError;
+
+      const { error: unlikeError } = await supabase
+        .from("commentLike")
+        .delete()
+        .eq("id", likeData.id);
+      if (unlikeError) throw unlikeError;
     } else {
-      // 좋아요
-      await supabase.from("commentLike").insert({ commentId, userId: user.id });
+      // 좋아요 추가 및 likes 증가
+      const { error: insertError } = await supabase.rpc(
+        "increment_comment_likes",
+        {
+          p_comment_id: commentId,
+        },
+      );
+      if (insertError) throw insertError;
+
+      const { error: likeInsertError } = await supabase
+        .from("commentLike")
+        .insert({ commentId, userId: user.id });
+      if (likeInsertError) throw likeInsertError;
     }
   } catch (error) {
     const errorMessage =

@@ -108,7 +108,6 @@ export function DeleteModal({
   );
 }
 
-
 export function OneButtonModal({
   isVisible,
   onClose,
@@ -127,27 +126,26 @@ export function OneButtonModal({
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
       <View className="items-center px-[55px] py-6">
-        {!!emoji && (
-          emoji === "sad" ? (
+        {!!emoji &&
+          (emoji === "sad" ? (
             <Icons.FaceNotDoneIcon width={40} height={40} />
           ) : (
             <Icons.FaceDoneIcon width={40} height={40} />
-          )
-        )}
+          ))}
 
         <Text className="title-3 mt-4 text-center text-gray-90">
           {contents}
         </Text>
 
-          <TouchableOpacity
-            onPress={() => {
-              onClose();
-              onPress();
-            }}
-            className="mt-5 h-[52px] flex-row grow items-center justify-center rounded-[8px] bg-primary"
-          >
-            <Text className="title-3 text-white">{buttonText}</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onClose();
+            onPress();
+          }}
+          className="mt-5 h-[52px] grow flex-row items-center justify-center rounded-[8px] bg-primary"
+        >
+          <Text className="title-3 text-white">{buttonText}</Text>
+        </TouchableOpacity>
       </View>
     </CustomModal>
   );

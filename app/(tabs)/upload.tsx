@@ -28,7 +28,6 @@ export default function Upload() {
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const queryClient = useQueryClient();
 
-
   const post = useFetchData(
     ["post", postId],
     () => (postId ? getPost(postId) : Promise.resolve(null)),
@@ -272,7 +271,15 @@ export default function Upload() {
         </TouchableOpacity>
       </View>
 
-      <OneButtonModal buttonText="확인" contents={`업로드에 실패했습니다 \n 다시한번 시도해주세요`} isVisible={isInfoModalVisible} onClose={() => setIsInfoModalVisible(false)} onPress={() => setIsInfoModalVisible(false)} emoji="sad" key={`upload-info-modal`} />
+      <OneButtonModal
+        buttonText="확인"
+        contents="업로드에 실패했습니다 \n 다시한번 시도해주세요"
+        isVisible={isInfoModalVisible}
+        onClose={() => setIsInfoModalVisible(false)}
+        onPress={() => setIsInfoModalVisible(false)}
+        emoji="sad"
+        key="upload-info-modal"
+      />
     </View>
   );
 }

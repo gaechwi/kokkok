@@ -172,6 +172,48 @@ export type Database = {
           },
         ];
       };
+      notification: {
+        Row: {
+          createdAt: string;
+          data: Json | null;
+          from: string;
+          id: number;
+          to: string;
+          type: Database["public"]["Enums"]["notificationtype"];
+        };
+        Insert: {
+          createdAt?: string;
+          data?: Json | null;
+          from: string;
+          id?: number;
+          to: string;
+          type: Database["public"]["Enums"]["notificationtype"];
+        };
+        Update: {
+          createdAt?: string;
+          data?: Json | null;
+          from?: string;
+          id?: number;
+          to?: string;
+          type?: Database["public"]["Enums"]["notificationtype"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_from_fkey";
+            columns: ["from"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notification_to_fkey";
+            columns: ["to"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       post: {
         Row: {
           contents: string | null;
@@ -313,6 +355,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      decrement_comment_likes: {
+        Args: {
+          p_comment_id: number;
+        };
+        Returns: undefined;
+      };
       get_posts_with_details: {
         Args: {
           startindex: number;
@@ -344,8 +392,15 @@ export type Database = {
           isLikedByUser: boolean;
         }[];
       };
+      increment_comment_likes: {
+        Args: {
+          p_comment_id: number;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
+      notificationtype: "poke" | "comment" | "like";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {

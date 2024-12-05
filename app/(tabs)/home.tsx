@@ -57,7 +57,6 @@ export default function Home() {
     setRefreshing(false);
   }, [queryClient]);
 
-
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">
       <FlatList
