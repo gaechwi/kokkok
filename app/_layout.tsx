@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 import "../global.css";
 import { useFonts } from "expo-font";
@@ -11,6 +11,7 @@ import { HeaderWithBack } from "@/components/Header";
 import { supabase } from "@/utils/supabase";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import { useAppState } from "@/hooks/useAppState";
+import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -72,6 +73,7 @@ export default function RootLayout() {
           options={{ header: () => <HeaderWithBack name="SETTING" /> }}
         />
       </Stack>
+      <Toast />
     </QueryClientProvider>
   );
 }
