@@ -1,10 +1,42 @@
-import { View, Text, Image, FlatList, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "@/constants/images";
 import Icons from "@/constants/icons";
 import colors from "@/constants/colors";
+import { supabase } from "@/utils/supabase";
+import { useQuery } from "@tanstack/react-query";
 
 export default function MyPage() {
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      return session;
+    },
+  });
+
+  const { data: userData } = useQuery({
+    queryKey: ["user", session?.user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user")
+        .select("*")
+        .eq("id", session?.user?.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="w-full">
@@ -12,14 +44,18 @@ export default function MyPage() {
           <View className="flex-row justify-between">
             <View className="flex-row items-center gap-6">
               <Image source={images.AvaTarDefault} className="size-[88px]" />
-              <Text className="title-3">닉네임</Text>
+              <Text className="title-3">{userData?.username}</Text>
             </View>
             <View>
-              <Icons.MeatballIcon
-                height={24}
-                width={24}
-                color={colors.gray[70]}
-              />
+              <TouchableOpacity
+                onPress={async () => await supabase.auth.signOut()}
+              >
+                <Icons.MeatballIcon
+                  height={24}
+                  width={24}
+                  color={colors.gray[70]}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 

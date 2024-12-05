@@ -17,6 +17,7 @@ import { signUpFormAtom } from "@contexts/auth";
 import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
+import { sendUpOTP, supabase } from "@/utils/supabase";
 
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -25,7 +26,13 @@ const Step1 = () => {
 
   const router = useRouter();
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    const { data: userData, error: userError } = await supabase
+      .from("user")
+      .select("isOAuth, email")
+      .eq("email", signUpForm.email)
+      .single();
+
     if (
       !signUpForm.email ||
       !signUpForm.username ||
@@ -33,6 +40,11 @@ const Step1 = () => {
       !passwordConfirm
     ) {
       Alert.alert("빈칸을 채워주세요.");
+      return;
+    }
+
+    if (signUpForm.username.length < 3) {
+      Alert.alert("닉네임은 3자 이상이어야 합니다.");
       return;
     }
 
@@ -52,7 +64,26 @@ const Step1 = () => {
       return;
     }
 
-    setIsModalVisible(true);
+    if (userData?.isOAuth) {
+      Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
+      return;
+    }
+
+    if (userData?.email) {
+      Alert.alert("알림", "이미 가입된 이메일입니다.");
+      return;
+    }
+
+    try {
+      await sendUpOTP(signUpForm.email);
+      setIsModalVisible(true);
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "이메일 전송에 실패했습니다.",
+      );
+      return;
+    }
   };
 
   return (
