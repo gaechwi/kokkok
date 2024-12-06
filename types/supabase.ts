@@ -382,6 +382,7 @@ export type Database = {
           };
           likes: number;
           parentsCommentId: number | null;
+          replyCommentId: number | null;
           isLiked: boolean;
           likedAvatars: string[];
           totalReplies: number;
@@ -391,6 +392,7 @@ export type Database = {
             userId: string;
             createdAt: string;
             parentsCommentId: number;
+            replyCommentId: number;
             user: {
               id: string;
               username: string;
@@ -444,6 +446,7 @@ export type Database = {
           userId: string;
           createdAt: string;
           parentsCommentId: number;
+          replyCommentId: number;
           userData: {
             id: string;
             username: string;

@@ -59,12 +59,12 @@ export default function CommentsSection({
   const [replyTo, setReplyTo] = useState<{
     username: string;
     parentId: number;
+    replyCommentId: number;
   } | null>(null);
   const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
   const animationRef = useRef<Animated.CompositeAnimation>();
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
-  const [previousText, setPreviousText] = useState("");
 
   // 유저 정보 가져오기
   const user = useFetchData(
@@ -205,19 +205,31 @@ export default function CommentsSection({
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
   }, [refetch]);
 
   // 답글달기 핸들러
-  const handleReply = (username: string, parentId: number) => {
-    setReplyTo({ username, parentId });
+  const handleReply = (
+    username: string,
+    parentId: number,
+    replyCommentId: number,
+  ) => {
+    setReplyTo({ username, parentId, replyCommentId: replyCommentId });
     inputRef.current?.focus();
   };
 
   const writeCommentMutation = useMutation({
     mutationFn: () =>
-      createComment({ postId, contents: comment, parentId: replyTo?.parentId }),
+      createComment({
+        postId,
+        contents: comment,
+        parentId: replyTo?.parentId,
+        replyCommentId: replyTo?.replyCommentId,
+      }),
     onSuccess: () => {
       setComment("");
       setReplyTo(null);
@@ -382,7 +394,9 @@ export default function CommentsSection({
             }}
             setReplyTo={setReplyTo}
             placeholder={
-              replyTo ? `${replyTo.username}님에게 답글` : "댓글 달기"
+              replyTo
+                ? `${replyTo.username}님에게 답글`
+                : "댓글을 입력해주세요."
             }
             mentionUser={replyTo}
             onSubmit={() => {

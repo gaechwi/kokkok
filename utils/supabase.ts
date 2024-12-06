@@ -658,6 +658,9 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
       endindex: end,
     });
 
+    console.log(data);
+    console.log(error);
+
     if (error) throw error;
     if (!data) throw new Error("답글을 가져올 수 없습니다.");
 
@@ -740,10 +743,12 @@ export async function createComment({
   postId,
   contents,
   parentId,
+  replyCommentId,
 }: {
   postId: number;
   contents: string;
   parentId?: number;
+  replyCommentId?: number;
 }) {
   try {
     const {
@@ -761,6 +766,7 @@ export async function createComment({
         userId: user.id,
         contents,
         parentsCommentId: parentId || null,
+        replyCommentId: replyCommentId || null,
       })
       .select(
         `

@@ -4,7 +4,13 @@ import { Text, TextInput, View } from "react-native";
 interface MentionInputProps {
   value: string;
   onChangeText: (text: string) => void;
-  setReplyTo: (replyTo: { username: string; parentId: number } | null) => void;
+  setReplyTo: (
+    replyTo: {
+      username: string;
+      parentId: number;
+      replyCommentId: number;
+    } | null,
+  ) => void;
   placeholder?: string;
   mentionUser?: { username: string } | null;
   onSubmit?: () => void;

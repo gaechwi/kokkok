@@ -40,6 +40,7 @@ interface CommentItemProps {
   likedAvatars: string[];
   createdAt: string;
   parentsCommentId?: number;
+  replyCommentId?: number;
   totalReplies?: number;
   topReply?: {
     id: number;
@@ -47,6 +48,7 @@ interface CommentItemProps {
     userId: string;
     createdAt: string;
     parentsCommentId: number;
+    replyCommentId: number;
     user: {
       id: string;
       username: string;
@@ -55,7 +57,7 @@ interface CommentItemProps {
     isLiked: boolean;
     likedAvatars: string[];
   } | null;
-  onReply: (username: string, parentId: number) => void;
+  onReply: (username: string, parentId: number, replyCommentId: number) => void;
   isReply?: boolean;
 }
 
@@ -68,6 +70,7 @@ export default function CommentItem({
   likedAvatars,
   createdAt,
   parentsCommentId,
+  replyCommentId,
   totalReplies,
   topReply,
   onReply,
@@ -289,7 +292,9 @@ export default function CommentItem({
       {/* reply button */}
       <TouchableOpacity
         className={isReply ? "pb-[5px]" : "pb-[13px]"}
-        onPress={() => onReply(author.username, parentsCommentId ?? id)}
+        onPress={() => {
+          onReply(author.username, parentsCommentId ?? id, id);
+        }}
       >
         <Text className="caption-2 text-gray-60">답글달기</Text>
       </TouchableOpacity>
@@ -310,6 +315,7 @@ export default function CommentItem({
             likedAvatars={topReply.likedAvatars}
             createdAt={topReply.createdAt}
             parentsCommentId={topReply.parentsCommentId}
+            replyCommentId={topReply.replyCommentId}
             onReply={onReply}
             isReply={true}
           />
@@ -333,6 +339,7 @@ export default function CommentItem({
                   likedAvatars={item.likedAvatars}
                   createdAt={item.createdAt}
                   parentsCommentId={item.parentsCommentId}
+                  replyCommentId={item.replyCommentId}
                   onReply={onReply}
                   isReply={true}
                 />
@@ -346,7 +353,6 @@ export default function CommentItem({
           )}
 
           {totalReplies &&
-            totalReplies > 0 &&
             !!(
               totalReplies -
               1 -
@@ -363,7 +369,6 @@ export default function CommentItem({
                 <Text className="font-pregular text-[11px] text-gray-60">
                   + 답글{" "}
                   {totalReplies -
-                    1 -
                     (replyData?.pages.reduce(
                       (acc, page) => acc + page.replies.length,
                       0,
