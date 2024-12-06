@@ -5,7 +5,9 @@ import {
   type TouchableOpacityProps,
   View,
 } from "react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 
 import useCalendar from "@/hooks/useCalendar";
 import useModal from "@/hooks/useModal";
@@ -21,10 +23,21 @@ import icons from "@/constants/icons";
 type History = Awaited<ReturnType<typeof getHistories>>[number];
 
 export default function History() {
-  const { date, year, month, currentYear, currentMonth, changeMonth } =
-    useCalendar();
-  const [histories, setHistories] = useState<History[]>([]);
+  const {
+    date,
+    year,
+    month,
+    currentYear,
+    currentMonth,
+    changeMonth,
+    resetDate,
+  } = useCalendar();
   const { isModalVisible, openModal, closeModal } = useModal();
+
+  const { data: histories = [], refetch } = useQuery({
+    queryKey: ["histories", year, month],
+    queryFn: () => getHistories(year, month),
+  });
 
   const handlePreviousMonth = () => {
     changeMonth(-1);
@@ -33,18 +46,12 @@ export default function History() {
     changeMonth(1);
   };
 
-  const loadHistory = useCallback(async () => {
-    try {
-      const data = await getHistories(year, month);
-      setHistories(data);
-    } catch (error) {
-      console.error("운동 기록 불러오기 에러:", error);
-    }
-  }, [year, month]);
-
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+  useFocusEffect(
+    useCallback(() => {
+      resetDate();
+      refetch();
+    }, [refetch, resetDate]),
+  );
 
   const workoutDays = histories.filter(
     (item) =>
