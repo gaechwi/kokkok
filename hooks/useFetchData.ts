@@ -11,7 +11,6 @@ const useFetchData = <T>(
   getService: () => Promise<T>,
   defaultErrorMessage: string,
   enabled = true,
-  refetchInterval = 30000, // NOTE 30초
 ): UseQueryResult<T, Error> => {
   return useQuery<T, Error>({
     queryKey: queryKey,
@@ -26,7 +25,6 @@ const useFetchData = <T>(
       }
     },
     enabled,
-    refetchInterval,
   });
 };
 
