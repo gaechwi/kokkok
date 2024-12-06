@@ -14,7 +14,7 @@ export const alertToggleAtom = atom<AlertToggleState>({
 export const allAlertAtom = atom(
   (get) => {
     const state = get(alertToggleAtom);
-    return state.like && state.comment;
+    return state.like || state.comment;
   },
   (_get, set, newValue: boolean) => {
     set(alertToggleAtom, {
