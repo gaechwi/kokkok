@@ -22,8 +22,15 @@ interface RestDayModalProps {
 }
 
 export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
-  const { date, year, month, currentYear, currentMonth, changeMonth } =
-    useCalendar();
+  const {
+    date,
+    year,
+    month,
+    currentYear,
+    currentMonth,
+    changeMonth,
+    resetDate,
+  } = useCalendar();
   const [restDates, setRestDates] = useState<RestDay[]>([]);
 
   const { data: defaultDates = [], isSuccess } = useQuery({
@@ -85,12 +92,18 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
     });
   };
 
+  const handleClose = () => {
+    setRestDates(defaultDates);
+    resetDate();
+    onClose();
+  };
+
   return (
-    <CustomModal visible={visible} onClose={onClose} position="bottom">
+    <CustomModal visible={visible} onClose={handleClose} position="bottom">
       <View className="items-center px-[39px] pt-[40px] pb-[52px]">
         <TouchableOpacity
           className="absolute top-[16px] right-[16px]"
-          onPress={onClose}
+          onPress={handleClose}
         >
           <icons.XIcon width={24} height={24} color={colors.gray[90]} />
         </TouchableOpacity>
