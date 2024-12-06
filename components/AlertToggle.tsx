@@ -18,7 +18,7 @@ export default function AlertToggle({
     if (isAll && setAllValues) {
       setAllValues(value);
     } else {
-      setToggleValue(value);
+      setToggleValue?.(value);
     }
   };
 
@@ -39,8 +39,6 @@ export default function AlertToggle({
         inActiveBackgroundColor: colors.gray[45],
         activeBackgroundColor: colors.primary,
       }}
-      leftTitle={toggleValue ? "on" : ""}
-      rightTitle={toggleValue ? "" : "off"}
       containerStyle={{
         alignItems: "center",
         justifyContent: "center",

@@ -4,16 +4,13 @@ import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
-import { useState } from "react";
 import AlertToggle from "@/components/AlertToggle";
+import { useAtom } from "jotai";
+import { alertToggleAtom } from "@/contexts/alert";
 
 export default function Setting() {
   const router = useRouter();
-  const [toggleValue, setToggleValue] = useState({
-    like: false,
-    comment: false,
-    all: false,
-  });
+  const [toggleValue, setToggleValue] = useAtom(alertToggleAtom);
 
   const { data: currentUser } = useFetchData(
     ["currentUser"],
