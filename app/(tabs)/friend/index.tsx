@@ -82,11 +82,13 @@ export default function Friend() {
     ["friendsStatus"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
-    !!friendIds,
+    !!friendIds?.length,
   );
 
   // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
+    if (!friendIds?.length) return;
+
     const today = formatDate(new Date());
     const statusChannel = supabase
       .channel("workoutHistory")
@@ -97,10 +99,10 @@ export default function Friend() {
           if (
             (payload.eventType === "DELETE" &&
               payload.old.date === today &&
-              friendIds?.includes(payload.old.userId)) ||
+              friendIds.includes(payload.old.userId)) ||
             (payload.eventType === "INSERT" &&
               payload.new.date === today &&
-              friendIds?.includes(payload.new.userId))
+              friendIds.includes(payload.new.userId))
           )
             queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
         },

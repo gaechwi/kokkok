@@ -396,6 +396,8 @@ export async function getFriends(userId: string): Promise<UserProfile[]> {
 export async function getFriendsStatus(
   friendIds: string[],
 ): Promise<StatusInfo[]> {
+  if (!friendIds.length) return [];
+
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("userId, status")
@@ -403,7 +405,7 @@ export async function getFriendsStatus(
     .eq("date", formatDate(new Date()));
 
   if (error) throw error;
-  if (!data) throw new Error("친구 운동 상태를 불러올 수 없습니다.");
+  if (!data) return [];
 
   return data;
 }
