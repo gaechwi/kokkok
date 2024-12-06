@@ -5,8 +5,8 @@ import useFetchData from "@/hooks/useFetchData";
 import { createPost, getPost, updatePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -28,6 +28,23 @@ export default function Upload() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const queryClient = useQueryClient();
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log("focus effect");
+      if (postId) {
+        post.refetch().then((data) => {
+          if (data !== null && data !== undefined) {
+            setPrevImages(data.data?.images ?? []);
+            setContents(data.data?.contents ?? "");
+          } else {
+            setPrevImages([]);
+            setContents("");
+          }
+        });
+      }
+    }, [postId]),
+  );
 
   const post = useFetchData(
     ["post", postId],
