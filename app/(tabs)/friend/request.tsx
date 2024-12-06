@@ -3,13 +3,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect } from "react";
 
 import { FriendRequest } from "@/components/FriendItem";
-import { getCurrentUser, getFriendRequests, supabase } from "@/utils/supabase";
+import {
+  getCurrentSession,
+  getFriendRequests,
+  supabase,
+} from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
 import type { RequestResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useQueryClient } from "@tanstack/react-query";
-import type { User } from "@/types/User.interface";
+import type { Session } from "@supabase/supabase-js";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -17,31 +21,41 @@ const LIMIT = 12;
 export default function Request() {
   const queryClient = useQueryClient();
 
-  const { data: user, error: userError } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
+  // 로그인한 유저 정보 조회
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",
   );
 
+  // 유저의 친구 요청 정보 조회
   const {
     data: requests,
     isLoading,
     error,
   } = useFetchData<RequestResponse>(
     ["friendRequests", OFFSET],
-    () => getFriendRequests(user?.id || ""),
+    () => getFriendRequests(session?.user.id || ""),
     "친구 요청 조회에 실패했습니다.",
-    !!user,
+    !!session?.user,
   );
 
+  // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
+    if (!session) return;
+
     const requestChannel = supabase
       .channel("friendRequest")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "friendRequest" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "friendRequest",
+          filter: `to=eq.${session.user.id}`,
+        },
         (payload) => {
-          if (!payload.new.isAccepted && payload.new.to === user?.id)
+          if (!payload.new.isAccepted)
             queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         },
       )
@@ -50,8 +64,9 @@ export default function Request() {
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [user, queryClient.invalidateQueries]);
+  }, [session, queryClient.invalidateQueries]);
 
+  // 에러 스크린
   if (error || userError) {
     return (
       <ErrorScreen
@@ -62,6 +77,7 @@ export default function Request() {
     );
   }
 
+  // 로딩 스크린
   if (isLoading || !requests) {
     return <LoadingScreen />;
   }

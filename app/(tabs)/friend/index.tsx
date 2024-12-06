@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { FriendItem } from "@/components/FriendItem";
 import SearchBar from "@/components/SearchBar";
-import { getCurrentUser, getFriends } from "@/utils/supabase";
+import {
+  getCurrentSession,
+  getFriends,
+  getFriendsStatus,
+  supabase,
+} from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
-import type { FriendResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import type { User, UserProfile } from "@/types/User.interface";
-
-const OFFSET = 0;
-const LIMIT = 12;
+import type { UserProfile } from "@/types/User.interface";
+import type { Session } from "@supabase/supabase-js";
+import type { StatusInfo } from "@/types/Friend.interface";
+import { formatDate } from "@/utils/formatDate";
 
 interface FriendLayoutProps {
   friends: UserProfile[];
@@ -27,7 +32,7 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
       <FlatList
         data={friends}
         keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => <FriendItem fromUser={friend} />}
+        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
         className="px-6 grow w-full"
         contentContainerStyle={friends.length ? {} : { flex: 1 }}
         ListHeaderComponent={
@@ -45,27 +50,102 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
 }
 
 export default function Friend() {
-  const { data: user, error: userError } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
+  const queryClient = useQueryClient();
+  const [friends, setFriends] = useState<UserProfile[]>([]);
+
+  // 로그인한 유저 정보 조회
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",
   );
 
+  // 유저의 친구 정보 조회
   const {
-    data: friends,
-    isLoading,
-    error: friendsError,
-  } = useFetchData<FriendResponse>(
-    ["friends", OFFSET],
-    () => getFriends(user?.id || ""),
+    data: friendsData,
+    isLoading: isFriendLoading,
+    error: friendError,
+  } = useFetchData<UserProfile[]>(
+    ["friends"],
+    () => getFriends(session?.user.id || ""),
     "친구 조회에 실패했습니다.",
-    !!user,
+    !!session?.user.id,
   );
 
-  if (userError || friendsError) {
+  const friendIds = friendsData?.map((friend) => friend.id);
+
+  // 친구의 운동 상태 정보 조회
+  const {
+    data: statusData,
+    isLoading: isStatusLoading,
+    error: statusError,
+  } = useFetchData<StatusInfo[]>(
+    ["friendsStatus"],
+    () => getFriendsStatus(friendIds || []),
+    "친구 조회에 실패했습니다.",
+    !!friendIds?.length,
+  );
+
+  // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
+  useEffect(() => {
+    if (!friendIds?.length) return;
+
+    const today = formatDate(new Date());
+    const statusChannel = supabase
+      .channel("workoutHistory")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "workoutHistory" },
+        (payload) => {
+          if (
+            (payload.eventType === "DELETE" &&
+              payload.old.date === today &&
+              friendIds.includes(payload.old.userId)) ||
+            (payload.eventType === "INSERT" &&
+              payload.new.date === today &&
+              friendIds.includes(payload.new.userId))
+          )
+            queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(statusChannel);
+    };
+  }, [friendIds, queryClient.invalidateQueries]);
+
+  // 친구 목록이나 친구 운동 기록이 바뀔때마다 데이터 가공
+  useEffect(() => {
+    if (!friendsData) return;
+    if (!statusData?.length) {
+      setFriends(friendsData);
+      return;
+    }
+
+    const getStatus = (friendId: string) =>
+      statusData?.find(({ userId }) => friendId === userId)?.status;
+
+    setFriends(
+      friendsData
+        .map((friend) => {
+          const status = getStatus(friend.id);
+          return status ? { ...friend, status } : friend;
+        })
+        .sort((a, b) => {
+          if (a.status && !b.status) return 1;
+          if (!a.status && b.status) return -1;
+          return 0;
+        }),
+    );
+  }, [friendsData, statusData]);
+
+  // 에러 스크린
+  if (userError || friendError || statusError) {
     const errorMessage =
       userError?.message ||
-      friendsError?.message ||
+      friendError?.message ||
+      statusError?.message ||
       "친구 조회에 실패했습니다.";
     return (
       <FriendLayout
@@ -75,13 +155,14 @@ export default function Friend() {
     );
   }
 
-  if (isLoading || !friends) {
+  // 로딩 스크린
+  if (isFriendLoading || isStatusLoading || !friendsData) {
     return <FriendLayout friends={[]} emptyComponent={<LoadingScreen />} />;
   }
 
   return (
     <FriendLayout
-      friends={friends.data}
+      friends={friends}
       emptyComponent={<ErrorScreen errorMessage="아직 친구가 없습니다." />}
     />
   );

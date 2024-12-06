@@ -11,11 +11,13 @@ import { HeaderWithBack } from "@/components/Header";
 import { supabase } from "@/utils/supabase";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import { useAppState } from "@/hooks/useAppState";
+import Toast from "react-native-toast-message";
+import { ToastConfig } from "@/components/ToastConfig";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1 } },
+  defaultOptions: { queries: { retry: 0 } },
 });
 
 export default function RootLayout() {
@@ -79,6 +81,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
       </Stack>
+      <Toast config={ToastConfig} />
     </QueryClientProvider>
   );
 }
