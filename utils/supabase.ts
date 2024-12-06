@@ -233,6 +233,21 @@ export async function updateMyProfile(
   }
 }
 
+// 유저 데이터베이스 삭제
+export async function deleteUser(userId: string) {
+  try {
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteError) throw deleteError;
+
+    await supabase.from("user").delete().eq("id", userId);
+  } catch (error) {
+    console.log(error);
+    const errorMessage =
+      error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // ============================================
 //
 //                    image
@@ -479,7 +494,7 @@ export async function getFriendRequests(
 export async function createFriendRequest(
   from: string,
   to: string,
-  isAccepted: boolean,
+  isAccepted: boolean | null,
 ) {
   try {
     const { error } = await supabase
@@ -506,6 +521,7 @@ export async function putFriendRequest(requestId: string, isAccepted: boolean) {
   }
 }
 
+// 친구 요청 삭제
 export async function deleteFriendRequest(requestId: string) {
   try {
     await supabase.from("friendRequest").delete().eq("id", requestId);

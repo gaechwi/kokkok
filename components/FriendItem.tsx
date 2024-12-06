@@ -1,4 +1,5 @@
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { Link } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import icons from "@/constants/icons";
@@ -20,6 +21,7 @@ type StatusType = keyof typeof FIT_STATUS;
 /* Interfaces */
 
 interface FriendProfileProps {
+  id: string;
   username: string;
   avatarUrl: string;
   description: string;
@@ -40,25 +42,28 @@ interface FriendRequestProps {
 /* SubComponent */
 
 const FriendProfile = ({
+  id,
   username,
   avatarUrl,
   description,
 }: FriendProfileProps) => (
-  <View className="flex-row gap-2">
-    <Image
-      src={avatarUrl}
-      defaultSource={images.AvaTarDefault}
-      style={{ width: 48, height: 48, borderRadius: 9999 }}
-    />
-    <View className="gap-[4px] w-[150px]">
-      <Text className="title-4 text-gray-90" numberOfLines={1}>
-        {username}
-      </Text>
-      <Text className="caption-3 text-gray-45" numberOfLines={1}>
-        {description}
-      </Text>
+  <Link href={`/user/${id}`}>
+    <View className="flex-row gap-2">
+      <Image
+        src={avatarUrl}
+        defaultSource={images.AvaTarDefault}
+        style={{ width: 48, height: 48, borderRadius: 9999 }}
+      />
+      <View className="gap-[4px] w-[150px]">
+        <Text className="title-4 text-gray-90" numberOfLines={1}>
+          {username}
+        </Text>
+        <Text className="caption-3 text-gray-45" numberOfLines={1}>
+          {description}
+        </Text>
+      </View>
     </View>
-  </View>
+  </Link>
 );
 
 /* Components */
