@@ -1,4 +1,6 @@
-import type { FriendResponse } from "@/types/Friend.interface";
+import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
+import type { Notification } from "@/types/Notification.interface";
+import type { UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -6,10 +8,6 @@ import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
-import type { User, UserProfile } from "@/types/User.interface";
-import type { Notification } from "@/types/Notification.interface";
 import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
