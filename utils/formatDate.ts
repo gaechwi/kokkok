@@ -59,5 +59,8 @@ export const diffDate = (dateString: Date) => {
   if (min > 0) {
     return `${min}분 전`;
   }
+  if (sec <= 1) {
+    return "방금 전";
+  }
   return `${sec}초 전`;
 };
