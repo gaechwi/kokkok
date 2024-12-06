@@ -978,7 +978,7 @@ export async function getHistories(
 
   if (error) throw error;
 
-  return data;
+  return data as History[];
 }
 
 // 쉬는 날 조회
@@ -1000,7 +1000,7 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
 
   if (error) throw error;
 
-  return data;
+  return data as History[];
 }
 
 // 쉬는 날 추가
