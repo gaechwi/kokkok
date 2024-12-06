@@ -593,6 +593,7 @@ export async function getLatestStabForFriend(
     .eq("to", friendId)
     .eq("type", "poke")
     .order("createdAt", { ascending: false })
+    .limit(1)
     .single();
 
   if (error) throw error;
