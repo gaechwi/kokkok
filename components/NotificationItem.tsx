@@ -2,7 +2,10 @@ import { Image, Text, View } from "react-native";
 
 import images from "@/constants/images";
 import { diffDate } from "@/utils/formatDate";
-import type { NotificationResponse } from "@/types/Notification.interface";
+import {
+  NOTIFICATION_TYPE,
+  type NotificationResponse,
+} from "@/types/Notification.interface";
 
 const COMMENT_MAX_LENGTH = 18;
 const shorten_comment = (comment: string) =>
@@ -17,18 +20,18 @@ export function NotificationItem({
   createdAt,
 }: NotificationResponse) {
   const NOTIFICATION_CONFIG = {
-    poke: {
+    [NOTIFICATION_TYPE.POKE]: {
       title: "👈 콕!",
       content: `${from.username}님이 콕 찌르셨어요.`,
     },
-    comment: {
+    [NOTIFICATION_TYPE.COMMENT]: {
       title: `${from.username}님의 댓글`,
       content: shorten_comment(data?.commentInfo?.content || ""),
     },
-    commentLike: {
+    [NOTIFICATION_TYPE.COMMENT_LIKE]: {
       title: [`${from.username}님이`, "댓글에 좋아요를 눌렀어요❤️"],
     },
-    like: {
+    [NOTIFICATION_TYPE.LIKE]: {
       title: [`${from.username}님이`, "게시글에 좋아요를 눌렀어요❤️"],
     },
   };
