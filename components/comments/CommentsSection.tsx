@@ -1,72 +1,103 @@
-import { useEffect, useMemo, useRef, useCallback, useState } from "react";
+import useFetchData from "@/hooks/useFetchData";
+import { createComment, getComments, getCurrentUser } from "@/utils/supabase";
 import {
-  Modal,
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
   Animated,
+  Dimensions,
   Easing,
   FlatList,
-  View,
-  Text,
-  PanResponder,
-  Dimensions,
-  RefreshControl,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-  ActivityIndicator,
-  TextInput,
   Image,
-  Platform,
-  KeyboardAvoidingView,
   Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  RefreshControl,
+  Text,
+  type TextInput,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommentItem from "./CommentItem";
-import { LinearGradient } from "expo-linear-gradient";
+import MentionInput from "./MentionInput";
 
 const { height: deviceHeight } = Dimensions.get("window");
-const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 90 : 82;
+const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 112 : 74;
 const MIN_HEIGHT = 0;
 const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
 const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
 const DEFAULT_HEIGHT = MAX_HEIGHT * 0.8;
 const DURATION = 400;
 
-const ANIMATION_CONFIG = {
-  useNativeDriver: true,
-  duration: DURATION,
-  easing: Easing.bezier(0.16, 1, 0.3, 1),
-};
-
 interface CommentsSectionProps {
   visible: boolean;
   onClose: () => void;
-  comments: Parameters<typeof CommentItem>[0][];
+  postId: number;
 }
 
 export default function CommentsSection({
   visible,
   onClose,
-  comments,
+  postId,
 }: CommentsSectionProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
   const slideAnim = useMemo(() => new Animated.Value(0), []);
   const heightRef = useRef(DEFAULT_HEIGHT);
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
-  const user = {
-    id: "151232aws2132",
-    username: "난이름",
-    avatar:
-      "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp",
-  };
   const [comment, setComment] = useState("");
+  const [replyTo, setReplyTo] = useState<{
+    username: string;
+    parentId: number;
+    replyCommentId: number;
+  } | null>(null);
   const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
-
   const animationRef = useRef<Animated.CompositeAnimation>();
+  const queryClient = useQueryClient();
+  const inputRef = useRef<TextInput>(null);
 
+  // 유저 정보 가져오기
+  const user = useFetchData(
+    ["user"],
+    getCurrentUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
+
+  // 댓글 가져오기
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ["comments", postId],
+      queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
+      getNextPageParam: (lastPage) =>
+        lastPage.hasNext ? lastPage.nextPage : undefined,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      placeholderData: keepPreviousData,
+      initialPageParam: 0,
+    });
+
+  // 댓글 더 불러오기
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // 키보드 이벤트 처리
   useEffect(() => {
+    // 애니메이션 정리
     const cleanupAnimations = () => animationRef.current?.stop();
 
+    // 키보드가 나타나면 높이 조절
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
@@ -77,10 +108,12 @@ export default function CommentsSection({
       },
     );
 
+    // 키보드가 사라지면 높이 조절
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
         animationRef.current?.stop();
+
         heightRef.current = MAX_HEIGHT;
         setMaxHeight(heightRef.current);
         animationRef.current = Animated.timing(heightAnim, {
@@ -92,7 +125,6 @@ export default function CommentsSection({
         animationRef.current.start();
       },
     );
-
     return () => {
       cleanupAnimations();
       keyboardDidShowListener.remove();
@@ -100,17 +132,24 @@ export default function CommentsSection({
     };
   }, [heightAnim]);
 
+  // 댓글 목록 열기 애니메이션
   useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: visible ? 1 : 0,
-      ...ANIMATION_CONFIG,
-    }).start();
+    if (visible) {
+      Animated.timing(slideAnim, {
+        toValue: visible ? 1 : 0,
+        duration: DURATION,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: true,
+      }).start();
+    }
   }, [visible, slideAnim]);
 
+  // 댓글 목록 닫기
   const handleClose = useCallback(() => {
     Animated.timing(heightAnim, {
       toValue: 0,
       duration: DURATION,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: false,
     }).start(() => {
       onClose();
@@ -141,11 +180,7 @@ export default function CommentsSection({
 
           if (finalHeight < CLOSE_THRESHOLD) {
             // 최소 높이보다 작으면 닫힘
-            onClose();
-            setTimeout(() => {
-              heightRef.current = DEFAULT_HEIGHT;
-              heightAnim.setValue(heightRef.current);
-            }, DURATION);
+            handleClose();
           } else if (finalHeight > maxHeight) {
             // 최대 높이보다 크면 최대 높이로 돌아감
             heightRef.current = maxHeight;
@@ -164,54 +199,47 @@ export default function CommentsSection({
           }
         },
       }),
-    [heightAnim, onClose, maxHeight, clampHeight],
+    [heightAnim, maxHeight, clampHeight, handleClose],
   );
-
-  const AnimatedView = Animated.createAnimatedComponent(View);
 
   const onRefresh = useCallback(async () => {
-    //   setRefreshing(true);
-    //   setPage(0);
-    //   await fetchPosts();
-    //   setRefreshing(false);
-  }, []);
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
-  const loadMorePosts = useCallback(async () => {
-    // if (loading || !posts.hasMore) return;
-    // setLoading(true);
-    // const nextPage = page + 1;
-    // const morePosts = await getPosts({
-    //   offset: nextPage * LIMIT,
-    //   limit: LIMIT,
-    // });
-    // setPosts((prev) => {
-    //   const existingIds = new Set(prev.posts.map((post) => post.id));
-    //   const newPosts = morePosts.posts.filter(
-    //     (post) => !existingIds.has(post.id),
-    //   );
-    //   return {
-    //     posts: [...prev.posts, ...newPosts],
-    //     total: morePosts.total,
-    //     hasMore: morePosts.hasMore && newPosts.length > 0,
-    //   };
-    // });
-    // setPage(nextPage);
-    // setLoading(false);
-  }, []);
+  // 답글달기 핸들러
+  const handleReply = (
+    username: string,
+    parentId: number,
+    replyCommentId: number,
+  ) => {
+    setReplyTo({ username, parentId, replyCommentId: replyCommentId });
+    inputRef.current?.focus();
+  };
 
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { layoutMeasurement, contentOffset, contentSize } =
-        event.nativeEvent;
-      const isEndReached =
-        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-
-      if (isEndReached) {
-        loadMorePosts();
-      }
+  const writeCommentMutation = useMutation({
+    mutationFn: () =>
+      createComment({
+        postId,
+        contents: comment,
+        parentId: replyTo?.parentId,
+        replyCommentId: replyTo?.replyCommentId,
+      }),
+    onSuccess: () => {
+      setComment("");
+      setReplyTo(null);
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
-    [loadMorePosts],
-  );
+    onError: () => {
+      Alert.alert("댓글 작성 실패", "댓글 작성에 실패했습니다.");
+    },
+  });
 
   return (
     <Modal
@@ -221,126 +249,161 @@ export default function CommentsSection({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -500}
       >
-        <View
-          className="flex-1 justify-end bg-black/50"
-          onTouchEnd={(e) => {
-            if (e.target === e.currentTarget) handleClose();
+        <TouchableWithoutFeedback
+          onPressOut={(e) => {
+            if (e.target === e.currentTarget) {
+              Keyboard.dismiss();
+              handleClose();
+              e.stopPropagation();
+            }
           }}
         >
-          {/* comment list */}
-          <AnimatedView
-            style={{
-              transform: [
-                {
-                  translateY: slideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [deviceHeight, 0],
-                  }),
-                },
-              ],
-            }}
-          >
+          <View className="flex-1 justify-end bg-black/50">
+            {/* comment list */}
             <Animated.View
               style={{
-                height: heightAnim,
-                overflow: "hidden",
+                transform: [
+                  {
+                    translateY: slideAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [MAX_HEIGHT, 0],
+                    }),
+                  },
+                ],
               }}
             >
-              <SafeAreaView
-                edges={["bottom"]}
-                className="h-full rounded-t-[20px] border border-gray-300 bg-white"
+              <Animated.View
+                style={{
+                  height: heightAnim,
+                }}
               >
-                <View className="flex-1">
-                  <View
-                    className="w-full items-center py-2.5"
-                    {...panResponder.panHandlers}
-                  >
-                    <View className="h-1 w-10 rounded-[2px] bg-gray-200" />
-                  </View>
+                <SafeAreaView
+                  edges={["bottom", "top"]}
+                  className="h-full rounded-t-[20px] border border-gray-20 bg-white"
+                >
+                  <View className="flex-1">
+                    <View
+                      className="w-full items-center py-2.5"
+                      {...panResponder.panHandlers}
+                    >
+                      <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
+                    </View>
 
-                  <View className="relative z-10 w-full pb-2.5">
-                    <LinearGradient
-                      colors={[
-                        "rgba(255, 255, 255, 1)",
-                        "rgba(255, 255, 255, 0)",
-                      ]}
-                      start={[0, 0]}
-                      end={[0, 1]}
-                      style={{
-                        position: "absolute",
-                        top: 36,
-                        left: 0,
-                        right: 0,
-                        height: 10,
-                        zIndex: 1,
-                      }}
-                    />
-                    <Text className="heading-2 text-center">댓글</Text>
-                  </View>
-
-                  <FlatList
-                    className="px-8"
-                    data={comments}
-                    keyExtractor={(item) => item.id.toString()}
-                    initialNumToRender={10}
-                    removeClippedSubviews
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => <CommentItem {...item} />}
-                    ListHeaderComponent={<View className="pt-4" />}
-                    ListEmptyComponent={
-                      <Text className="heading-2 mt-5 text-center text-gray-90">
-                        아직 댓글이 없습니다.
-                      </Text>
-                    }
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
+                    <View className="relative z-10 w-full pb-2.5">
+                      <LinearGradient
+                        colors={[
+                          "rgba(255, 255, 255, 1)",
+                          "rgba(255, 255, 255, 0)",
+                        ]}
+                        start={[0, 0]}
+                        end={[0, 1]}
+                        style={{
+                          position: "absolute",
+                          top: 36,
+                          left: 0,
+                          right: 0,
+                          height: 10,
+                          zIndex: 1,
+                        }}
                       />
-                    }
-                    onEndReached={loadMorePosts}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                      loading ? (
-                        <ActivityIndicator size="large" className="py-4" />
-                      ) : null
-                    }
-                    onScroll={handleScroll}
-                    keyboardShouldPersistTaps="always"
-                  />
-                </View>
-              </SafeAreaView>
+                      <Text className="heading-2 text-center">댓글</Text>
+                    </View>
+
+                    <FlatList
+                      className="flex-1 px-8"
+                      maintainVisibleContentPosition={{
+                        minIndexForVisible: 0,
+                      }}
+                      ListHeaderComponent={<View className="h-4" />}
+                      data={data?.pages.flatMap((page) => page.comments) || []}
+                      keyExtractor={(item) => item.id.toString()}
+                      onEndReachedThreshold={0.5}
+                      onEndReached={() => {
+                        if (!isFetchingNextPage) loadMore();
+                      }}
+                      refreshControl={
+                        <RefreshControl
+                          refreshing={refreshing}
+                          onRefresh={onRefresh}
+                        />
+                      }
+                      removeClippedSubviews={false}
+                      maxToRenderPerBatch={10}
+                      windowSize={5}
+                      getItemLayout={(data, index) => ({
+                        length: 100,
+                        offset: 100 * index,
+                        index,
+                      })}
+                      renderItem={({ item }) => (
+                        <CommentItem
+                          key={item.id}
+                          id={Number(item.id)}
+                          postId={postId}
+                          contents={item.contents}
+                          createdAt={item.createdAt}
+                          likedAvatars={item.likedAvatars}
+                          liked={item.isLiked}
+                          author={item.userData}
+                          totalReplies={item.totalReplies - 1}
+                          topReply={item.topReply}
+                          onReply={handleReply}
+                        />
+                      )}
+                      ListFooterComponent={
+                        isFetchingNextPage ? (
+                          <ActivityIndicator size="large" className="py-4" />
+                        ) : null
+                      }
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                      ListEmptyComponent={
+                        <View className="flex-1 items-center justify-center">
+                          <Text className="title-3 text-gray-70">
+                            아직 댓글이 없어요.
+                          </Text>
+                        </View>
+                      }
+                    />
+                  </View>
+                </SafeAreaView>
+              </Animated.View>
             </Animated.View>
-          </AnimatedView>
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
 
         {/* comment input */}
         <View
-          className={`z-10 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-6" : "pb-4"}`}
+          className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
         >
           <Image
-            source={{ uri: user.avatar }}
+            source={{ uri: user.data?.avatarUrl || undefined }}
             resizeMode="cover"
             className="size-12 rounded-full"
           />
 
-          <TextInput
-            className="z-10 max-h-[120px] min-h-[50px] flex-1 rounded-[10px] border border-gray-20 px-4 py-3 focus:border-primary"
-            placeholder="댓글을 입력해주세요."
-            keyboardType="default"
-            autoCapitalize="words"
-            multiline={true}
-            numberOfLines={1}
-            maxLength={400}
-            textAlignVertical="center"
-            accessibilityLabel="댓글 입력"
-            accessibilityHint="댓글을 입력해주세요."
+          <MentionInput
+            ref={inputRef}
             value={comment}
-            onChangeText={(text) => setComment(text)}
+            onChangeText={(text) => {
+              setComment(text);
+            }}
+            setReplyTo={setReplyTo}
+            placeholder={
+              replyTo
+                ? `${replyTo.username}님에게 답글`
+                : "댓글을 입력해주세요."
+            }
+            mentionUser={replyTo}
+            onSubmit={() => {
+              if (comment.trim() && !writeCommentMutation.isPending) {
+                writeCommentMutation.mutate();
+              }
+            }}
+            isPending={writeCommentMutation.isPending}
           />
         </View>
       </KeyboardAvoidingView>

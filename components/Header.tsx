@@ -1,8 +1,9 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 import icons from "@/constants/icons";
+import images from "@/constants/images";
 
 const HEADER_TITLE = {
   LOGIN: "로그인",
@@ -29,6 +30,19 @@ export function Header({ name }: HeaderProps) {
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
       <View className="h-14 items-center justify-center">
         <Text className="heading-2">{HEADER_TITLE[name]}</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export function HeaderTypo() {
+  return (
+    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
+      <View className="h-14 flex-row items-center justify-between px-4">
+        <Image source={images.AuthLogo} style={{ width: 70, height: 16 }} />
+        <TouchableOpacity onPress={() => router.push("/notification")}>
+          <icons.BellIcon width={24} height={24} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

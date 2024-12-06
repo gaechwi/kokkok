@@ -1,331 +1,115 @@
+import CommentsSection from "@/components/comments/CommentsSection";
+import { getPosts } from "@/utils/supabase";
 import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
   RefreshControl,
   SafeAreaView,
-  ActivityIndicator,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-  FlatList,
-  View,
 } from "react-native";
+import { View } from "react-native";
 import PostItem from "../../components/PostItem";
-import { useEffect, useState, useCallback } from "react";
-import { getPosts } from "@/utils/supabase";
-import CommentsSection from "@/components/comments/CommentsSection";
-
-const AVATAR_URL =
-  "https://zrkselfyyqkkqcmxhjlt.supabase.co/storage/v1/object/public/images/1730962073092-thumbnail.webp";
-
-const OFFSET = 0;
-const LIMIT = 10;
 
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
-  const [posts, setPosts] = useState<Awaited<ReturnType<typeof getPosts>>>({
-    posts: [],
-    total: 0,
-    hasMore: false,
-  });
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
 
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const queryClient = useQueryClient();
 
-  const toggleComments = useCallback(() => {
-    setIsCommentsVisible((prev) => !prev);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+
+  const onOpenComments = useCallback((postId: number) => {
+    setSelectedPostId(postId);
+    setIsCommentsVisible(true);
   }, []);
 
-  const fetchPosts = useCallback(async () => {
-    const fetchedPosts = await getPosts({
-      offset: OFFSET,
-      limit: LIMIT,
+  const onCloseComments = useCallback(() => {
+    setIsCommentsVisible(false);
+    setSelectedPostId(null);
+  }, []);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ["posts"],
+      queryFn: ({ pageParam = 0 }) => getPosts({ page: pageParam, limit: 10 }),
+      getNextPageParam: (lastPage) =>
+        lastPage.hasNext ? lastPage.nextPage : undefined,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      placeholderData: keepPreviousData,
+      initialPageParam: 0,
     });
-    setPosts(fetchedPosts);
-  }, []);
+
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(0);
-    await fetchPosts();
-    setRefreshing(false);
-  }, [fetchPosts]);
-
-  const loadMorePosts = useCallback(async () => {
-    if (loading || !posts.hasMore) return;
-
-    setLoading(true);
-    const nextPage = page + 1;
-    const morePosts = await getPosts({
-      offset: nextPage * LIMIT,
-      limit: LIMIT,
-    });
-
-    setPosts((prev) => {
-      const existingIds = new Set(prev.posts.map((post) => post.id));
-
-      const newPosts = morePosts.posts.filter(
-        (post) => !existingIds.has(post.id),
-      );
-
-      return {
-        posts: [...prev.posts, ...newPosts],
-        total: morePosts.total,
-        hasMore: morePosts.hasMore && newPosts.length > 0,
-      };
-    });
-    setPage(nextPage);
-    setLoading(false);
-  }, [loading, posts.hasMore, page]);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { layoutMeasurement, contentOffset, contentSize } =
-        event.nativeEvent;
-      const isEndReached =
-        layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-
-      if (isEndReached) {
-        loadMorePosts();
-      }
-    },
-    [loadMorePosts],
-  );
-
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">
       <FlatList
-        data={posts.posts}
-        keyExtractor={(
-          post: Awaited<ReturnType<typeof getPosts>>["posts"][0],
-        ) => post.id.toString()}
+        data={data?.pages.flatMap((page) => page.posts) ?? []}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item: post }) => (
           <PostItem
             key={post.id}
             author={{
-              name: "John Doe",
-              avatar: AVATAR_URL,
+              id: post.userData?.id ?? "",
+              name: post.userData?.username ?? "",
+              avatar: post.userData?.avatarUrl ?? "",
             }}
             images={post.images}
-            liked={false}
-            likedAuthorAvatar={[AVATAR_URL, AVATAR_URL, AVATAR_URL, AVATAR_URL]}
+            liked={post.isLikedByUser}
+            likedAuthorAvatar={post.likedAvatars ?? []}
             contents={post.contents}
             createdAt={post.createdAt}
-            commentsCount={10}
+            commentsCount={post.totalComments ?? 0}
             comment={{
-              author: { name: "Jane Doe", avatar: AVATAR_URL },
-              content: "Hello, World!",
+              author: {
+                name: post.commentData?.author?.username ?? "",
+                avatar: post.commentData?.author?.avatarUrl ?? "",
+              },
+              content: post.commentData?.contents ?? "",
             }}
-            onCommentsPress={toggleComments}
+            postId={Number(post.id)}
+            onCommentsPress={() => onOpenComments(Number(post.id))}
           />
         )}
+        onEndReachedThreshold={0.5}
+        onEndReached={loadMore}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        onEndReached={loadMorePosts}
-        onEndReachedThreshold={0.5}
         ListFooterComponent={
-          loading ? <ActivityIndicator size="large" className="py-4" /> : null
+          isFetchingNextPage ? (
+            <ActivityIndicator size="large" className="py-4" />
+          ) : null
         }
-        onScroll={handleScroll}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       />
 
-      {isCommentsVisible && (
+      {isCommentsVisible && selectedPostId !== null && (
         <View className="flex-1">
           <CommentsSection
             visible={isCommentsVisible}
-            onClose={toggleComments}
-            comments={[
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "John Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-              {
-                id: Math.random().toString(),
-                user: {
-                  id: Math.random().toString(),
-                  avatar: "https://via.placeholder.com/150",
-                  username: "Jane Doe",
-                },
-                content: "Hello, World!",
-                createdAt: "2022-01-01T00:00:00Z",
-                liked: false,
-                likes: 10,
-                likedAuthorAvatar: [
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                  "https://via.placeholder.com/150",
-                ],
-              },
-            ]}
+            onClose={onCloseComments}
+            postId={selectedPostId}
           />
         </View>
       )}
