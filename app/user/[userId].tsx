@@ -127,7 +127,7 @@ const User = () => {
               await createFriendRequest(
                 currentUser?.id as string,
                 userId as string,
-                false,
+                null,
               );
 
               setIsModalVisible(false);

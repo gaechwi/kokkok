@@ -4,9 +4,16 @@ import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
+import { useState } from "react";
+import AlertToggle from "@/components/AlertToggle";
 
 export default function Setting() {
   const router = useRouter();
+  const [toggleValue, setToggleValue] = useState({
+    like: false,
+    comment: false,
+    all: false,
+  });
 
   const { data: currentUser } = useFetchData(
     ["currentUser"],
@@ -17,10 +24,41 @@ export default function Setting() {
   return (
     <View className="flex-1 bg-white">
       <View className="border-gray-5 border-b-8 px-6 py-[22px]">
-        <Text className="heading-2 text-gray-80">알림 설정</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="heading-2 text-gray-80">알림 설정</Text>
+          <AlertToggle
+            toggleValue={toggleValue.all}
+            isAll={true}
+            setAllValues={(value) =>
+              setToggleValue({
+                all: value,
+                like: value,
+                comment: value,
+              })
+            }
+          />
+        </View>
         <View className="mt-5 gap-5 px-2">
-          <Text className="font-pmedium text-gray-80 text-xl">좋아요 알림</Text>
-          <Text className="font-pmedium text-gray-80 text-xl">댓글 알림</Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="font-pmedium text-gray-80 text-xl">
+              좋아요 알림
+            </Text>
+            <AlertToggle
+              toggleValue={toggleValue.like}
+              setToggleValue={(value) =>
+                setToggleValue((prev) => ({ ...prev, like: value }))
+              }
+            />
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="font-pmedium text-gray-80 text-xl">댓글 알림</Text>
+            <AlertToggle
+              toggleValue={toggleValue.comment}
+              setToggleValue={(value) =>
+                setToggleValue((prev) => ({ ...prev, comment: value }))
+              }
+            />
+          </View>
         </View>
       </View>
       <View className="border-gray-5 border-b-8 px-6 py-[22px]">

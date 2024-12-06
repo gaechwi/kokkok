@@ -495,7 +495,7 @@ export async function getFriendRequests(
 export async function createFriendRequest(
   from: string,
   to: string,
-  isAccepted: boolean,
+  isAccepted: boolean | null,
 ) {
   try {
     const { error } = await supabase
