@@ -40,6 +40,7 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-toast-message": "^2.2.1",
+    "react-native-toggle-element": "^2.1.1",
     "react-native-web": "~0.19.13",
     "tailwindcss": "^3.4.15"
   },
