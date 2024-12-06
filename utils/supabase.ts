@@ -4,15 +4,14 @@ import type * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE } from "@env";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
 import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 import type { User } from "@/types/User.interface";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
-const supabaseServiceRole = SUPABASE_SERVICE_ROLE;
 
-export const supabase = createClient(supabaseUrl, supabaseServiceRole, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,

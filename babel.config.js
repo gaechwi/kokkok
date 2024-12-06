@@ -26,11 +26,7 @@ module.exports = function (api) {
         {
           moduleName: "@env",
           path: ".env",
-          allowlist: [
-            "SUPABASE_URL",
-            "SUPABASE_ANON_KEY",
-            "SUPABASE_SERVICE_ROLE",
-          ],
+          allowlist: ["SUPABASE_URL", "SUPABASE_ANON_KEY"],
           safe: true,
           allowUndefined: false,
         },
