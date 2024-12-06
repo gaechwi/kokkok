@@ -92,7 +92,7 @@ export default function Notification() {
         ListHeaderComponent={<View className="h-2" />}
         ListFooterComponent={<View className="h-[34px]" />}
         ListEmptyComponent={
-          <ErrorScreen errorMessage="친구 요청이 없습니다." />
+          <ErrorScreen errorMessage="새로운 알림이 없습니다." />
         }
       />
     </SafeAreaView>

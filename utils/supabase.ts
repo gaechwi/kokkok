@@ -649,7 +649,7 @@ export async function getNotifications(
     .limit(30);
 
   if (error) throw error;
-  if (!data) throw new Error("유저를 불러올 수 없습니다.");
+  if (!data) throw new Error("알림을 불러올 수 없습니다.");
 
   return data;
 }
@@ -664,7 +664,7 @@ export async function getLatestNotification(userId: string): Promise<string> {
     .single();
 
   if (error) throw error;
-  if (!data) throw new Error("유저를 불러올 수 없습니다.");
+  if (!data) throw new Error("최근 알림을 불러올 수 없습니다.");
 
   return data.createdAt;
 }
