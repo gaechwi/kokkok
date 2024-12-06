@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FriendItem } from "@/components/FriendItem";
 import SearchBar from "@/components/SearchBar";
 import {
-  getCurrentUser,
+  getCurrentSession,
   getFriends,
   getFriendsStatus,
   supabase,
@@ -14,7 +14,8 @@ import {
 import useFetchData from "@/hooks/useFetchData";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import type { User, UserProfile } from "@/types/User.interface";
+import type { UserProfile } from "@/types/User.interface";
+import type { Session } from "@supabase/supabase-js";
 import type { StatusInfo } from "@/types/Friend.interface";
 import { formatDate } from "@/utils/formatDate";
 
@@ -53,9 +54,9 @@ export default function Friend() {
   const [friends, setFriends] = useState<UserProfile[]>([]);
 
   // 로그인한 유저 정보 조회
-  const { data: user, error: userError } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",
   );
 
@@ -66,9 +67,9 @@ export default function Friend() {
     error: friendError,
   } = useFetchData<UserProfile[]>(
     ["friends"],
-    () => getFriends(user?.id || ""),
+    () => getFriends(session?.user.id || ""),
     "친구 조회에 실패했습니다.",
-    !!user,
+    !!session?.user.id,
   );
 
   const friendIds = friendsData?.map((friend) => friend.id);

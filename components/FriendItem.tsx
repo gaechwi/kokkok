@@ -8,11 +8,12 @@ import {
   createFriendRequest,
   createNotification,
   deleteFriendRequest,
-  getCurrentUser,
+  getCurrentSession,
   getLatestStabForFriend,
   putFriendRequest,
 } from "@/utils/supabase";
-import type { User, UserProfile } from "@/types/User.interface";
+import type { UserProfile } from "@/types/User.interface";
+import type { Session } from "@supabase/supabase-js";
 import useFetchData from "@/hooks/useFetchData";
 import { showToast } from "./ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
@@ -69,17 +70,18 @@ export function FriendItem({ friend }: FriendItemProps) {
   const queryClient = useQueryClient();
 
   // 로그인한 유저 정보 조회
-  const { data: user } = useFetchData<User>(
+  const { data: session } = useFetchData<Session>(
     ["currentUser"],
-    getCurrentUser,
+    getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",
   );
+  const user = session?.user;
 
   const { data: lastPokeCreatedAt } = useFetchData<string>(
     ["poke", user?.id, friend.id],
     () => getLatestStabForFriend(user?.id || "", friend.id),
     "찌르기 정보 조회에 실패했습니다.",
-    !!user?.id,
+    !!user,
   );
 
   const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();

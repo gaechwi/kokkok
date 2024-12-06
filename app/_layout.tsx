@@ -48,7 +48,7 @@ const useProtectedRoute = (session: Session | null) => {
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
 
-  useProtectedRoute(session);
+  // useProtectedRoute(session);
 
   const [loaded, error] = useFonts({
     "Pretendard-Black": require("../assets/fonts/Pretendard-Black.otf"),

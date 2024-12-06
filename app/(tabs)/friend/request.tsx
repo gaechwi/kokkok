@@ -3,13 +3,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect } from "react";
 
 import { FriendRequest } from "@/components/FriendItem";
-import { getCurrentUser, getFriendRequests, supabase } from "@/utils/supabase";
+import {
+  getCurrentSession,
+  getFriendRequests,
+  supabase,
+} from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
 import type { RequestResponse } from "@/types/Friend.interface";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useQueryClient } from "@tanstack/react-query";
-import type { User } from "@/types/User.interface";
+import type { Session } from "@supabase/supabase-js";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -18,9 +22,9 @@ export default function Request() {
   const queryClient = useQueryClient();
 
   // 로그인한 유저 정보 조회
-  const { data: user, error: userError } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",
   );
 
@@ -31,9 +35,9 @@ export default function Request() {
     error,
   } = useFetchData<RequestResponse>(
     ["friendRequests", OFFSET],
-    () => getFriendRequests(user?.id || ""),
+    () => getFriendRequests(session?.user.id || ""),
     "친구 요청 조회에 실패했습니다.",
-    !!user,
+    !!session?.user,
   );
 
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
@@ -44,7 +48,7 @@ export default function Request() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "friendRequest" },
         (payload) => {
-          if (!payload.new.isAccepted && payload.new.to === user?.id)
+          if (!payload.new.isAccepted && payload.new.to === session?.user.id)
             queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         },
       )
@@ -53,7 +57,7 @@ export default function Request() {
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [user, queryClient.invalidateQueries]);
+  }, [session, queryClient.invalidateQueries]);
 
   // 에러 스크린
   if (error || userError) {
