@@ -7,36 +7,57 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import images from "@constants/images";
 import { useAtom } from "jotai";
 import { signUpFormAtom } from "@contexts/auth";
-// import { useRouter } from "expo-router";
-// import { signUp } from "@/utils/supabase";
+import { useRouter } from "expo-router";
+import { signUp, verifySignUpOTP } from "@/utils/supabase";
+import { useState } from "react";
+import { formatTime } from "@/utils/formatTime";
+import { useTimeLeft } from "@/hooks/useTimeLeft";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
-  //   const router = useRouter();
+  const [otpcode, setOtpcode] = useState("");
+
+  const router = useRouter();
+  const timeLeft = useTimeLeft();
 
   const handleSignUp = async () => {
-    // if (!signUpForm.username) {
-    //   Alert.alert("닉네임을 채워주세요");
-    //   return;
-    // }
-    // try {
-    //   await signUp({
-    //     email: signUpForm.email,
-    //     password: signUpForm.password,
-    //     username: signUpForm.username,
-    //     description: signUpForm.description,
-    //   });
-    //   router.replace("/home");
-    // } catch (error) {
-    //   Alert.alert(
-    //     "회원가입 실패",
-    //     error instanceof Error ? error.message : "회원가입에 실패했습니다.",
-    //   );
-    // }
+    if (!signUpForm.username) {
+      Alert.alert("닉네임을 채워주세요");
+      return;
+    }
+
+    try {
+      const res = await verifySignUpOTP(signUpForm.email, otpcode);
+
+      await signUp({
+        id: res.user?.id,
+        email: signUpForm.email,
+        password: signUpForm.password,
+        username: signUpForm.username,
+        description: signUpForm.description,
+      });
+
+      router.replace("/home");
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("User already registered")
+      ) {
+        Alert.alert("알림", "이미 가입된 이메일입니다.", [
+          { text: "확인", onPress: () => router.replace("/sign-up/step1") },
+        ]);
+      } else {
+        Alert.alert(
+          "회원가입 실패",
+          error instanceof Error ? error.message : "회원가입에 실패했습니다.",
+        );
+      }
+    }
   };
 
   return (
@@ -57,11 +78,11 @@ const Step2 = () => {
               placeholder="인증코드를 입력해주세요."
               accessibilityLabel="인증코드 입력"
               accessibilityHint="인증코드를 입력해주세요."
-              //   value={}
-              //   onChangeText={}
+              value={otpcode}
+              onChangeText={(text) => setOtpcode(text)}
             />
             <Text className="-translate-y-1/2 body-1 absolute top-1/2 right-4 text-gray-40">
-              nn : nn
+              {formatTime(timeLeft)}
             </Text>
           </View>
 

@@ -57,7 +57,7 @@ export default function CustomModal({
           }}
         >
           <SafeAreaView
-            edges={["bottom"]}
+            edges={[]}
             className={`z-10 h-fit w-full bg-white ${
               position === "middle" ? "rounded-xl" : "rounded-t-xl"
             }`}

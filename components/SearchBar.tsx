@@ -4,12 +4,19 @@ import icons from "@/constants/icons";
 
 interface SearchBarProps {
   value: string;
+  customClassName?: string;
   handleChangeText: (k: string) => void;
 }
 
-export default function SearchBar({ value, handleChangeText }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  customClassName,
+  handleChangeText,
+}: SearchBarProps) {
   return (
-    <View className="w-full h-[56px] rounded-[10px] bg-gray-10 flex-row">
+    <View
+      className={`w-full h-[56px] rounded-[10px] bg-gray-10 flex-row ${customClassName ? customClassName : ""}`}
+    >
       <icons.SearchIcon
         width={24}
         height={24}

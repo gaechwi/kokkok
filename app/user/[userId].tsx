@@ -1,50 +1,54 @@
+import colors from "@/constants/colors";
+import images from "@/constants/images";
+import useFetchData from "@/hooks/useFetchData";
+import {
+  createFriendRequest,
+  getCurrentUser,
+  getMyPosts,
+  getUser,
+} from "@/utils/supabase";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   View,
   Text,
   Image,
-  FlatList,
-  Dimensions,
   TouchableOpacity,
+  Dimensions,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getCurrentUser, getMyPosts } from "@/utils/supabase";
-import images from "@/constants/images";
-import Icons from "@/constants/icons";
-import colors from "@/constants/colors";
 import { useState } from "react";
+import Icons from "@/constants/icons";
 import CustomModal from "@/components/Modal";
-import { useRouter } from "expo-router";
-import useFetchData from "@/hooks/useFetchData";
+import { HeaderWithUserPage } from "@/components/Header";
 
-export default function MyPage() {
-  const router = useRouter();
+const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const { userId } = useLocalSearchParams();
 
-  const { data: currentUser, isLoading: isUserLoading } = useFetchData(
+  const router = useRouter();
+
+  const { data: currentUser } = useFetchData(
     ["currentUser"],
     getCurrentUser,
-    "현재 사용자를 불러올 수 없습니다.",
+    "유저를 불러올 수 없습니다.",
   );
 
-  const { data: posts, isLoading: isPostsLoading } = useFetchData(
-    ["userPosts", currentUser?.id],
-    () => getMyPosts(currentUser?.id!),
+  const { data: user } = useFetchData(
+    ["user", userId],
+    () => getUser(userId as string),
+    "유저를 불러올 수 없습니다.",
+  );
+
+  const { data: posts } = useFetchData(
+    ["posts", userId],
+    () => getMyPosts(userId as string),
     "게시물을 불러올 수 없습니다.",
-    !!currentUser?.id,
   );
-
-  if (isUserLoading || isPostsLoading) {
-    return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="flex-1 items-center justify-center">
-          <Text>로딩중...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <>
+      <HeaderWithUserPage name={user?.username || ""} />
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
@@ -52,13 +56,13 @@ export default function MyPage() {
               <View className="flex-row items-center gap-6">
                 <Image
                   source={
-                    currentUser?.avatarUrl
-                      ? { uri: currentUser.avatarUrl }
+                    user?.avatarUrl
+                      ? { uri: user.avatarUrl }
                       : images.AvaTarDefault
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{currentUser?.username}</Text>
+                <Text className="title-3">{user?.username}</Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
@@ -73,7 +77,7 @@ export default function MyPage() {
 
             <View className="mt-4 rounded-[10px] bg-[#f0f0f0] p-4">
               <Text className="body-5 text-gray-80">
-                {currentUser?.description || "소개글을 입력해주세요"}
+                {user?.description || "소개글을 입력해주세요"}
               </Text>
             </View>
           </View>
@@ -118,16 +122,32 @@ export default function MyPage() {
       >
         <View className="items-center">
           <TouchableOpacity
+            className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+            onPress={async () => {
+              await createFriendRequest(
+                currentUser?.id as string,
+                userId as string,
+                null,
+              );
+
+              setIsModalVisible(false);
+            }}
+          >
+            <Text className="title-2 text-gray-90">친구 요청하기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             className="h-[82px] w-full items-center justify-center"
             onPress={() => {
               setIsModalVisible(false);
               router.push("/profile");
             }}
           >
-            <Text className="title-2 text-gray-90">수정하기</Text>
+            <Text className="title-2 text-gray-90">신고하기</Text>
           </TouchableOpacity>
         </View>
       </CustomModal>
     </>
   );
-}
+};
+
+export default User;

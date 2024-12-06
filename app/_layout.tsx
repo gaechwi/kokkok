@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 import "../global.css";
 import { useFonts } from "expo-font";
@@ -71,6 +71,13 @@ export default function RootLayout() {
           name="setting"
           options={{ header: () => <HeaderWithBack name="SETTING" /> }}
         />
+        <Stack.Screen
+          name="profile"
+          options={{
+            header: () => <HeaderWithBack name="EDIT_PROFILE" />,
+          }}
+        />
+        <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
       </Stack>
     </QueryClientProvider>
   );

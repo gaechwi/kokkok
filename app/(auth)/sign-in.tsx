@@ -69,7 +69,29 @@ const SignIn = () => {
 
     if (res.type === "success") {
       const { url } = res;
-      await createSessionFromUrl(url);
+      const session = await createSessionFromUrl(url);
+
+      // OAuth 사용자 정보 저장
+      if (session?.user) {
+        const { error: upsertError } = await supabase.from("user").upsert(
+          {
+            id: session.user.id,
+            email: session.user.email,
+            username:
+              session.user.user_metadata.full_name ||
+              session.user.email?.split("@")[0],
+            avatarUrl:
+              session.user.user_metadata.avatar_url ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email || "")}`,
+            isOAuth: true, // OAuth 사용자
+          },
+          {
+            onConflict: "id", // id가 이미 존재하면 업데이트
+          },
+        );
+
+        if (upsertError) throw upsertError;
+      }
 
       router.replace("/home");
     }
@@ -153,7 +175,9 @@ const SignIn = () => {
           </TouchableOpacity>
 
           <View className="mt-10 flex flex-row justify-center gap-3">
-            <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+            <Link href="/password-reset/step1">
+              <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+            </Link>
             <Text className="body-1 text-gray-50">|</Text>
             <Link href="/sign-up/step1">
               <Text className="body-1 text-gray-50">회원가입</Text>
@@ -168,9 +192,6 @@ const SignIn = () => {
               <TouchableOpacity onPress={() => performOAuth("google")}>
                 <icons.GoogleIcon width={56} height={56} />
               </TouchableOpacity>
-              {/* <TouchableOpacity onPress={() => performOAuth("kakao")}>
-                <icons.KakaoIcon width={56} height={56} />
-              </TouchableOpacity> */}
               <TouchableOpacity onPress={() => performOAuth("github")}>
                 <icons.GithubIcon width={56} height={56} />
               </TouchableOpacity>

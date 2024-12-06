@@ -4,13 +4,14 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 
-// queryKey, getService, defaultErrorMessage, enabled 순
+// queryKey, getService, defaultErrorMessage, enabled, refetchInterval 순
 // 기본 에러 핸들링: 제공된 메시지 || defaultErrorMessage
 const useFetchData = <T>(
   queryKey: QueryKey,
   getService: () => Promise<T>,
   defaultErrorMessage: string,
   enabled = true,
+  refetchInterval = 30000, // NOTE 30초
 ): UseQueryResult<T, Error> => {
   return useQuery<T, Error>({
     queryKey: queryKey,
@@ -24,7 +25,8 @@ const useFetchData = <T>(
         throw new Error(errorMessage);
       }
     },
-    enabled: enabled,
+    enabled,
+    refetchInterval,
   });
 };
 
