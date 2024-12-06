@@ -23,17 +23,7 @@ export default function Setting() {
       <View className="border-gray-5 border-b-8 px-6 py-[22px]">
         <View className="flex-row items-center justify-between">
           <Text className="heading-2 text-gray-80">알림 설정</Text>
-          <AlertToggle
-            toggleValue={toggleValue.all}
-            isAll={true}
-            setAllValues={(value) =>
-              setToggleValue({
-                all: value,
-                like: value,
-                comment: value,
-              })
-            }
-          />
+          <AlertToggle useAllAlert />
         </View>
         <View className="mt-5 gap-5 px-2">
           <View className="flex-row items-center justify-between">

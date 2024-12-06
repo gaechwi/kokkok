@@ -1,30 +1,32 @@
 import colors from "@/constants/colors";
+import { allAlertAtom } from "@/contexts/alert";
+import { useAtom } from "jotai";
 import Toggle from "react-native-toggle-element";
 
 interface AlertToggleProps {
-  toggleValue: boolean;
+  toggleValue?: boolean;
   setToggleValue?: (value: boolean) => void;
-  isAll?: boolean;
-  setAllValues?: (value: boolean) => void;
+  useAllAlert?: boolean;
 }
 
 export default function AlertToggle({
   toggleValue,
   setToggleValue,
-  isAll = false,
-  setAllValues,
+  useAllAlert = false,
 }: AlertToggleProps) {
+  const [allEnabled, setAllEnabled] = useAtom(allAlertAtom);
+
   const handleToggle = (value: boolean) => {
-    if (isAll && setAllValues) {
-      setAllValues(value);
-    } else {
-      setToggleValue?.(value);
+    if (useAllAlert) {
+      setAllEnabled(value);
+    } else if (setToggleValue) {
+      setToggleValue(value);
     }
   };
 
   return (
     <Toggle
-      value={toggleValue}
+      value={useAllAlert ? allEnabled : toggleValue}
       onPress={handleToggle}
       trackBar={{
         inActiveBackgroundColor: "#d9d9d9",
