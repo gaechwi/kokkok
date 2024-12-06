@@ -7,6 +7,7 @@ import { decode } from "base64-arraybuffer";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
 import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 import type { User } from "@/types/User.interface";
+import type { NotificationResponse } from "@/types/Notification.interface";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -612,6 +613,35 @@ export async function deleteRestDay(
   if (error) {
     throw error;
   }
+}
+
+// ============================================
+//
+//                 notification
+//
+// ============================================
+
+export async function getNotifications(
+  userId: string,
+): Promise<NotificationResponse[]> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select(
+      `
+          id,
+          from: from (username, avatarUrl),
+          type,
+          data,
+          createdAt
+        `,
+    )
+    .eq("to", userId)
+    .limit(30);
+
+  if (error) throw error;
+  if (!data) throw new Error("유저를 불러올 수 없습니다.");
+
+  return data;
 }
 
 // ============================================

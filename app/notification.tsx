@@ -1,24 +1,86 @@
-import { ScrollView, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { NOTIFICATIONS } from "@/mockData/notification";
 import { NotificationItem } from "@/components/NotificationItem";
+import useFetchData from "@/hooks/useFetchData";
+import type { Session } from "@supabase/supabase-js";
+import {
+  getCurrentSession,
+  getNotifications,
+  supabase,
+} from "@/utils/supabase";
+import ErrorScreen from "@/components/ErrorScreen";
+import LoadingScreen from "@/components/LoadingScreen";
+import type { NotificationResponse } from "@/types/Notification.interface";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Notification() {
+  const queryClient = useQueryClient();
+
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
+    "로그인 정보 조회에 실패했습니다.",
+  );
+
+  const {
+    data: notifications,
+    isLoading,
+    error: notificationError,
+  } = useFetchData<NotificationResponse[]>(
+    ["notification"],
+    () => getNotifications(session?.user.id || ""),
+    "알림 조회에 실패했습니다.",
+    !!session?.user,
+  );
+
+  useEffect(() => {
+    const notificationChannel = supabase
+      .channel("notification")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notification" },
+        (payload) => {
+          if (payload.new.to === session?.user.id)
+            queryClient.invalidateQueries({ queryKey: ["notification"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notificationChannel);
+    };
+  }, [session, queryClient.invalidateQueries]);
+
+  if (userError || notificationError) {
+    const errorMessage =
+      userError?.message ||
+      notificationError?.message ||
+      "알림 조회에 실패했습니다.";
+    return <ErrorScreen errorMessage={errorMessage} />;
+  }
+
+  if (isLoading || !notifications) {
+    return <LoadingScreen />;
+  }
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <ScrollView className="grow w-full">
-        {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
-        <View className="h-2" />
-
-        {[1, 2, 3, 4].map((n) =>
-          NOTIFICATIONS.map((notification) => (
-            <NotificationItem key={n + notification.id} {...notification} />
-          )),
+      <FlatList
+        data={notifications}
+        keyExtractor={(notification) => notification.id}
+        renderItem={({ item: notification }) => (
+          <NotificationItem {...notification} />
         )}
-
-        <View className="h-[34px]" />
-      </ScrollView>
+        className="px-8 grow w-full"
+        contentContainerStyle={notifications.length ? {} : { flex: 1 }}
+        ListHeaderComponent={<View className="h-2" />}
+        ListFooterComponent={<View className="h-[34px]" />}
+        ListEmptyComponent={
+          <ErrorScreen errorMessage="친구 요청이 없습니다." />
+        }
+      />
     </SafeAreaView>
   );
 }
