@@ -4,14 +4,15 @@ import type * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE } from "@env";
 import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
 import type { User } from "@/types/User.interface";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
+const supabaseServiceRole = SUPABASE_SERVICE_ROLE;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseServiceRole, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -229,6 +230,21 @@ export async function updateMyProfile(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "프로필 업데이트에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 유저 데이터베이스 삭제
+export async function deleteUser(userId: string) {
+  try {
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteError) throw deleteError;
+
+    await supabase.from("user").delete().eq("id", userId);
+  } catch (error) {
+    console.log(error);
+    const errorMessage =
+      error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
     throw new Error(errorMessage);
   }
 }
