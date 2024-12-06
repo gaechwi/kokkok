@@ -19,7 +19,7 @@ import { formatTime } from "@/utils/formatTime";
 import {
   alertExpirationOnTimeout,
   useTimerWithDuration,
-} from "@/hooks/useTimeLeft";
+} from "@/hooks/useTimer";
 import { OTP_TIME } from "@/constants/time";
 
 const Step2 = () => {

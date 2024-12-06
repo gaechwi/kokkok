@@ -16,7 +16,7 @@ import type { User, UserProfile } from "@/types/User.interface";
 import useFetchData from "@/hooks/useFetchData";
 import { showToast } from "./ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
-import { useTimerWithStartAndDuration } from "@/hooks/useTimeLeft";
+import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
 import { formatTime } from "@/utils/formatTime";
 import { POKE_TIME } from "@/constants/time";
 

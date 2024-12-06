@@ -25,7 +25,6 @@ export function useTimerWithDuration(duration: number, onTimeout?: () => void) {
 export function useTimerWithStartAndDuration(onTimeout?: () => void) {
   const [expiration, setExpiration] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
 
   // expiration과 현재 시간 차이를 초로 계산
   const calculateTimeLeft = useCallback(() => {
@@ -38,17 +37,16 @@ export function useTimerWithStartAndDuration(onTimeout?: () => void) {
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
-    if (isRunning && timeLeft > 0) {
+    if (timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft(calculateTimeLeft());
       }, 1000);
-    } else if (timeLeft === 0 && onTimeout) {
+    } else if (onTimeout) {
       onTimeout();
-      setIsRunning(false);
     }
 
     return () => clearInterval(timer);
-  }, [timeLeft, isRunning, onTimeout, calculateTimeLeft]);
+  }, [timeLeft, onTimeout, calculateTimeLeft]);
 
   const start = (start: number, duration: number) => {
     // expiration이 유효하지 않거나 현재보다 작으면 실행 X
@@ -57,7 +55,6 @@ export function useTimerWithStartAndDuration(onTimeout?: () => void) {
 
     setExpiration(expiration);
     setTimeLeft(calculateTimeLeft());
-    setIsRunning(true);
   };
 
   return { timeLeft, start };
