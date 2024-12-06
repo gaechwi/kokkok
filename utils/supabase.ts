@@ -522,6 +522,7 @@ export async function putFriendRequest(requestId: string, isAccepted: boolean) {
   }
 }
 
+// 친구 요청 삭제
 export async function deleteFriendRequest(requestId: string) {
   try {
     await supabase.from("friendRequest").delete().eq("id", requestId);

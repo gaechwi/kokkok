@@ -2,10 +2,17 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
-import { supabase } from "@/utils/supabase";
+import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
+import useFetchData from "@/hooks/useFetchData";
 
 export default function Setting() {
   const router = useRouter();
+
+  const { data: currentUser } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
 
   return (
     <View className="flex-1 bg-white">
@@ -38,7 +45,14 @@ export default function Setting() {
             <Text className="font-pmedium text-gray-80 text-xl">로그아웃</Text>
             <Icons.ChevronRightIcon color={colors.gray[70]} />
           </TouchableOpacity>
-          <TouchableOpacity className="flex-row items-center justify-between">
+          <TouchableOpacity
+            className="flex-row items-center justify-between"
+            onPress={async () => {
+              await deleteUser(currentUser?.id ?? "");
+
+              router.replace("/sign-in");
+            }}
+          >
             <Text className="font-pmedium text-gray-80 text-xl">계정 탈퇴</Text>
             <Icons.ChevronRightIcon color={colors.gray[70]} />
           </TouchableOpacity>
