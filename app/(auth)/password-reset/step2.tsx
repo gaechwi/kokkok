@@ -16,13 +16,17 @@ import { verifyResetToken } from "@/utils/supabase";
 import { useAtom } from "jotai";
 import { passwordResetFormAtom } from "@/contexts/auth";
 import { formatTime } from "@/utils/formatTime";
-import { useTimeLeft } from "@/hooks/useTimeLeft";
+import {
+  alertExpirationOnTimeout,
+  useTimerWithDuration,
+} from "@/hooks/useTimer";
+import { OTP_TIME } from "@/constants/time";
 
 const Step2 = () => {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
-  const timeLeft = useTimeLeft();
+  const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
 
   const handleVerifyToken = async () => {
     try {

@@ -5,9 +5,11 @@ import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env";
-import type { FriendResponse, RequestResponse } from "@/types/Friend.interface";
-import type { User } from "@/types/User.interface";
 import type { NotificationResponse } from "@/types/Notification.interface";
+import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
+import type { User, UserProfile } from "@/types/User.interface";
+import type { Notification } from "@/types/Notification.interface";
+import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -243,6 +245,21 @@ export async function updateNotificationCheck(userId: string) {
   if (error) throw error;
 }
 
+// 유저 데이터베이스 삭제
+export async function deleteUser(userId: string) {
+  try {
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteError) throw deleteError;
+
+    await supabase.from("user").delete().eq("id", userId);
+  } catch (error) {
+    console.log(error);
+    const errorMessage =
+      error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // ============================================
 //
 //                    image
@@ -423,32 +440,35 @@ export async function getMyPosts(userId: string) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(
-  userId: string,
-  offset = 0,
-  limit = 12,
-): Promise<FriendResponse> {
-  const { data, error, count } = await supabase
+export async function getFriends(userId: string): Promise<UserProfile[]> {
+  const { data, error } = await supabase
     .from("friendRequest")
-    .select(
-      `
-      to: user!friendRequset_to_fkey (id, username, avatarUrl, description)
-      `,
-      { count: "exact" },
-    )
+    .select("to: to (id, username, avatarUrl, description)")
     .eq("from", userId)
-    .eq("isAccepted", true)
-    .order("createdAt", { ascending: false }) // NOTE order 추후 변경 가능
-    .range(offset, offset + limit - 1);
+    .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return {
-    data: data.map(({ to }) => to),
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
-  };
+  return data.map(({ to }) => to);
+}
+
+// 모든 친구의 운동 상태 조회
+export async function getFriendsStatus(
+  friendIds: string[],
+): Promise<StatusInfo[]> {
+  if (!friendIds.length) return [];
+
+  const { data, error } = await supabase
+    .from("workoutHistory")
+    .select("userId, status")
+    .in("userId", friendIds)
+    .eq("date", formatDate(new Date()));
+
+  if (error) throw error;
+  if (!data) return [];
+
+  return data;
 }
 
 // 친구요청 조회 조회
@@ -462,7 +482,7 @@ export async function getFriendRequests(
     .select(
       `
           id,
-          from: user!friendRequset_from_fkey (id, username, avatarUrl, description),
+          from: from (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
@@ -473,6 +493,7 @@ export async function getFriendRequests(
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
 
   return {
     data: data.map((request) => ({
@@ -489,41 +510,33 @@ export async function getFriendRequests(
 export async function createFriendRequest(
   from: string,
   to: string,
-  isAccepted: boolean,
+  isAccepted: boolean | null,
 ) {
-  try {
-    const { error } = await supabase
-      .from("friendRequest")
-      .insert({ from, to, isAccepted });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 생성에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .insert({ from, to, isAccepted });
+
+  if (error) throw error;
 }
 
 // 친구요청 반응 업데이트
 export async function putFriendRequest(requestId: string, isAccepted: boolean) {
-  try {
-    const { error } = await supabase
-      .from("friendRequest")
-      .update({ isAccepted })
-      .eq("id", requestId);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 수정에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .update({ isAccepted })
+    .eq("id", requestId);
+
+  if (error) throw error;
 }
 
+// 친구 요청 삭제
 export async function deleteFriendRequest(requestId: string) {
-  try {
-    await supabase.from("friendRequest").delete().eq("id", requestId);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "친구 요청 삭제에 실패했습니다";
-    throw new Error(errorMessage);
-  }
+  const { error } = await supabase
+    .from("friendRequest")
+    .delete()
+    .eq("id", requestId);
+
+  if (error) throw error;
 }
 
 // ============================================
@@ -667,6 +680,33 @@ export async function getLatestNotification(userId: string): Promise<string> {
   if (!data) throw new Error("최근 알림을 불러올 수 없습니다.");
 
   return data.createdAt;
+}
+
+// 가장 최근 특정 친구를 찌른 기록 조회
+export async function getLatestStabForFriend(
+  myId: string,
+  friendId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select("createdAt")
+    .eq("from", myId)
+    .eq("to", friendId)
+    .eq("type", "poke")
+    .order("createdAt", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("콕 찌르기 정보를 가져올 수 없습니다.");
+
+  return data.createdAt;
+}
+
+// 알림 생성
+export async function createNotification(notification: Notification) {
+  const { error } = await supabase.from("notification").insert(notification);
+  if (error) throw error;
 }
 
 // ============================================

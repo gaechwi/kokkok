@@ -16,14 +16,18 @@ import { useRouter } from "expo-router";
 import { signUp, verifySignUpOTP } from "@/utils/supabase";
 import { useState } from "react";
 import { formatTime } from "@/utils/formatTime";
-import { useTimeLeft } from "@/hooks/useTimeLeft";
+import {
+  alertExpirationOnTimeout,
+  useTimerWithDuration,
+} from "@/hooks/useTimer";
+import { OTP_TIME } from "@/constants/time";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
   const [otpcode, setOtpcode] = useState("");
 
   const router = useRouter();
-  const timeLeft = useTimeLeft();
+  const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
 
   const handleSignUp = async () => {
     if (!signUpForm.username) {
