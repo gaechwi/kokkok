@@ -36,14 +36,20 @@ export default function Notification() {
   );
 
   useEffect(() => {
+    if (!session) return;
+
     const notificationChannel = supabase
       .channel("notification")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notification" },
-        (payload) => {
-          if (payload.new.to === session?.user.id)
-            queryClient.invalidateQueries({ queryKey: ["notification"] });
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notification",
+          filter: `to=eq.${session.user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["notification"] });
         },
       )
       .subscribe();
