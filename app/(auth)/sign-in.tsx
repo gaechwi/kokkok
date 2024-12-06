@@ -18,7 +18,7 @@ import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { Provider } from "@supabase/supabase-js";
+import type { Provider } from "@supabase/supabase-js";
 
 WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri({});
@@ -73,8 +73,14 @@ const SignIn = () => {
 
       // OAuth 사용자 정보 저장
       if (session?.user) {
-        const { error: upsertError } = await supabase.from("user").upsert(
-          {
+        const { data: existingUser } = await supabase
+          .from("user")
+          .select()
+          .eq("id", session.user.id)
+          .single();
+
+        if (!existingUser) {
+          const { error: insertError } = await supabase.from("user").insert({
             id: session.user.id,
             email: session.user.email,
             username:
@@ -82,15 +88,14 @@ const SignIn = () => {
               session.user.email?.split("@")[0],
             avatarUrl:
               session.user.user_metadata.avatar_url ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email || "")}`,
-            isOAuth: true, // OAuth 사용자
-          },
-          {
-            onConflict: "id", // id가 이미 존재하면 업데이트
-          },
-        );
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                session.user.email || "",
+              )}`,
+            isOAuth: true,
+          });
 
-        if (upsertError) throw upsertError;
+          if (insertError) throw insertError;
+        }
       }
 
       router.replace("/home");
