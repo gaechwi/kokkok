@@ -12,10 +12,10 @@ export interface Notification {
   type: NotificationType;
   // comment, like 필수
   data?: {
-    postId: string;
+    postId: number;
     // comment 필수
     commentInfo?: {
-      id: string;
+      id: number;
       content: string;
     };
   };
