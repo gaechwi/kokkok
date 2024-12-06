@@ -510,6 +510,47 @@ export async function getComments(postId: number, page = 0, limit = 10) {
   }
 }
 
+// 답글 조회
+export async function getReplies(parentId: number, page = 0, limit = 10) {
+  try {
+    const start = page * limit;
+    const end = start + limit - 1;
+
+    const { count } = await supabase
+      .from("comment")
+      .select("*", { count: "exact", head: true })
+      .eq("parentsCommentId", parentId);
+
+    if (!count) {
+      return {
+        replies: [],
+        total: 0,
+        hasNext: false,
+        nextPage: 0,
+      };
+    }
+
+    const { data, error } = await supabase.rpc("get_replies_with_likes", {
+      parentid: parentId,
+      startindex: start,
+      endindex: end,
+    });
+
+    if (error) throw error;
+    if (!data) throw new Error("답글을 가져올 수 없습니다.");
+
+    return {
+      replies: data,
+      total: count ?? data.length,
+      hasNext: data.length === limit,
+      nextPage: page + 1,
+    };
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "답글 조회에 실패했습니다",
+    );
+  }
+}
 // 댓글 좋아요 토글
 export async function toggleLikeComment(commentId: number) {
   try {
@@ -587,6 +628,8 @@ export async function createComment({
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
+
+    console.log(postId, contents, parentId);
 
     if (userError) throw userError;
     if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");

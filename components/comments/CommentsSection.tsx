@@ -64,11 +64,12 @@ export default function CommentsSection({
   const animationRef = useRef<Animated.CompositeAnimation>();
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
+  const [previousText, setPreviousText] = useState("");
 
   // 유저 정보 가져오기
   const user = useFetchData(["user"], () => getUser(), "user");
 
-  // 댓글 가져오기 (무한 스크롤)
+  // 댓글 가져오기
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["comments", postId],
@@ -204,6 +205,14 @@ export default function CommentsSection({
     setRefreshing(false);
   }, [queryClient, postId]);
 
+  const handleKeyPress = (e: { nativeEvent: { key: string } }) => {
+    if (e.nativeEvent.key === "Backspace" && !comment) {
+      if (replyTo) {
+        setReplyTo(null);
+      }
+    }
+  };
+
   // 답글달기 핸들러
   const handleReply = (username: string, parentId: number) => {
     setReplyTo({ username, parentId });
@@ -215,7 +224,7 @@ export default function CommentsSection({
       createComment({ postId, contents: comment, parentId: replyTo?.parentId }),
     onSuccess: () => {
       setComment("");
-      setReplyTo(null); // 답글 상태 초기화
+      setReplyTo(null);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
@@ -264,7 +273,7 @@ export default function CommentsSection({
                 }}
               >
                 <SafeAreaView
-                  edges={["bottom"]}
+                  edges={["bottom", "top"]}
                   className="h-full rounded-t-[20px] border border-gray-20 bg-white"
                 >
                   <View className="flex-1">
@@ -331,6 +340,7 @@ export default function CommentsSection({
                           likedAvatars={item.likedAvatars}
                           liked={item.isLiked}
                           author={item.userData}
+                          totalReplies={item.totalReplies}
                           topReply={item.topReply}
                           onReply={handleReply}
                         />
@@ -372,8 +382,8 @@ export default function CommentsSection({
             value={comment}
             onChangeText={(text) => {
               setComment(text);
-              if (text.trim() === "" && replyTo) setReplyTo(null);
             }}
+            onKeyPress={handleKeyPress}
             placeholder={
               replyTo ? `${replyTo.username}님에게 답글` : "댓글 달기"
             }

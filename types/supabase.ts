@@ -293,6 +293,7 @@ export type Database = {
           email: string;
           id: string;
           isOAuth: boolean | null;
+          notificationCheckedAt: string | null;
           updatedAt: string | null;
           username: string;
         };
@@ -303,6 +304,7 @@ export type Database = {
           email: string;
           id: string;
           isOAuth?: boolean | null;
+          notificationCheckedAt?: string | null;
           updatedAt?: string | null;
           username: string;
         };
@@ -313,6 +315,7 @@ export type Database = {
           email?: string;
           id?: string;
           isOAuth?: boolean | null;
+          notificationCheckedAt?: string | null;
           updatedAt?: string | null;
           username?: string;
         };
@@ -378,13 +381,16 @@ export type Database = {
             avatarUrl: string | null;
           };
           likes: number;
+          parentsCommentId: number | null;
           isLiked: boolean;
           likedAvatars: string[];
+          totalReplies: number;
           topReply: {
             id: number;
             contents: string;
             userId: string;
             createdAt: string;
+            parentsCommentId: number;
             user: {
               id: string;
               username: string;
@@ -426,6 +432,28 @@ export type Database = {
           isLikedByUser: boolean;
         }[];
       };
+      get_replies_with_likes: {
+        Args: {
+          parentid: number;
+          startindex: number;
+          endindex: number;
+        };
+        Returns: {
+          id: number;
+          contents: string;
+          userId: string;
+          createdAt: string;
+          parentsCommentId: number;
+          userData: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
+          likes: number;
+          isLiked: boolean;
+          likedAvatars: string[];
+        }[];
+      };
       increment_comment_likes: {
         Args: {
           p_comment_id: number;
@@ -434,7 +462,7 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like";
+      notificationtype: "poke" | "comment" | "like" | "commentLike";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {

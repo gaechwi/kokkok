@@ -3,10 +3,21 @@ import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
-import { deleteComment, getUser, toggleLikeComment } from "@/utils/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import {
+  deleteComment,
+  getReplies,
+  getUser,
+  toggleLikeComment,
+} from "@/utils/supabase";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
 
 interface CommentItemProps {
@@ -21,11 +32,14 @@ interface CommentItemProps {
   liked?: boolean;
   likedAvatars: string[];
   createdAt: string;
+  parentsCommentId?: number;
+  totalReplies?: number;
   topReply?: {
     id: number;
     contents: string;
     userId: string;
     createdAt: string;
+    parentsCommentId: number;
     user: {
       id: string;
       username: string;
@@ -35,6 +49,7 @@ interface CommentItemProps {
     likedAvatars: string[];
   } | null;
   onReply: (username: string, parentId: number) => void;
+  isReply?: boolean;
 }
 
 export default function CommentItem({
@@ -45,16 +60,54 @@ export default function CommentItem({
   liked = false,
   likedAvatars,
   createdAt,
+  parentsCommentId,
+  totalReplies,
   topReply,
   onReply,
+  isReply = false,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [isMore, setIsMore] = useState(false);
+  const [isTextMore, setIsTextMore] = useState(false);
   const queryClient = useQueryClient();
+  const [isMoreReply, setIsMoreReply] = useState(false);
 
   const { truncateText, calculateMaxChars } = useTruncateText();
+
+  // 답글 가져오기
+  const {
+    data: replyData,
+    fetchNextPage: replyFetchNextPage,
+    hasNextPage: replyHasNextPage,
+    isFetchingNextPage: isReplyFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["replies", id],
+    queryFn: ({ pageParam = 0 }) => getReplies(id, pageParam, 5),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? lastPage.nextPage : undefined,
+    enabled: isMoreReply,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: keepPreviousData,
+    initialPageParam: 0,
+  });
+
+  // 답글 더 불러오기
+  const loadMoreReply = useCallback(() => {
+    if (!isMoreReply) {
+      setIsMoreReply(true);
+      return;
+    }
+    if (replyHasNextPage && !isReplyFetchingNextPage) {
+      replyFetchNextPage();
+    }
+  }, [
+    replyHasNextPage,
+    isReplyFetchingNextPage,
+    replyFetchNextPage,
+    isMoreReply,
+  ]);
 
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
@@ -100,9 +153,9 @@ export default function CommentItem({
   if (!author.avatarUrl) return null;
 
   return (
-    <View className="mb-4 gap-[13px] border-gray-20 border-b">
+    <View>
       {/* header */}
-      <View className="flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between pb-[13px]">
         {/* user info */}
         <TouchableOpacity className="flex-1">
           <View className="flex-1 flex-row items-center gap-2 ">
@@ -208,46 +261,100 @@ export default function CommentItem({
       </View>
 
       {/* contents */}
-      <View className="flex-1 flex-row flex-wrap">
+      <View className="flex-1 flex-row flex-wrap pb-[13px]">
         <Text
           onPress={() => {
             if (contents.length > calculateMaxChars) {
-              setIsMore(!isMore);
+              setIsTextMore(!isTextMore);
             }
           }}
           className="title-5 flex-1 text-gray-90"
         >
-          {isMore ? contents : truncateText(contents)}
+          {isTextMore ? contents : truncateText(contents)}
           {contents.length > calculateMaxChars && (
             <Text className="title-5 -mb-[3px] text-gray-45">
-              {isMore ? " 접기" : "더보기"}
+              {isTextMore ? " 접기" : "더보기"}
             </Text>
           )}
         </Text>
       </View>
 
+      {/* reply button */}
       <TouchableOpacity
-        className="mb-[16px]"
-        onPress={() => onReply(author.username, id)}
+        className={isReply ? "pb-[5px]" : "pb-[13px]"}
+        onPress={() => onReply(author.username, parentsCommentId ?? id)}
       >
         <Text className="caption-2 text-gray-60">답글달기</Text>
       </TouchableOpacity>
 
-      {/* reply */}
+      {/* top reply */}
       {topReply && (
         <View className="px-4">
           <CommentItem
             id={topReply.id}
             postId={postId}
-            author={topReply.user}
             contents={topReply.contents}
-            createdAt={topReply.createdAt}
+            author={{
+              id: topReply.user.id,
+              username: topReply.user.username,
+              avatarUrl: topReply.user.avatarUrl,
+            }}
             liked={topReply.isLiked}
             likedAvatars={topReply.likedAvatars}
+            createdAt={topReply.createdAt}
+            parentsCommentId={topReply.parentsCommentId}
             onReply={onReply}
+            isReply={true}
           />
+
+          {replyData && replyData.pages.length > 0 && (
+            <FlatList
+              data={replyData.pages.flatMap((page) => page.replies)}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <CommentItem
+                  id={item.id}
+                  postId={postId}
+                  contents={item.contents}
+                  author={{
+                    id: item.userData.id,
+                    username: item.userData.username,
+                    avatarUrl: item.userData.avatarUrl,
+                  }}
+                  liked={item.isLiked}
+                  likedAvatars={item.likedAvatars}
+                  createdAt={item.createdAt}
+                  parentsCommentId={item.parentsCommentId}
+                  onReply={onReply}
+                  isReply={true}
+                />
+              )}
+            />
+          )}
+
+          {totalReplies &&
+            totalReplies > 0 &&
+            (!isMoreReply || replyHasNextPage) && (
+              <TouchableOpacity
+                onPress={loadMoreReply}
+                className="w-full flex-1 items-center justify-center"
+              >
+                <Text className="font-pregular text-[11px] text-gray-60">
+                  + 답글{" "}
+                  {totalReplies -
+                    (replyData?.pages.reduce(
+                      (acc, page) => acc + page.replies.length,
+                      0,
+                    ) ?? 0)}
+                  개 더보기
+                </Text>
+              </TouchableOpacity>
+            )}
         </View>
       )}
+
+      {/* divider */}
+      {!isReply && <View className="mt-2 mb-4 h-[1px] w-full bg-gray-20" />}
     </View>
   );
 }
