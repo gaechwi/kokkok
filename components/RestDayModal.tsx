@@ -55,7 +55,7 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       if (deletedDays.length > 0) {
         await deleteRestDay(deletedDays);
       }
-      onClose();
+      handleClose();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["histories"] });
@@ -65,6 +65,12 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       Alert.alert("쉬는 날 설정 실패: ", error.message);
     },
   });
+
+  const handleClose = () => {
+    onClose();
+    setRestDates(defaultDates);
+    resetDate();
+  };
 
   const handlePreviousMonth = () => {
     changeMonth(-1);
@@ -90,12 +96,6 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       }
       return [...prev, { date: formattedDate }];
     });
-  };
-
-  const handleClose = () => {
-    setRestDates(defaultDates);
-    resetDate();
-    onClose();
   };
 
   return (
