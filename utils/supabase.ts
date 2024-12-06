@@ -399,7 +399,7 @@ export async function getFriendsStatus(
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("userId, status")
-    .filter("userId", "in", `(${friendIds})`)
+    .in("userId", friendIds)
     .eq("date", formatDate(new Date()));
 
   if (error) throw error;
