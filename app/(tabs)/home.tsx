@@ -33,7 +33,7 @@ export default function Home() {
     setSelectedPostId(null);
   }, []);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useInfiniteQuery({
       queryKey: ["posts"],
       queryFn: ({ pageParam = 0 }) => getPosts({ page: pageParam, limit: 10 }),
@@ -53,9 +53,9 @@ export default function Home() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ["posts"] });
+    await refetch();
     setRefreshing(false);
-  }, [queryClient]);
+  }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white">

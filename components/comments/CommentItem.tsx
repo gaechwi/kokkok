@@ -349,6 +349,7 @@ export default function CommentItem({
             totalReplies > 0 &&
             !!(
               totalReplies -
+              1 -
               (replyData?.pages.reduce(
                 (acc, page) => acc + page.replies.length,
                 0,
@@ -362,6 +363,7 @@ export default function CommentItem({
                 <Text className="font-pregular text-[11px] text-gray-60">
                   + 답글{" "}
                   {totalReplies -
+                    1 -
                     (replyData?.pages.reduce(
                       (acc, page) => acc + page.replies.length,
                       0,

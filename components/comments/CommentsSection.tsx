@@ -74,7 +74,7 @@ export default function CommentsSection({
   );
 
   // 댓글 가져오기
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useInfiniteQuery({
       queryKey: ["comments", postId],
       queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
@@ -205,9 +205,9 @@ export default function CommentsSection({
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    await refetch();
     setRefreshing(false);
-  }, [queryClient, postId]);
+  }, [refetch]);
 
   // 답글달기 핸들러
   const handleReply = (username: string, parentId: number) => {
