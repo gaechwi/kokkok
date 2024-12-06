@@ -234,6 +234,15 @@ export async function updateMyProfile(
   }
 }
 
+export async function updateNotificationCheck(userId: string) {
+  const { error } = await supabase
+    .from("user")
+    .update({ notificationCheckedAt: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) throw error;
+}
+
 // ============================================
 //
 //                    image
@@ -636,12 +645,28 @@ export async function getNotifications(
         `,
     )
     .eq("to", userId)
+    .order("createdAt", { ascending: false })
     .limit(30);
 
   if (error) throw error;
   if (!data) throw new Error("유저를 불러올 수 없습니다.");
 
   return data;
+}
+
+export async function getLatestNotification(userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select("createdAt")
+    .eq("to", userId)
+    .order("createdAt", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("유저를 불러올 수 없습니다.");
+
+  return data.createdAt;
 }
 
 // ============================================

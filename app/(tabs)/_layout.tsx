@@ -4,11 +4,7 @@ import { Text, View, Platform } from "react-native";
 
 import icons from "@constants/icons";
 import colors from "@constants/colors";
-import {
-  HeaderWithBack,
-  HeaderWithNotification,
-  HeaderWithSettingAndNotification,
-} from "@/components/Header";
+import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
 
 /* constants */
 
@@ -113,7 +109,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="mypage"
           options={{
-            header: () => <HeaderWithSettingAndNotification name="MY_PAGE" />,
+            header: () => <HeaderWithNotification name="MY_PAGE" />,
             title: "MyPage",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="MY_PAGE" />,
           }}

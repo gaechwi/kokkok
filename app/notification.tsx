@@ -4,16 +4,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationItem } from "@/components/NotificationItem";
 import useFetchData from "@/hooks/useFetchData";
 import type { Session } from "@supabase/supabase-js";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
 import {
   getCurrentSession,
   getNotifications,
   supabase,
+  updateNotificationCheck,
 } from "@/utils/supabase";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { NotificationResponse } from "@/types/Notification.interface";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function Notification() {
   const queryClient = useQueryClient();
@@ -38,6 +40,11 @@ export default function Notification() {
   useEffect(() => {
     if (!session) return;
 
+    // 알림 페이지 방문 시간 업데이트하고, 그에 따라 유저 정보 다시 가져오도록 함
+    updateNotificationCheck(session.user.id);
+    queryClient.invalidateQueries({ queryKey: ["user"] });
+
+    // 나에게 오는 알림 구독
     const notificationChannel = supabase
       .channel("notification")
       .on(
@@ -50,6 +57,7 @@ export default function Notification() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["notification"] });
+          queryClient.invalidateQueries({ queryKey: ["lastNotification"] });
         },
       )
       .subscribe();
