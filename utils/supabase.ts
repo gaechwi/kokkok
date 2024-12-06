@@ -219,6 +219,20 @@ export async function getCurrentUser(): Promise<User> {
   return await getUser(user.id);
 }
 
+// 프로필 업데이트
+export async function updateMyProfile(
+  userId: string,
+  profile: { username: string; description: string },
+) {
+  try {
+    await supabase.from("user").update(profile).eq("id", userId);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "프로필 업데이트에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // ============================================
 //
 //                    image
@@ -366,6 +380,28 @@ export async function getPosts({
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 내 게시물 조회
+export async function getMyPosts(userId: string) {
+  try {
+    const { data: posts, error: postsError } = await supabase
+      .from("post")
+      .select(`
+        id,
+        images
+      `)
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false });
+
+    if (postsError) throw postsError;
+
+    return posts;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "프로필 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
 }

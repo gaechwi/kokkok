@@ -7,121 +7,127 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getCurrentUser, getMyPosts } from "@/utils/supabase";
 import images from "@/constants/images";
 import Icons from "@/constants/icons";
 import colors from "@/constants/colors";
-import { supabase } from "@/utils/supabase";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import CustomModal from "@/components/Modal";
+import { useRouter } from "expo-router";
+import useFetchData from "@/hooks/useFetchData";
 
 export default function MyPage() {
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      return session;
-    },
-  });
+  const router = useRouter();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { data: userData } = useQuery({
-    queryKey: ["user", session?.user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user")
-        .select("*")
-        .eq("id", session?.user?.id)
-        .single();
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
+  const { data: currentUser, isLoading: isUserLoading } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
+
+  const { data: posts, isLoading: isPostsLoading } = useFetchData(
+    ["userPosts", currentUser?.id],
+    () => getMyPosts(currentUser?.id!),
+    "게시물을 불러올 수 없습니다.",
+    !!currentUser?.id,
+  );
+
+  if (isUserLoading || isPostsLoading) {
+    return (
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center">
+          <Text>로딩중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <View className="w-full">
-        <View className="mt-6 px-5">
-          <View className="flex-row justify-between">
-            <View className="flex-row items-center gap-6">
-              <Image source={images.AvaTarDefault} className="size-[88px]" />
-              <Text className="title-3">{userData?.username}</Text>
-            </View>
-            <View>
-              <TouchableOpacity
-                onPress={async () => await supabase.auth.signOut()}
-              >
-                <Icons.MeatballIcon
-                  height={24}
-                  width={24}
-                  color={colors.gray[70]}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View className="mt-4 rounded-[10px] bg-[#f0f0f0] p-4">
-            <Text className="body-5 text-gray-80">
-              소개글 입니다{"\n"}소개글입니다
-            </Text>
-          </View>
-        </View>
-
-        <FlatList
-          data={[
-            {
-              url: "https://cdn.pixabay.com/photo/2023/02/08/06/29/fashion-7775824_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2023/02/16/03/43/music-player-7792956_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2016/09/10/11/11/musician-1658887_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2020/10/30/09/24/angel-5698069_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            },
-            {
-              url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            },
-            // {
-            //   url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            // },
-            // {
-            //   url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            // },
-            // {
-            //   url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/maine-coon-694730_1280.jpg",
-            // },
-          ]}
-          renderItem={({ item }) => {
-            const size = Dimensions.get("window").width / 3;
-            return (
-              <View style={{ height: size, width: size }} className="bg-gray-5">
+    <>
+      <SafeAreaView edges={[]} className="flex-1 bg-white">
+        <View className="w-full flex-1">
+          <View className="mt-6 px-5">
+            <View className="flex-row justify-between">
+              <View className="flex-row items-center gap-6">
                 <Image
-                  source={{ uri: item.url }}
-                  resizeMode="cover"
-                  style={{ width: "100%", height: "100%" }}
+                  source={
+                    currentUser?.avatarUrl
+                      ? { uri: currentUser.avatarUrl }
+                      : images.AvaTarDefault
+                  }
+                  className="size-[88px] rounded-full"
                 />
+                <Text className="title-3">{currentUser?.username}</Text>
               </View>
-            );
-          }}
-          numColumns={3}
-          keyExtractor={(item, index) => index.toString()}
-          className="mt-[32px]"
-        />
-      </View>
-    </SafeAreaView>
+              <View>
+                <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+                  <Icons.MeatballIcon
+                    height={24}
+                    width={24}
+                    color={colors.gray[70]}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View className="mt-4 rounded-[10px] bg-[#f0f0f0] p-4">
+              <Text className="body-5 text-gray-80">
+                {currentUser?.description || "소개글을 입력해주세요"}
+              </Text>
+            </View>
+          </View>
+
+          {posts && posts.length > 0 ? (
+            <FlatList
+              data={posts}
+              renderItem={({ item }) => {
+                const size = Dimensions.get("window").width / 3;
+                return (
+                  <View
+                    style={{ height: size, width: size }}
+                    className="bg-gray-5"
+                  >
+                    <Image
+                      source={{ uri: item.images[0] }}
+                      resizeMode="cover"
+                      style={{ width: "100%", height: "100%" }}
+                    />
+                  </View>
+                );
+              }}
+              numColumns={3}
+              keyExtractor={(item) => item.id}
+              className="mt-[32px]"
+            />
+          ) : (
+            <View className="mt-8 flex-1 items-center justify-center bg-gray-5">
+              <Image
+                source={images.NoPost}
+                className="h-[178px] w-[234px]"
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
+      <CustomModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        position="bottom"
+      >
+        <View className="items-center">
+          <TouchableOpacity
+            className="h-[82px] w-full items-center justify-center"
+            onPress={() => {
+              setIsModalVisible(false);
+              router.push("/profile");
+            }}
+          >
+            <Text className="title-2 text-gray-90">수정하기</Text>
+          </TouchableOpacity>
+        </View>
+      </CustomModal>
+    </>
   );
 }
