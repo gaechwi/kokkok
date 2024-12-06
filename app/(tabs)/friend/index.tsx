@@ -115,7 +115,10 @@ export default function Friend() {
   // 친구 목록이나 친구 운동 기록이 바뀔때마다 데이터 가공
   useEffect(() => {
     if (!friendsData) return;
-    if (!statusData?.length) setFriends(friendsData);
+    if (!statusData?.length) {
+      setFriends(friendsData);
+      return;
+    }
 
     const getStatus = (friendId: string) =>
       statusData?.find(({ userId }) => friendId === userId)?.status;
