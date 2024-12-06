@@ -1,6 +1,7 @@
 export const NOTIFICATION_TYPE = {
   POKE: "poke",
   COMMENT: "comment",
+  COMMENT_LIKE: "commentLike",
   LIKE: "like",
 } as const;
 export type NotificationType =
@@ -10,13 +11,14 @@ export interface Notification {
   from: string;
   to: string;
   type: NotificationType;
-  // comment, like 필수
+  // data: comment, commentLike, like 필수
   data?: {
-    postId: string;
-    // comment 필수
+    postId: number;
+    // commentInfo: comment, commentLike 필수
     commentInfo?: {
-      id: string;
-      content: string;
+      id: number;
+      // content: comment 필수
+      content?: string;
     };
   };
 }
@@ -32,7 +34,7 @@ export interface NotificationResponse {
     postId: string;
     commentInfo?: {
       id: string;
-      content: string;
+      content?: string;
     };
   };
   createdAt: string;

@@ -25,6 +25,9 @@ export function NotificationItem({
       title: `${from.username}님의 댓글`,
       content: shorten_comment(data?.commentInfo?.content || ""),
     },
+    commentLike: {
+      title: [`${from.username}님이`, "댓글에 좋아요를 눌렀어요❤️"],
+    },
     like: {
       title: [`${from.username}님이`, "게시글에 좋아요를 눌렀어요❤️"],
     },
@@ -42,7 +45,7 @@ export function NotificationItem({
         />
 
         <View className="gap-[4px] w-[198px]">
-          {type === "like" ? (
+          {type === "like" || type === "commentLike" ? (
             <>
               <Text className="title-4 text-gray-90" numberOfLines={1}>
                 {NOTIFICATION_CONFIG[type].title[0]}
