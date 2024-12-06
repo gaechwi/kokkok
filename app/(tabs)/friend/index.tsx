@@ -129,7 +129,7 @@ export default function Friend() {
       friendsData
         .map((friend) => {
           const status = getStatus(friend.id);
-          return status ? { ...friend, status: getStatus(friend.id) } : friend;
+          return status ? { ...friend, status } : friend;
         })
         .sort((a, b) => {
           if (a.status && !b.status) return 1;

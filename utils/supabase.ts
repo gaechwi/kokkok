@@ -591,6 +591,7 @@ export async function getLatestStabForFriend(
     .select("createdAt")
     .eq("from", myId)
     .eq("to", friendId)
+    .eq("type", "poke")
     .order("createdAt", { ascending: false })
     .single();
 
