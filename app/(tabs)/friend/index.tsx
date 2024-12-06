@@ -129,7 +129,11 @@ export default function Friend() {
           const status = getStatus(friend.id);
           return status ? { ...friend, status: getStatus(friend.id) } : friend;
         })
-        .sort((friend) => (friend.status ? 1 : -1)),
+        .sort((a, b) => {
+          if (a.status && !b.status) return 1;
+          if (!a.status && b.status) return -1;
+          return 0;
+        }),
     );
   }, [friendsData, statusData]);
 
