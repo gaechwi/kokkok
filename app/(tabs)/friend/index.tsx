@@ -155,7 +155,7 @@ export default function Friend() {
   }
 
   // 로딩 스크린
-  if (isFriendLoading || isStatusLoading || !friendsData || !statusData) {
+  if (isFriendLoading || isStatusLoading || !friendsData) {
     return <FriendLayout friends={[]} emptyComponent={<LoadingScreen />} />;
   }
 
