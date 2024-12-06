@@ -42,13 +42,20 @@ export default function Request() {
 
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
+    if (!session) return;
+
     const requestChannel = supabase
       .channel("friendRequest")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "friendRequest" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "friendRequest",
+          filter: `to=eq.${session.user.id}`,
+        },
         (payload) => {
-          if (!payload.new.isAccepted && payload.new.to === session?.user.id)
+          if (!payload.new.isAccepted)
             queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         },
       )

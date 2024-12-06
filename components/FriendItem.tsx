@@ -90,8 +90,10 @@ export function FriendItem({ friend }: FriendItemProps) {
   // 친구 콕 찌르기
   const { mutate: handlePoke } = useMutation({
     mutationFn: async () => {
+      if (!user?.id) throw new Error("로그인한 유저 정보가 없습니다.");
+
       await createNotification({
-        from: user?.id || "",
+        from: user.id,
         to: friend.id,
         type: NOTIFICATION_TYPE.POKE,
       });
