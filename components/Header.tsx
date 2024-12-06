@@ -71,10 +71,14 @@ export function HeaderWithNotification({ name }: HeaderProps) {
 
   const [hasNewNotification, setHasNewNotification] = useState(false);
   useEffect(() => {
-    if (!lastNotificationTime || !user?.notificationCheckedAt) return;
+    if (!lastNotificationTime) return;
+    if (!user?.notificationCheckedAt) {
+      setHasNewNotification(true);
+      return;
+    }
 
     if (
-      Date.parse(lastNotificationTime) > Date.parse(user?.notificationCheckedAt)
+      Date.parse(lastNotificationTime) > Date.parse(user.notificationCheckedAt)
     ) {
       setHasNewNotification(true);
     } else {
