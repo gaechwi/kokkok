@@ -39,7 +39,7 @@ export function NotificationItem({
     <View className="w-full py-4 border-b border-gray-25 flex-row justify-between items-center">
       <View className="flex-row gap-4">
         <Image
-          src={from.avatarUrl}
+          source={{ uri: from.avatarUrl }}
           defaultSource={images.AvaTarDefault}
           style={{ width: 48, height: 48, borderRadius: 9999 }}
         />

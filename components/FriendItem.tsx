@@ -46,7 +46,7 @@ const FriendProfile = ({
 }: FriendProfileProps) => (
   <View className="flex-row gap-2">
     <Image
-      src={avatarUrl}
+      source={{ uri: avatarUrl }}
       defaultSource={images.AvaTarDefault}
       style={{ width: 48, height: 48, borderRadius: 9999 }}
     />
