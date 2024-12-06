@@ -355,7 +355,6 @@ export default function CommentItem({
           {totalReplies &&
             !!(
               totalReplies -
-              1 -
               (replyData?.pages.reduce(
                 (acc, page) => acc + page.replies.length,
                 0,

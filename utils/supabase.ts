@@ -658,9 +658,6 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
       endindex: end,
     });
 
-    console.log(data);
-    console.log(error);
-
     if (error) throw error;
     if (!data) throw new Error("답글을 가져올 수 없습니다.");
 

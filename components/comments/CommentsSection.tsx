@@ -54,7 +54,6 @@ export default function CommentsSection({
   const slideAnim = useMemo(() => new Animated.Value(0), []);
   const heightRef = useRef(DEFAULT_HEIGHT);
   const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
-
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
     username: string;
@@ -349,7 +348,7 @@ export default function CommentsSection({
                           likedAvatars={item.likedAvatars}
                           liked={item.isLiked}
                           author={item.userData}
-                          totalReplies={item.totalReplies}
+                          totalReplies={item.totalReplies - 1}
                           topReply={item.topReply}
                           onReply={handleReply}
                         />
