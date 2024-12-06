@@ -1,5 +1,5 @@
 import useFetchData from "@/hooks/useFetchData";
-import { createComment, getComments, getUser } from "@/utils/supabase";
+import { createComment, getComments, getCurrentUser } from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -67,7 +67,11 @@ export default function CommentsSection({
   const [previousText, setPreviousText] = useState("");
 
   // 유저 정보 가져오기
-  const user = useFetchData(["user"], () => getUser(), "user");
+  const user = useFetchData(
+    ["user"],
+    getCurrentUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
 
   // 댓글 가져오기
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =

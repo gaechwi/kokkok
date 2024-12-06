@@ -5,8 +5,8 @@ import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
   deleteComment,
+  getCurrentUser,
   getReplies,
-  getUser,
   toggleLikeComment,
 } from "@/utils/supabase";
 import {
@@ -139,7 +139,7 @@ export default function CommentItem({
 
   const user = useFetchData(
     ["user"],
-    getUser,
+    getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
 

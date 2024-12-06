@@ -3,7 +3,7 @@ import icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
-import { deletePost, getUser, toggleLikePost } from "@/utils/supabase";
+import { deletePost, getCurrentUser, toggleLikePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -62,7 +62,7 @@ export default function PostItem({
 
   const user = useFetchData(
     ["user"],
-    getUser,
+    getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
 

@@ -1,9 +1,8 @@
+import type { FriendResponse } from "@/types/Friend.interface";
 import type { Database } from "@/types/supabase";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient, type Session } from "@supabase/supabase-js";
-import type * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
@@ -34,7 +33,7 @@ export async function signUp({
   username,
   description,
 }: {
-  id: string | undefined;
+  id: string;
   email: string;
   password: string;
   username: string;
@@ -183,7 +182,7 @@ export async function updateNewPassword(newPassword: string) {
 // ============================================
 
 // 유저 정보 조회
-export async function getUser(userId: string): Promise<User> {
+export async function getUser(userId: string) {
   try {
     const { data, error } = await supabase
       .from("user")
@@ -214,7 +213,7 @@ export async function getCurrentSession(): Promise<Session> {
 }
 
 // 로그인한 유저 정보 조회
-export async function getCurrentUser(): Promise<User> {
+export async function getCurrentUser() {
   const { user } = await getCurrentSession();
   return await getUser(user.id);
 }
