@@ -73,7 +73,7 @@ export default function MyPage() {
 
             <View className="mt-4 rounded-[10px] bg-[#f0f0f0] p-4">
               <Text className="body-5 text-gray-80">
-                {currentUser?.description || ""}
+                {currentUser?.description || "소개글을 입력해주세요"}
               </Text>
             </View>
           </View>
