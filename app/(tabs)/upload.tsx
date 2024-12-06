@@ -31,7 +31,6 @@ export default function Upload() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("focus effect");
       if (postId) {
         post.refetch().then((data) => {
           if (data !== null && data !== undefined) {

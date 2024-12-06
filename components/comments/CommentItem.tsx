@@ -16,7 +16,14 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
 
@@ -309,6 +316,7 @@ export default function CommentItem({
 
           {replyData && replyData.pages.length > 0 && (
             <FlatList
+              className="gap-2"
               data={replyData.pages.flatMap((page) => page.replies)}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
@@ -329,11 +337,23 @@ export default function CommentItem({
                   isReply={true}
                 />
               )}
+              ListFooterComponent={() =>
+                isReplyFetchingNextPage ? (
+                  <ActivityIndicator size="small" />
+                ) : null
+              }
             />
           )}
 
           {totalReplies &&
             totalReplies > 0 &&
+            !!(
+              totalReplies -
+              (replyData?.pages.reduce(
+                (acc, page) => acc + page.replies.length,
+                0,
+              ) ?? 0)
+            ) &&
             (!isMoreReply || replyHasNextPage) && (
               <TouchableOpacity
                 onPress={loadMoreReply}

@@ -205,14 +205,6 @@ export default function CommentsSection({
     setRefreshing(false);
   }, [queryClient, postId]);
 
-  const handleKeyPress = (e: { nativeEvent: { key: string } }) => {
-    if (e.nativeEvent.key === "Backspace" && !comment) {
-      if (replyTo) {
-        setReplyTo(null);
-      }
-    }
-  };
-
   // 답글달기 핸들러
   const handleReply = (username: string, parentId: number) => {
     setReplyTo({ username, parentId });
@@ -227,6 +219,7 @@ export default function CommentsSection({
       setReplyTo(null);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
       Alert.alert("댓글 작성 실패", "댓글 작성에 실패했습니다.");
@@ -383,7 +376,7 @@ export default function CommentsSection({
             onChangeText={(text) => {
               setComment(text);
             }}
-            onKeyPress={handleKeyPress}
+            setReplyTo={setReplyTo}
             placeholder={
               replyTo ? `${replyTo.username}님에게 답글` : "댓글 달기"
             }

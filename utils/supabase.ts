@@ -629,8 +629,6 @@ export async function createComment({
       error: userError,
     } = await supabase.auth.getUser();
 
-    console.log(postId, contents, parentId);
-
     if (userError) throw userError;
     if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
