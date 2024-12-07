@@ -17,6 +17,7 @@ export type Database = {
           likes: number | null;
           parentsCommentId: number | null;
           postId: number;
+          replyCommentId: number | null;
           userId: string;
         };
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           likes?: number | null;
           parentsCommentId?: number | null;
           postId: number;
+          replyCommentId?: number | null;
           userId?: string;
         };
         Update: {
@@ -35,6 +37,7 @@ export type Database = {
           likes?: number | null;
           parentsCommentId?: number | null;
           postId?: number;
+          replyCommentId?: number | null;
           userId?: string;
         };
         Relationships: [
@@ -50,6 +53,13 @@ export type Database = {
             columns: ["postId"];
             isOneToOne: false;
             referencedRelation: "post";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comment_replyCommentId_fkey";
+            columns: ["replyCommentId"];
+            isOneToOne: false;
+            referencedRelation: "comment";
             referencedColumns: ["id"];
           },
           {
@@ -97,42 +107,6 @@ export type Database = {
           },
         ];
       };
-      friendHistory: {
-        Row: {
-          createAt: string | null;
-          historyId: number | null;
-          id: number;
-          userId: string | null;
-        };
-        Insert: {
-          createAt?: string | null;
-          historyId?: number | null;
-          id?: number;
-          userId?: string | null;
-        };
-        Update: {
-          createAt?: string | null;
-          historyId?: number | null;
-          id?: number;
-          userId?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "friendHistory_historyId_fkey";
-            columns: ["historyId"];
-            isOneToOne: false;
-            referencedRelation: "workoutHistory";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "friendHistory_userId_fkey";
-            columns: ["userId"];
-            isOneToOne: false;
-            referencedRelation: "user";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       friendRequest: {
         Row: {
           createdAt: string;
@@ -157,14 +131,14 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "friendRequset_from_fkey";
+            foreignKeyName: "friendRequest_from_fkey";
             columns: ["from"];
             isOneToOne: false;
             referencedRelation: "user";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "friendRequset_to_fkey";
+            foreignKeyName: "friendRequest_to_fkey";
             columns: ["to"];
             isOneToOne: false;
             referencedRelation: "user";
@@ -364,7 +338,7 @@ export type Database = {
         };
         Returns: undefined;
       };
-      get_comments_with_top_reply: {
+      get_comments: {
         Args: {
           postid: number;
           startindex: number;
@@ -386,21 +360,6 @@ export type Database = {
           isLiked: boolean;
           likedAvatars: string[];
           totalReplies: number;
-          topReply: {
-            id: number;
-            contents: string;
-            userId: string;
-            createdAt: string;
-            parentsCommentId: number;
-            replyCommentId: number;
-            user: {
-              id: string;
-              username: string;
-              avatarUrl: string | null;
-            };
-            isLiked: boolean;
-            likedAvatars: string[];
-          } | null;
         }[];
       };
       get_posts_with_details: {

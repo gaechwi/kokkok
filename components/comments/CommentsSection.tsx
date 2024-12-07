@@ -348,8 +348,7 @@ export default function CommentsSection({
                           likedAvatars={item.likedAvatars}
                           liked={item.isLiked}
                           author={item.userData}
-                          totalReplies={item.totalReplies - 1}
-                          topReply={item.topReply}
+                          totalReplies={item.totalReplies}
                           onReply={handleReply}
                         />
                       )}
