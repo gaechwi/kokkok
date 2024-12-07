@@ -1000,7 +1000,7 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
 
   if (error) throw error;
 
-  return data as History[];
+  return data as Pick<History, "date">[];
 }
 
 // 쉬는 날 추가
