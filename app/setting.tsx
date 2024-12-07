@@ -1,12 +1,12 @@
+import AlertToggle from "@/components/AlertToggle";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
-import { Linking, Text, TouchableOpacity, View } from "react-native";
-import { useRouter } from "expo-router";
-import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
-import useFetchData from "@/hooks/useFetchData";
-import AlertToggle from "@/components/AlertToggle";
-import { useAtom } from "jotai";
 import { alertToggleAtom } from "@/contexts/alert";
+import useFetchData from "@/hooks/useFetchData";
+import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
+import { useRouter } from "expo-router";
+import { useAtom } from "jotai";
+import { Linking, Text, TouchableOpacity, View } from "react-native";
 
 export default function Setting() {
   const router = useRouter();
@@ -73,6 +73,7 @@ export default function Setting() {
           <TouchableOpacity
             className="flex-row items-center justify-between"
             onPress={async () => {
+              console.log("first");
               await deleteUser(currentUser?.id ?? "");
 
               router.replace("/sign-in");
