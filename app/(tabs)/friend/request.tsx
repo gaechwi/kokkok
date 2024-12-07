@@ -1,19 +1,19 @@
-import { View, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect } from "react";
+import { FlatList, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import ErrorScreen from "@/components/ErrorScreen";
 import { FriendRequest } from "@/components/FriendItem";
+import LoadingScreen from "@/components/LoadingScreen";
+import useFetchData from "@/hooks/useFetchData";
+import type { RequestResponse } from "@/types/Friend.interface";
 import {
   getCurrentSession,
   getFriendRequests,
   supabase,
 } from "@/utils/supabase";
-import useFetchData from "@/hooks/useFetchData";
-import type { RequestResponse } from "@/types/Friend.interface";
-import ErrorScreen from "@/components/ErrorScreen";
-import LoadingScreen from "@/components/LoadingScreen";
-import { useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -86,7 +86,7 @@ export default function Request() {
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
         data={requests.data}
-        keyExtractor={(request) => request.requestId}
+        keyExtractor={(request) => String(request.requestId)}
         renderItem={({ item: request }) => (
           <FriendRequest {...request} isLoading={isLoading} />
         )}
