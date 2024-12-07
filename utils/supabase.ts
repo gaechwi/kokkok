@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { UserProfile } from "@/types/User.interface";
@@ -233,13 +234,13 @@ export async function updateMyProfile(
   try {
     const avatarUrl = profile.avatarUrl
       ? await uploadImage(profile.avatarUrl)
-      : null;
+      : DEFAULT_AVATAR_URL;
 
     await supabase
       .from("user")
       .update({
         ...profile,
-        avatarUrl: avatarUrl || null,
+        avatarUrl: avatarUrl,
       })
       .eq("id", userId);
   } catch (error) {
