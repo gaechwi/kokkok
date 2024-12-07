@@ -78,7 +78,7 @@ export function FriendItem({ friend }: FriendItemProps) {
   const isPokeDisable = !!friend.status || !!timeLeft;
 
   const { usePoke } = useManageFriend();
-  const { mutate: handlePoke } = usePoke({ userId: user?.id, friend });
+  const { mutate: handlePoke } = usePoke();
 
   useEffect(() => {
     if (lastPokeCreatedAt) timerStart(Date.parse(lastPokeCreatedAt), POKE_TIME);
@@ -93,7 +93,7 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => handlePoke()}
+        onPress={() => handlePoke({ userId: user?.id, friend })}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
@@ -148,7 +148,9 @@ export function FriendRequest({
 
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
-          onPress={() => handleRefuse({ requestId })}
+          onPress={() =>
+            handleRefuse({ requestId, fromUserId: fromUser.id, toUserId })
+          }
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 거절"
           accessibilityHint="이 버튼을 누르면 친구 요청을 거절합니다"
