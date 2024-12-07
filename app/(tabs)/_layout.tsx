@@ -1,11 +1,14 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Platform, Text, View } from "react-native";
 
 import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
 import useSubscribeNotification from "@/hooks/useSubscribeNotification";
+import { supabase } from "@/utils/supabase";
 import colors from "@constants/colors";
 import icons from "@constants/icons";
+import type { Session } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 
 /* constants */
 
@@ -51,6 +54,23 @@ const TabIcon = ({
 
 export default function TabsLayout() {
   useSubscribeNotification();
+
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoading(false);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+
+  if (isLoading) return null;
+  if (!session) return <Redirect href="/sign-in" />;
 
   return (
     <>

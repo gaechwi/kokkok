@@ -1,11 +1,28 @@
-import { Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
 
 import { Header, HeaderWithBack } from "@/components/Header";
+import { supabase } from "@/utils/supabase";
+import type { Session } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 
 const AuthLayout = () => {
-  const router = useRouter();
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoading(false);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+
+  if (isLoading) return null;
+  if (session) return <Redirect href="/home" />;
 
   return (
     <>
