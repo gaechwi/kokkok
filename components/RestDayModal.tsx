@@ -62,7 +62,8 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       queryClient.invalidateQueries({ queryKey: ["histories"] });
       queryClient.invalidateQueries({ queryKey: ["restDates"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("쉬는 날 설정 실패:", error);
       showToast("fail", "쉬는 날 설정에 실패했어요!");
     },
   });
