@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
@@ -235,13 +236,13 @@ export async function updateMyProfile(
   try {
     const avatarUrl = profile.avatarUrl
       ? await uploadImage(profile.avatarUrl)
-      : null;
+      : DEFAULT_AVATAR_URL;
 
     await supabase
       .from("user")
       .update({
         ...profile,
-        avatarUrl: avatarUrl || null,
+        avatarUrl: avatarUrl,
       })
       .eq("id", userId);
   } catch (error) {
