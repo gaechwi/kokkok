@@ -67,7 +67,7 @@ export default function CommentItem({
   contents,
   author,
   liked = false,
-  likedAvatars,
+  likedAvatars = [],
   createdAt,
   parentsCommentId,
   replyCommentId,
@@ -202,7 +202,7 @@ export default function CommentItem({
           </TouchableOpacity>
 
           {/* likeAvatar */}
-          {likedAvatars.length > 0 && (
+          {likedAvatars && likedAvatars.length > 0 && (
             <TouchableOpacity className="ml-[2px] flex-row items-center">
               {likedAvatars.slice(0, 2).map((avatar, index) => (
                 <Image
