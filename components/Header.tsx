@@ -1,11 +1,12 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@/constants/icons";
+import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import { getCurrentUser, getLatestNotification } from "@/utils/supabase";
 import type { User } from "@/types/User.interface";
+import { getCurrentUser, getLatestNotification } from "@/utils/supabase";
 import { useEffect, useState } from "react";
 
 const HEADER_TITLE = {
@@ -33,6 +34,19 @@ export function Header({ name }: HeaderProps) {
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
       <View className="h-14 items-center justify-center">
         <Text className="heading-2">{HEADER_TITLE[name]}</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export function HeaderTypo() {
+  return (
+    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
+      <View className="h-14 flex-row items-center justify-between px-4">
+        <Image source={images.AuthLogo} style={{ width: 70, height: 16 }} />
+        <TouchableOpacity onPress={() => router.push("/notification")}>
+          <icons.BellIcon width={24} height={24} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

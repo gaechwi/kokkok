@@ -1,10 +1,14 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, Platform } from "react-native";
+import { Platform, Text, View } from "react-native";
 
-import icons from "@constants/icons";
+import {
+  HeaderTypo,
+  HeaderWithBack,
+  HeaderWithNotification,
+} from "@/components/Header";
 import colors from "@constants/colors";
-import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
+import icons from "@constants/icons";
 
 /* constants */
 
@@ -72,7 +76,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            header: () => <HeaderWithNotification name="HOME" />,
+            header: () => <HeaderTypo />,
             title: "Home",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}
@@ -96,6 +100,7 @@ export default function TabsLayout() {
                 <icons.PlusIcon width={24} height={24} color={colors.white} />
               </View>
             ),
+            href: "/upload",
           }}
         />
         <Tabs.Screen

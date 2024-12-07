@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { getCurrentUser, updateMyProfile } from "@/utils/supabase";
 import useFetchData from "@/hooks/useFetchData";
+import * as ImagePicker from "expo-image-picker";
 
 const Profile = () => {
   const { data: currentUser } = useFetchData(
@@ -22,6 +23,7 @@ const Profile = () => {
   );
 
   const [profileInput, setProfileInput] = useState({
+    avatarUrl: currentUser?.avatarUrl || "",
     username: currentUser?.username || "",
     description: currentUser?.description || "",
   });
@@ -30,6 +32,7 @@ const Profile = () => {
   useEffect(() => {
     if (currentUser) {
       setProfileInput({
+        avatarUrl: currentUser.avatarUrl || "",
         username: currentUser.username || "",
         description: currentUser.description || "",
       });
@@ -39,8 +42,29 @@ const Profile = () => {
   const router = useRouter();
 
   const handleEditProfile = async () => {
-    await updateMyProfile(currentUser?.id!, profileInput);
+    await updateMyProfile(currentUser?.id!, {
+      ...profileInput,
+      avatarUrl: profileInput.avatarUrl
+        ? { uri: profileInput.avatarUrl, width: 500, height: 500 }
+        : undefined,
+    });
     router.replace("/mypage");
+  };
+
+  const handleAvatarPress = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setProfileInput({
+        ...profileInput,
+        avatarUrl: result.assets[0].uri,
+      });
+    }
   };
 
   return (
@@ -50,10 +74,14 @@ const Profile = () => {
     >
       <ScrollView>
         <View className="mt-12 flex items-center justify-center px-6">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleAvatarPress}>
             <Image
-              source={images.AvatarInput}
-              className="size-[236px]"
+              source={
+                profileInput.avatarUrl
+                  ? { uri: profileInput.avatarUrl }
+                  : images.AvatarInput
+              }
+              className="size-[236px] rounded-full"
               resizeMode="contain"
             />
           </TouchableOpacity>

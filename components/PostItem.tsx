@@ -1,18 +1,30 @@
-import { View, Text, Image, TouchableOpacity, Pressable } from "react-native";
-import Carousel from "./Carousel";
-import { diffDate } from "@/utils/formatDate";
-import { useState } from "react";
-import icons from "@/constants/icons";
-import CustomModal from "./Modal";
 import colors from "@/constants/colors";
+import icons from "@/constants/icons";
+import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import { diffDate } from "@/utils/formatDate";
+import { deletePost, getCurrentUser, toggleLikePost } from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Carousel from "./Carousel";
+import CustomModal, { DeleteModal } from "./Modal";
 interface PostItemProps {
   author: {
+    id: string;
     name: string;
     avatar: string;
   };
   images: string[];
-  contents?: string;
+  contents?: string | null;
   liked: boolean;
   likedAuthorAvatar?: string[];
   createdAt: string;
@@ -23,8 +35,9 @@ interface PostItemProps {
       avatar: string;
     };
     content: string;
-  };
-  onCommentsPress: () => void; // 새로 추가
+  } | null;
+  postId: number;
+  onCommentsPress: (num: number) => void;
 }
 
 export default function PostItem({
@@ -36,18 +49,52 @@ export default function PostItem({
   createdAt,
   commentsCount = 0,
   comment,
-  onCommentsPress, // 새로 추가
+  postId,
+  onCommentsPress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const user = useFetchData(
+    ["user"],
+    getCurrentUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
 
-  const toggleModal = () => {
-    setIsModalVisible((prev) => !prev);
-  };
+  const toggleModal = () => setIsModalVisible((prev) => !prev);
+
+  const toggleDeleteModal = () => setIsDeleteModalVisible((prev) => !prev);
+
+  const toggleLike = useMutation({
+    mutationFn: () => toggleLikePost(postId),
+    onMutate: () => {
+      setIsLiked((prev) => !prev);
+    },
+    onError: () => {
+      setIsLiked((prev) => !prev);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: () => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      Alert.alert("삭제 성공", "게시물이 성공적으로 삭제되었습니다.");
+    },
+    onError: () => {
+      Alert.alert("삭제 실패", "게시물 삭제에 실패했습니다.");
+    },
+  });
 
   return (
     <View className="grow bg-gray-10 pb-[10px]">
@@ -55,34 +102,64 @@ export default function PostItem({
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
           <TouchableOpacity>
-            <View className="h-14 flex-row items-center gap-4">
+            <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
                 resizeMode="cover"
                 className="size-8 rounded-full"
               />
-              <Text className="body-3 text-gray-80">{author.name}</Text>
+              {/* username */}
+              <Text className="font-psemibold text-[13px] text-gray-80 leading-[150%]">
+                {author.name}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={toggleModal}>
-            <icons.MeatballIcon width={24} height={24} color="#5D5D5D" />
+          {user.data?.id === author.id && (
+            <TouchableOpacity onPress={toggleModal}>
+              <icons.MeatballIcon
+                width={24}
+                height={24}
+                color={colors.gray[70]}
+              />
 
-            <CustomModal
-              visible={isModalVisible}
-              onClose={toggleModal}
-              position="bottom"
-            >
-              <View className="items-center">
-                <TouchableOpacity className="h-[82px] w-full items-center justify-center border-gray-20 border-b">
-                  <Text className="title-2 text-gray-90">수정하기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className="h-[82px] w-full items-center justify-center">
-                  <Text className="title-2 text-gray-90">삭제하기</Text>
-                </TouchableOpacity>
-              </View>
-            </CustomModal>
-          </TouchableOpacity>
+              <CustomModal
+                visible={isModalVisible}
+                onClose={toggleModal}
+                position="bottom"
+              >
+                <View className="items-center">
+                  <TouchableOpacity
+                    onPress={() => {
+                      toggleModal();
+                      router.push(`/upload?postId=${postId}`);
+                    }}
+                    className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+                  >
+                    <Text className="title-2 text-gray-90">수정하기</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      toggleDeleteModal();
+                      toggleModal();
+                    }}
+                    className="h-[82px] w-full items-center justify-center"
+                  >
+                    <Text className="title-2 text-gray-90">삭제하기</Text>
+                  </TouchableOpacity>
+                </View>
+              </CustomModal>
+
+              <DeleteModal
+                isVisible={isDeleteModalVisible}
+                onClose={toggleDeleteModal}
+                onDelete={() => {
+                  deletePostMutation.mutate();
+                  setIsDeleteModalVisible(false);
+                }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* carousel */}
@@ -94,7 +171,11 @@ export default function PostItem({
         <View className="flex-row items-center justify-between bg-white px-4 pb-6">
           <View className="flex-row items-center pr-[2px]">
             {/* like */}
-            <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!toggleLike.isPending) toggleLike.mutate();
+              }}
+            >
               <icons.HeartIcon
                 width={24}
                 height={24}
@@ -121,7 +202,7 @@ export default function PostItem({
                   />
                 ))}
                 {likedAuthorAvatar.length > 2 && (
-                  <Text className="pl-[2px] font-pbold text-[13px] text-gray-90 leading-[150%]">
+                  <Text className="pl-[2px] font-psemibold text-[13px] text-gray-90 leading-[150%]">
                     외 여러명
                   </Text>
                 )}
@@ -130,7 +211,7 @@ export default function PostItem({
 
             {/* comments */}
             <TouchableOpacity
-              onPress={onCommentsPress} // 수정된 부분
+              onPress={() => onCommentsPress(postId)}
               className="ml-[10px] flex-row items-center gap-[4px]"
             >
               <icons.CommentIcon
@@ -139,7 +220,7 @@ export default function PostItem({
                 color={colors.gray[90]}
               />
               {commentsCount > 0 && (
-                <Text className="font-pbold text-[13px] text-gray-90 leading-[150%]">
+                <Text className="font-psemibold text-[13px] text-gray-90 leading-[150%]">
                   {commentsCount > 99 ? "99+" : commentsCount}
                 </Text>
               )}
@@ -152,10 +233,10 @@ export default function PostItem({
           </Text>
         </View>
 
-        {(contents || comment) && (
+        {(!!contents?.length || !!comment?.content?.length) && (
           <View className="bg-white px-4 pb-[22px]">
             {/* content */}
-            {contents && (
+            {!!contents?.length && (
               <Pressable
                 disabled={!isMore && contents.length <= calculateMaxChars}
                 onPress={() => setIsMore(!isMore)}
@@ -173,15 +254,17 @@ export default function PostItem({
             )}
 
             {/* comments */}
-            {comment && (
-              <Pressable onPress={onCommentsPress} className="mt-2 px-2">
-                {/* 수정된 부분 */}
+            {!!comment?.content?.length && (
+              <Pressable
+                onPress={() => onCommentsPress(postId)}
+                className="mt-2 px-2"
+              >
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-nowrap font-pbold text-[15px] text-gray-70 leading-[150%]">
+                  <Text className="text-nowrap font-pbold text-[14px] text-gray-70 leading-[150%]">
                     {comment.author.name}
                   </Text>
                   <Text
-                    className="body-2 flex-1 text-gray-90"
+                    className="body-3 flex-1 text-gray-90"
                     numberOfLines={1}
                   >
                     {comment.content}
