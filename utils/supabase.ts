@@ -271,7 +271,6 @@ export async function deleteUser(userId: string) {
       },
       body: JSON.stringify({ userId }),
     });
-    console.log(response);
 
     if (!response.ok) {
       const error = await response.json();
