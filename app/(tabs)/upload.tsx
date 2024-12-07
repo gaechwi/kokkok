@@ -89,10 +89,15 @@ export default function Upload() {
   const addWorkoutHistoryMutation = useMutation({
     mutationFn: () => {
       const today = new Date();
-      const koreaTime = new Date(today.getTime() + 9 * 60 * 60 * 1000); // 한국 시간으로 변환
+      const koreaTime = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(today);
 
       return addWorkoutHistory({
-        date: koreaTime.toISOString().split("T")[0], // 날짜만 추출
+        date: koreaTime,
       });
     },
     onError: () => {
