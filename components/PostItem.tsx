@@ -1,6 +1,7 @@
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
 import Icons from "@/constants/icons";
+import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
@@ -255,7 +256,8 @@ export default function PostItem({
                           <View className="flex-1 flex-row items-center gap-2">
                             <Image
                               source={{
-                                uri: item.author?.avatarUrl || undefined,
+                                uri:
+                                  item.author?.avatarUrl || imgs.AvaTarDefault,
                               }}
                               resizeMode="cover"
                               className="size-10 rounded-full"

@@ -1,3 +1,4 @@
+import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { createComment, getComments, getCurrentUser } from "@/utils/supabase";
 import {
@@ -172,6 +173,7 @@ export default function CommentsSection({
               author={item.userData}
               totalReplies={item.totalReplies}
               onReply={handleReply}
+              onCommentsClose={onClose}
             />
           )}
           ListFooterComponent={
@@ -194,7 +196,7 @@ export default function CommentsSection({
         className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
       >
         <Image
-          source={{ uri: user.data?.avatarUrl || undefined }}
+          source={{ uri: user.data?.avatarUrl || images.AvaTarDefault }}
           resizeMode="cover"
           className="size-12 rounded-full"
         />
