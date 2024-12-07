@@ -357,10 +357,9 @@ export type Database = {
             avatarUrl: string | null;
           };
           likes: number;
-          parentsCommentId: number | null;
-          replyCommentId: number | null;
           isLiked: boolean;
           likedAvatars: string[];
+          parentsCommentId: number;
           totalReplies: number;
         }[];
       };
