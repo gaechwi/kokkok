@@ -341,7 +341,7 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
     return {
       posts: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -639,7 +639,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
       .eq("postId", postId)
       .is("parentsCommentId", null);
 
-    const { data, error } = await supabase.rpc("get_comments_with_top_reply", {
+    const { data, error } = await supabase.rpc("get_comments", {
       postid: postId,
       startindex: start,
       endindex: end,
@@ -651,7 +651,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
     return {
       comments: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -664,8 +664,8 @@ export async function getComments(postId: number, page = 0, limit = 10) {
 // 답글 조회
 export async function getReplies(parentId: number, page = 0, limit = 10) {
   try {
-    const start = page * limit;
-    const end = start + limit - 1;
+    const start = page === 0 ? 0 : (page - 1) * limit + 1;
+    const end = page === 0 ? 1 : start + limit;
 
     const { count } = await supabase
       .from("comment")
@@ -690,10 +690,12 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
     if (error) throw error;
     if (!data) throw new Error("답글을 가져올 수 없습니다.");
 
+    const hasNext = page === 0 ? count > 1 : data.length === limit;
+
     return {
       replies: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -702,6 +704,7 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
     );
   }
 }
+
 // 댓글 좋아요 토글
 export async function toggleLikeComment(commentId: number) {
   try {
