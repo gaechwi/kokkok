@@ -105,18 +105,16 @@ export default function CommentItem({
 
   // 답글 더 불러오기
   const loadMoreReply = useCallback(() => {
-    if (!isMoreReply) {
-      setIsMoreReply(true);
-      return;
-    }
-    if (replyHasNextPage && !isReplyFetchingNextPage) {
+    if (isMoreReply && replyHasNextPage && !isReplyFetchingNextPage) {
       replyFetchNextPage();
+    } else if (!isMoreReply) {
+      setIsMoreReply(true);
     }
   }, [
+    isMoreReply,
     replyHasNextPage,
     isReplyFetchingNextPage,
     replyFetchNextPage,
-    isMoreReply,
   ]);
 
   const toggleModal = () => {
@@ -159,8 +157,7 @@ export default function CommentItem({
 
   const diff = diffDate(new Date(createdAt));
 
-  if (!author) return null;
-  if (!author.avatarUrl) return null;
+  if (!author || !author.avatarUrl) return null;
 
   return (
     <View>
@@ -205,7 +202,7 @@ export default function CommentItem({
           </TouchableOpacity>
 
           {/* likeAvatar */}
-          {likedAvatars && likedAvatars.length > 0 && (
+          {likedAvatars.length > 0 && (
             <TouchableOpacity className="ml-[2px] flex-row items-center">
               {likedAvatars.slice(0, 2).map((avatar, index) => (
                 <Image
@@ -213,11 +210,9 @@ export default function CommentItem({
                   key={`avatar-${index}`}
                   source={{ uri: avatar }}
                   resizeMode="cover"
-                  className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
+                  className={`size-[24px] rounded-full border border-white ${index !== 0 ? "-ml-[9px]" : ""}`}
                   style={{
                     zIndex: 5 - index,
-                    borderWidth: 1,
-                    borderColor: "white",
                   }}
                 />
               ))}
@@ -273,11 +268,9 @@ export default function CommentItem({
       {/* contents */}
       <View className="flex-1 flex-row flex-wrap pb-[13px]">
         <Text
-          onPress={() => {
-            if (contents.length > calculateMaxChars) {
-              setIsTextMore(!isTextMore);
-            }
-          }}
+          onPress={() =>
+            contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
+          }
           className="title-5 flex-1 text-gray-90"
         >
           {isTextMore ? contents : truncateText(contents)}
@@ -300,7 +293,7 @@ export default function CommentItem({
       </TouchableOpacity>
 
       {/* top reply */}
-      {topReply && (
+      {!!topReply && (
         <View className="px-4">
           <CommentItem
             id={topReply.id}
@@ -320,7 +313,7 @@ export default function CommentItem({
             isReply={true}
           />
 
-          {replyData && replyData.pages.length > 0 && (
+          {!!replyData && replyData.pages.length > 0 && (
             <FlatList
               className="gap-2"
               data={replyData.pages.flatMap((page) => page.replies)}
@@ -352,7 +345,7 @@ export default function CommentItem({
             />
           )}
 
-          {totalReplies &&
+          {!!totalReplies &&
             !!(
               totalReplies -
               (replyData?.pages.reduce(
