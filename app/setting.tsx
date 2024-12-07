@@ -1,5 +1,6 @@
 import AlertToggle from "@/components/AlertToggle";
 import CustomModal from "@/components/Modal";
+import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { alertToggleAtom } from "@/contexts/alert";
@@ -130,10 +131,15 @@ export default function Setting() {
               className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
               onPress={async () => {
                 setIsLoading(true);
+
                 await deleteUser(currentUser?.id ?? "");
+
                 setIsDeleteModalVisible(false);
                 setIsLoading(false);
+
                 router.replace("/sign-in");
+
+                showToast("success", "탈퇴가 완료되었습니다!");
               }}
               disabled={isLoading}
             >
@@ -166,10 +172,15 @@ export default function Setting() {
               className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
               onPress={async () => {
                 setIsLoading(true);
+
                 await supabase.auth.signOut();
+
                 setIsSignOutModalVisible(false);
                 setIsLoading(false);
+
                 router.replace("/sign-in");
+
+                showToast("success", "로그아웃이 완료되었습니다!");
               }}
               disabled={isLoading}
             >
