@@ -226,10 +226,24 @@ export async function getCurrentUser() {
 // 프로필 업데이트
 export async function updateMyProfile(
   userId: string,
-  profile: { username: string; description: string },
+  profile: {
+    username: string;
+    description: string;
+    avatarUrl?: ImagePicker.ImagePickerAsset;
+  },
 ) {
   try {
-    await supabase.from("user").update(profile).eq("id", userId);
+    const avatarUrl = profile.avatarUrl
+      ? await uploadImage(profile.avatarUrl)
+      : null;
+
+    await supabase
+      .from("user")
+      .update({
+        ...profile,
+        avatarUrl: avatarUrl || null,
+      })
+      .eq("id", userId);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "프로필 업데이트에 실패했습니다";
