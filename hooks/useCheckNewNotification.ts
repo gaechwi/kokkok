@@ -28,9 +28,7 @@ const useCheckNewNotification = () => {
     }
 
     // 유저의 알람 확인 시간과 마지막 알람 확인 시간 비교해서 새 알람 여부 저장
-    if (
-      Date.parse(lastNotificationTime) > Date.parse(user.notificationCheckedAt)
-    ) {
+    if (new Date(lastNotificationTime) > new Date(user.notificationCheckedAt)) {
       setHasNewNotification(true);
     } else {
       setHasNewNotification(false);

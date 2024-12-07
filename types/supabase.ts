@@ -159,14 +159,14 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "friendRequset_from_fkey";
+            foreignKeyName: "friendRequest_from_fkey";
             columns: ["from"];
             isOneToOne: false;
             referencedRelation: "user";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "friendRequset_to_fkey";
+            foreignKeyName: "friendRequest_to_fkey";
             columns: ["to"];
             isOneToOne: false;
             referencedRelation: "user";

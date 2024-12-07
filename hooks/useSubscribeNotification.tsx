@@ -7,7 +7,7 @@ import useFetchData from "./useFetchData";
 const useSubscribeNotification = () => {
   const queryClient = useQueryClient();
 
-  const { data: session, error: userError } = useFetchData<Session>(
+  const { data: session } = useFetchData<Session>(
     ["session"],
     getCurrentSession,
     "로그인 정보 조회에 실패했습니다.",

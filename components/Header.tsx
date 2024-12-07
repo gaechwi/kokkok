@@ -61,7 +61,11 @@ export function HeaderWithNotification({ name }: HeaderProps) {
       <View className="h-14 flex-row items-center justify-between px-4">
         {/* 홈의 경우 로고 이미지 사용 */}
         {name === "HOME" ? (
-          <Image source={images.AuthLogo} style={{ width: 70, height: 16 }} />
+          <Image
+            source={images.AuthLogo}
+            style={{ width: 70, height: 16 }}
+            accessibilityLabel="KokKok 로고"
+          />
         ) : (
           <Text className="heading-2">{HEADER_TITLE[name]}</Text>
         )}
