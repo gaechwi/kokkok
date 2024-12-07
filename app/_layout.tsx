@@ -1,18 +1,16 @@
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Session } from "@supabase/supabase-js";
+import { useEffect } from "react";
 
 import "../global.css";
-import { useFonts } from "expo-font";
 import { HeaderWithBack } from "@/components/Header";
-import { supabase } from "@/utils/supabase";
-import { useOnlineManager } from "@/hooks/useOnlineManager";
-import { useAppState } from "@/hooks/useAppState";
-import Toast from "react-native-toast-message";
 import { ToastConfig } from "@/components/ToastConfig";
+import { useAppState } from "@/hooks/useAppState";
+import { useOnlineManager } from "@/hooks/useOnlineManager";
+import { useFonts } from "expo-font";
+import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,8 +19,6 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [session, setSession] = useState<Session | null>(null);
-
   const [loaded, error] = useFonts({
     "Pretendard-Black": require("../assets/fonts/Pretendard-Black.otf"),
     "Pretendard-Bold": require("../assets/fonts/Pretendard-Bold.otf"),
@@ -45,17 +41,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
-
-  // TODO - 세션 체크
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
 
   if (!loaded && !error) return null;
 
