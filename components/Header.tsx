@@ -118,7 +118,12 @@ export function HeaderWithUserPage({ name }: { name: string }) {
         >
           <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
-        <Text className="heading-2">{name}님의 페이지</Text>
+        <View className="flex-1 flex-row items-center">
+          <Text className="heading-2" numberOfLines={1} ellipsizeMode="tail">
+            {name}
+          </Text>
+          <Text className="heading-2 shrink-0">님의 페이지</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
