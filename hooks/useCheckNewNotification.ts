@@ -6,7 +6,7 @@ import useFetchData from "./useFetchData";
 const useCheckNewNotification = () => {
   // 로그인한 유저 정보 조회 (마지막 알람 확인 시간)
   const { data: user } = useFetchData<User>(
-    ["user"],
+    ["user", "notificationCheckedAt"],
     getCurrentUser,
     "로그인 정보 조회에 실패했습니다.",
   );

@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { Platform, Text, View } from "react-native";
 
 import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
+import useSubscribeNotification from "@/hooks/useSubscribeNotification";
 import colors from "@constants/colors";
 import icons from "@constants/icons";
 
@@ -49,6 +50,8 @@ const TabIcon = ({
 );
 
 export default function TabsLayout() {
+  useSubscribeNotification();
+
   return (
     <>
       <Tabs
