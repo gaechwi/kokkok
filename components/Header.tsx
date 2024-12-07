@@ -4,10 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
-import useFetchData from "@/hooks/useFetchData";
-import type { User } from "@/types/User.interface";
-import { getCurrentUser, getLatestNotification } from "@/utils/supabase";
-import { useEffect, useState } from "react";
+import useCheckNewNotification from "@/hooks/useCheckNewNotification";
 
 const HEADER_TITLE = {
   LOGIN: "로그인",
@@ -39,19 +36,6 @@ export function Header({ name }: HeaderProps) {
   );
 }
 
-export function HeaderTypo() {
-  return (
-    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
-      <View className="h-14 flex-row items-center justify-between px-4">
-        <Image source={images.AuthLogo} style={{ width: 70, height: 16 }} />
-        <TouchableOpacity onPress={() => router.push("/notification")}>
-          <icons.BellIcon width={24} height={24} />
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
 export function HeaderWithBack({ name }: HeaderProps) {
   return (
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
@@ -70,46 +54,27 @@ export function HeaderWithBack({ name }: HeaderProps) {
 }
 
 export function HeaderWithNotification({ name }: HeaderProps) {
-  const { data: user } = useFetchData<User>(
-    ["user"],
-    getCurrentUser,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
-  const { data: lastNotificationTime } = useFetchData<string>(
-    ["lastNotification"],
-    () => getLatestNotification(user?.id || ""),
-    "마지막 알림 정보 조회에 실패했습니다.",
-    !!user,
-  );
-
-  const [hasNewNotification, setHasNewNotification] = useState(false);
-  useEffect(() => {
-    if (!lastNotificationTime) return;
-    if (!user?.notificationCheckedAt) {
-      setHasNewNotification(true);
-      return;
-    }
-
-    if (
-      Date.parse(lastNotificationTime) > Date.parse(user.notificationCheckedAt)
-    ) {
-      setHasNewNotification(true);
-    } else {
-      setHasNewNotification(false);
-    }
-  }, [lastNotificationTime, user]);
+  const hasNewNotification = useCheckNewNotification();
 
   return (
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
       <View className="h-14 flex-row items-center justify-between px-4">
-        <Text className="heading-2">{HEADER_TITLE[name]}</Text>
+        {/* 홈의 경우 로고 이미지 사용 */}
+        {name === "HOME" ? (
+          <Image source={images.AuthLogo} style={{ width: 70, height: 16 }} />
+        ) : (
+          <Text className="heading-2">{HEADER_TITLE[name]}</Text>
+        )}
+
         <View className="flex-row gap-2">
+          {/* 마이페이지에서만 설정 버튼 추가 */}
           {name === "MY_PAGE" && (
             <TouchableOpacity onPress={() => router.push("/setting")}>
               <icons.SettingIcon width={24} height={24} />
             </TouchableOpacity>
           )}
+
+          {/* 새 알람 여부에 따른 아이콘 렌더링 */}
           <TouchableOpacity onPress={() => router.push("/notification")}>
             {hasNewNotification ? (
               <icons.BellWithDotIcon width={24} height={24} />

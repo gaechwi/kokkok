@@ -2,11 +2,7 @@ import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Platform, Text, View } from "react-native";
 
-import {
-  HeaderTypo,
-  HeaderWithBack,
-  HeaderWithNotification,
-} from "@/components/Header";
+import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
 import colors from "@constants/colors";
 import icons from "@constants/icons";
 
@@ -76,7 +72,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            header: () => <HeaderTypo />,
+            header: () => <HeaderWithNotification name="HOME" />,
             title: "Home",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}
