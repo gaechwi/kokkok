@@ -218,7 +218,7 @@ export default function PostItem({
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`avatar-${index}`}
-                    source={{ uri: avatar }}
+                    source={avatar ? { uri: avatar } : imgs.AvaTarDefault}
                     resizeMode="cover"
                     className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
                     style={{
@@ -255,10 +255,11 @@ export default function PostItem({
                         >
                           <View className="flex-1 flex-row items-center gap-2">
                             <Image
-                              source={{
-                                uri:
-                                  item.author?.avatarUrl || imgs.AvaTarDefault,
-                              }}
+                              source={
+                                item.author?.avatarUrl
+                                  ? { uri: item.author?.avatarUrl }
+                                  : imgs.AvaTarDefault
+                              }
                               resizeMode="cover"
                               className="size-10 rounded-full"
                             />

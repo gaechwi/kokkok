@@ -196,7 +196,11 @@ export default function CommentsSection({
         className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
       >
         <Image
-          source={{ uri: user.data?.avatarUrl || images.AvaTarDefault }}
+          source={
+            user.data?.avatarUrl
+              ? { uri: user.data.avatarUrl }
+              : images.AvaTarDefault
+          }
           resizeMode="cover"
           className="size-12 rounded-full"
         />

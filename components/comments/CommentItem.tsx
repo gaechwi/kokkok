@@ -167,7 +167,11 @@ export default function CommentItem({
         >
           <View className="flex-1 flex-row items-center gap-2 ">
             <Image
-              source={{ uri: author?.avatarUrl || images.AvaTarDefault }}
+              source={
+                author?.avatarUrl
+                  ? { uri: author.avatarUrl }
+                  : images.AvaTarDefault
+              }
               resizeMode="cover"
               className="size-12 rounded-full"
             />
@@ -247,10 +251,11 @@ export default function CommentItem({
                       >
                         <View className="flex-1 flex-row items-center gap-2">
                           <Image
-                            source={{
-                              uri:
-                                item.author?.avatarUrl || images.AvaTarDefault,
-                            }}
+                            source={
+                              item.author?.avatarUrl
+                                ? { uri: item.author.avatarUrl }
+                                : images.AvaTarDefault
+                            }
                             resizeMode="cover"
                             className="size-10 rounded-full"
                           />
