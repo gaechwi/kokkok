@@ -1,18 +1,19 @@
-import { Alert, Text, TouchableOpacity, View } from "react-native";
-import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import useCalendar from "@/hooks/useCalendar";
 
-import { addRestDay, deleteRestDay, getRestDays } from "@/utils/supabase";
 import { formatDate } from "@/utils/formatDate";
+import { addRestDay, deleteRestDay, getRestDays } from "@/utils/supabase";
 
-import CustomModal from "./Modal";
 import CalendarNavigator from "./CalendarNavigator";
+import CustomModal from "./Modal";
 import RestDayCalendar from "./RestDayCalendar";
 
-import icons from "@/constants/icons";
 import colors from "@/constants/colors";
+import icons from "@/constants/icons";
+import { showToast } from "./ToastConfig";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 
@@ -61,8 +62,8 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
       queryClient.invalidateQueries({ queryKey: ["histories"] });
       queryClient.invalidateQueries({ queryKey: ["restDates"] });
     },
-    onError: (error) => {
-      Alert.alert("쉬는 날 설정 실패: ", error.message);
+    onError: () => {
+      showToast("fail", "쉬는 날 설정에 실패했어요!");
     },
   });
 
