@@ -1,15 +1,11 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, Platform } from "react-native";
+import { Platform, Text, View } from "react-native";
 
-import icons from "@constants/icons";
+import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
+import useSubscribeNotification from "@/hooks/useSubscribeNotification";
 import colors from "@constants/colors";
-import {
-  HeaderWithBack,
-  HeaderWithNotification,
-  HeaderWithSettingAndNotification,
-  HeaderTypo,
-} from "@/components/Header";
+import icons from "@constants/icons";
 
 /* constants */
 
@@ -54,6 +50,8 @@ const TabIcon = ({
 );
 
 export default function TabsLayout() {
+  useSubscribeNotification();
+
   return (
     <>
       <Tabs
@@ -77,7 +75,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            header: () => <HeaderTypo />,
+            header: () => <HeaderWithNotification name="HOME" />,
             title: "Home",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}
@@ -115,7 +113,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="mypage"
           options={{
-            header: () => <HeaderWithSettingAndNotification name="MY_PAGE" />,
+            header: () => <HeaderWithNotification name="MY_PAGE" />,
             title: "MyPage",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="MY_PAGE" />,
           }}

@@ -1,24 +1,79 @@
-import { ScrollView, View } from "react-native";
+import type { Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
+import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { NOTIFICATIONS } from "@/mockData/notification";
 import { NotificationItem } from "@/components/NotificationItem";
+import useFetchData from "@/hooks/useFetchData";
+
+import ErrorScreen from "@/components/ErrorScreen";
+import LoadingScreen from "@/components/LoadingScreen";
+import type { NotificationResponse } from "@/types/Notification.interface";
+import {
+  getCurrentSession,
+  getNotifications,
+  updateNotificationCheck,
+} from "@/utils/supabase";
 
 export default function Notification() {
+  const queryClient = useQueryClient();
+
+  const { data: session, error: userError } = useFetchData<Session>(
+    ["session"],
+    getCurrentSession,
+    "로그인 정보 조회에 실패했습니다.",
+  );
+
+  const {
+    data: notifications,
+    isLoading,
+    error: notificationError,
+  } = useFetchData<NotificationResponse[]>(
+    ["notification"],
+    () => getNotifications(session?.user.id || ""),
+    "알림 조회에 실패했습니다.",
+    !!session?.user,
+  );
+
+  useFocusEffect(() => {
+    if (!session) return;
+
+    // 알림 페이지 방문 시간 업데이트하고, 그에 따라 유저 알림 정보 다시 가져오도록 함
+    updateNotificationCheck(session.user.id);
+    queryClient.invalidateQueries({
+      queryKey: ["user", "notificationCheckedAt"],
+    });
+  });
+
+  if (userError || notificationError) {
+    const errorMessage =
+      userError?.message ||
+      notificationError?.message ||
+      "알림 조회에 실패했습니다.";
+    return <ErrorScreen errorMessage={errorMessage} />;
+  }
+
+  if (isLoading || !notifications) {
+    return <LoadingScreen />;
+  }
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <ScrollView className="grow w-full">
-        {/* 상단에 패딩을 주면 일부 모바일에서 패딩만큼 끝이 잘려보여서 높이 조절을 위해 추가 */}
-        <View className="h-2" />
-
-        {[1, 2, 3, 4].map((n) =>
-          NOTIFICATIONS.map((notification) => (
-            <NotificationItem key={n + notification.id} {...notification} />
-          )),
+      <FlatList
+        data={notifications}
+        keyExtractor={(notification) => String(notification.id)}
+        renderItem={({ item: notification }) => (
+          <NotificationItem {...notification} />
         )}
-
-        <View className="h-[34px]" />
-      </ScrollView>
+        className="px-8 grow w-full"
+        contentContainerStyle={notifications.length ? {} : { flex: 1 }}
+        ListHeaderComponent={<View className="h-2" />}
+        ListFooterComponent={<View className="h-[34px]" />}
+        ListEmptyComponent={
+          <ErrorScreen errorMessage="새로운 알림이 없습니다." />
+        }
+      />
     </SafeAreaView>
   );
 }

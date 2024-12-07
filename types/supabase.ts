@@ -1,3 +1,5 @@
+import type { NotificationData } from "./Notification.interface";
+
 export type Json =
   | string
   | number
@@ -157,14 +159,14 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "friendRequset_from_fkey";
+            foreignKeyName: "friendRequest_from_fkey";
             columns: ["from"];
             isOneToOne: false;
             referencedRelation: "user";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "friendRequset_to_fkey";
+            foreignKeyName: "friendRequest_to_fkey";
             columns: ["to"];
             isOneToOne: false;
             referencedRelation: "user";
@@ -175,7 +177,7 @@ export type Database = {
       notification: {
         Row: {
           createdAt: string;
-          data: Json | null;
+          data: NotificationData | null;
           from: string;
           id: number;
           to: string;
@@ -183,7 +185,7 @@ export type Database = {
         };
         Insert: {
           createdAt?: string;
-          data?: Json | null;
+          data?: NotificationData | null;
           from: string;
           id?: number;
           to: string;
@@ -191,7 +193,7 @@ export type Database = {
         };
         Update: {
           createdAt?: string;
-          data?: Json | null;
+          data?: NotificationData | null;
           from?: string;
           id?: number;
           to?: string;

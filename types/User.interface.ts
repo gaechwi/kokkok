@@ -8,11 +8,12 @@ export type StatusType = (typeof FIT_STATUS)[keyof typeof FIT_STATUS];
 export interface UserProfile {
   id: string;
   username: string;
-  avatarUrl: string;
-  description: string;
+  avatarUrl: string | null;
+  description: string | null;
   status?: StatusType;
 }
 
 export interface User extends UserProfile {
   email: string;
+  notificationCheckedAt: string;
 }
