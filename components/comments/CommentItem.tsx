@@ -24,8 +24,8 @@ import {
   View,
 } from "react-native";
 import { FlatList } from "react-native";
-import Toast from "react-native-toast-message";
 import CustomModal, { DeleteModal } from "../Modal";
+import { showToast } from "../ToastConfig";
 
 interface CommentItemProps {
   id: number;
@@ -124,20 +124,14 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
-      Toast.show({
-        type: "success",
-        text1: "댓글이 삭제되었어요.",
-      });
+      showToast("success", "댓글이 삭제되었어요.");
 
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Toast.show({
-        type: "error",
-        text1: "댓글 삭제에 실패했어요.",
-      });
+      showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
 

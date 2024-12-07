@@ -27,7 +27,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
+import { showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -230,10 +230,7 @@ export default function CommentsSection({
         replyCommentId: replyTo?.replyCommentId,
       }),
     onSuccess: () => {
-      Toast.show({
-        type: "success",
-        text1: "댓글이 작성되었어요!",
-      });
+      showToast("success", "댓글이 작성되었어요!");
 
       setComment("");
       setReplyTo(null);
@@ -243,10 +240,7 @@ export default function CommentsSection({
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Toast.show({
-        type: "error",
-        text1: "댓글 작성에 실패했어요!",
-      });
+      showToast("fail", "댓글 작성에 실패했어요!");
     },
   });
 

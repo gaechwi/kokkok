@@ -8,9 +8,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
 import Carousel from "./Carousel";
 import CustomModal, { DeleteModal } from "./Modal";
+import { showToast } from "./ToastConfig";
 interface PostItemProps {
   author: {
     id: string;
@@ -82,17 +82,11 @@ export default function PostItem({
   const deletePostMutation = useMutation({
     mutationFn: () => deletePost(postId),
     onSuccess: () => {
+      showToast("success", "게시글이 삭제되었어요.");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      Toast.show({
-        type: "success",
-        text1: "게시글이 삭제되었어요.",
-      });
     },
     onError: () => {
-      Toast.show({
-        type: "error",
-        text1: "게시글 삭제에 실패했어요.",
-      });
+      showToast("fail", "게시글 삭제에 실패했어요.");
     },
   });
 

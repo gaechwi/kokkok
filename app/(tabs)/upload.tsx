@@ -1,4 +1,5 @@
 import CustomModal, { OneButtonModal } from "@/components/Modal";
+import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
@@ -17,7 +18,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 export default function Upload() {
   const params = useLocalSearchParams<{ postId?: string }>();
@@ -74,10 +74,7 @@ export default function Upload() {
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      Toast.show({
-        type: "success",
-        text1: "글이 작성되었어요!",
-      });
+      showToast("success", "글이 작성되었어요!");
       router.back();
     },
     onError: () => {
@@ -94,16 +91,14 @@ export default function Upload() {
       return updatePost({ postId, contents, images, prevImages });
     },
     onSuccess: () => {
+      showToast("success", "글이 수정되었어요!");
+
       setImages([]);
       setPrevImages([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      Toast.show({
-        type: "success",
-        text1: "글이 수정되었어요!",
-      });
       router.back();
     },
     onError: () => {
@@ -134,10 +129,8 @@ export default function Upload() {
 
     const totalImages = images.length + prevImages.length;
     if (totalImages >= 5) {
-      Toast.show({
-        type: "error",
-        text1: "이미지는 5개까지 선택가능해요",
-      });
+      showToast("fail", "이미지는 5개까지 선택가능해요");
+
       return;
     }
 
@@ -172,10 +165,7 @@ export default function Upload() {
 
     const totalImages = images.length + prevImages.length;
     if (totalImages >= 5) {
-      Toast.show({
-        type: "error",
-        text1: "이미지는 5개까지 선택가능해요",
-      });
+      showToast("fail", "이미지는 5개까지 선택가능해요");
       return;
     }
     // 카메라 권한 요청
