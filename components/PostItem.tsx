@@ -85,13 +85,6 @@ export default function PostItem({
     isLikedModalVisible,
   );
 
-  // console.log(
-  //   "likedAuthorData",
-  //   likedAuthorData,
-  //   "isLikedModalVisible",
-  //   isLikedModalVisible,
-  // );
-
   const { calculateMaxChars, truncateText } = useTruncateText();
 
   const toggleModal = () => setIsModalVisible((prev) => !prev);
@@ -127,7 +120,11 @@ export default function PostItem({
       <View className="grow bg-white ">
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
-          <TouchableOpacity onPress={() => router.push(`/user/${author.id}`)}>
+          <TouchableOpacity
+            onPress={() => {
+              router.push(`/user/${author.id}`);
+            }}
+          >
             <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
@@ -142,7 +139,7 @@ export default function PostItem({
           </TouchableOpacity>
 
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleModal}>
+            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
               <icons.MeatballIcon
                 width={24}
                 height={24}
@@ -151,13 +148,13 @@ export default function PostItem({
 
               <CustomModal
                 visible={isModalVisible}
-                onClose={toggleModal}
+                onClose={() => setIsModalVisible(false)}
                 position="bottom"
               >
                 <View className="items-center">
                   <TouchableOpacity
                     onPress={() => {
-                      toggleModal();
+                      setIsModalVisible(true);
                       router.push(`/upload?postId=${postId}`);
                     }}
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
@@ -166,8 +163,8 @@ export default function PostItem({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      toggleDeleteModal();
-                      toggleModal();
+                      setIsDeleteModalVisible(true);
+                      setIsModalVisible(false);
                     }}
                     className="h-[82px] w-full items-center justify-center"
                   >

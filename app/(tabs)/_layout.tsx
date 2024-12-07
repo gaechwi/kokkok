@@ -1,15 +1,15 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, Platform } from "react-native";
+import { Platform, Text, View } from "react-native";
 
-import icons from "@constants/icons";
-import colors from "@constants/colors";
 import {
+  HeaderTypo,
   HeaderWithBack,
   HeaderWithNotification,
   HeaderWithSettingAndNotification,
-  HeaderTypo,
 } from "@/components/Header";
+import colors from "@constants/colors";
+import icons from "@constants/icons";
 
 /* constants */
 

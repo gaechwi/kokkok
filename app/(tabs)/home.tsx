@@ -1,7 +1,7 @@
 import CommentsSection from "@/components/comments/CommentsSection";
 import { getPosts } from "@/utils/supabase";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -26,13 +26,6 @@ export default function Home() {
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
     setSelectedPostId(null);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      setIsCommentsVisible(false);
-      setSelectedPostId(null);
-    };
   }, []);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =

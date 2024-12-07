@@ -7,17 +7,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Animated,
   Dimensions,
-  Easing,
   FlatList,
   Image,
-  Keyboard,
-  PanResponder,
   Platform,
   RefreshControl,
   Text,
@@ -29,12 +25,6 @@ import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
 const { height: deviceHeight } = Dimensions.get("window");
-const COMMENT_INPUT_HEIGHT = Platform.OS === "ios" ? 112 : 74;
-const MIN_HEIGHT = 0;
-const CLOSE_THRESHOLD = (deviceHeight - COMMENT_INPUT_HEIGHT) * 0.1;
-const MAX_HEIGHT = deviceHeight - COMMENT_INPUT_HEIGHT;
-const DEFAULT_HEIGHT = MAX_HEIGHT * 0.8;
-const DURATION = 400;
 
 interface CommentsSectionProps {
   visible: boolean;
@@ -48,17 +38,12 @@ export default function CommentsSection({
   postId,
 }: CommentsSectionProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const slideAnim = useMemo(() => new Animated.Value(0), []);
-  const heightRef = useRef(DEFAULT_HEIGHT);
-  const heightAnim = useMemo(() => new Animated.Value(heightRef.current), []);
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
     username: string;
     parentId: number;
     replyCommentId: number;
   } | null>(null);
-  const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
-  const animationRef = useRef<Animated.CompositeAnimation>();
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
 
@@ -84,120 +69,8 @@ export default function CommentsSection({
 
   // 댓글 더 불러오기
   const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // 키보드 이벤트 처리
-  useEffect(() => {
-    // 애니메이션 정리
-    const cleanupAnimations = () => animationRef.current?.stop();
-
-    // 키보드가 나타나면 높이 조절
-    const keyboardDidShowListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => {
-        animationRef.current?.stop();
-        heightRef.current = MAX_HEIGHT - e.endCoordinates.height;
-        setMaxHeight(heightRef.current);
-        heightAnim.setValue(heightRef.current);
-      },
-    );
-
-    // 키보드가 사라지면 높이 조절
-    const keyboardDidHideListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        animationRef.current?.stop();
-
-        heightRef.current = MAX_HEIGHT;
-        setMaxHeight(heightRef.current);
-        animationRef.current = Animated.timing(heightAnim, {
-          toValue: MAX_HEIGHT,
-          duration: 300,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: false,
-        });
-        animationRef.current.start();
-      },
-    );
-    return () => {
-      cleanupAnimations();
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, [heightAnim]);
-
-  // 댓글 목록 열기 애니메이션
-  useEffect(() => {
-    if (visible) {
-      Animated.timing(slideAnim, {
-        toValue: visible ? 1 : 0,
-        duration: DURATION,
-        easing: Easing.bezier(0.16, 1, 0.3, 1),
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible, slideAnim]);
-
-  // 댓글 목록 닫기
-  const handleClose = useCallback(() => {
-    Animated.timing(heightAnim, {
-      toValue: 0,
-      duration: DURATION,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-      useNativeDriver: false,
-    }).start(() => {
-      onClose();
-      setTimeout(() => {
-        heightRef.current = DEFAULT_HEIGHT;
-        heightAnim.setValue(heightRef.current);
-      }, 100);
-    });
-  }, [onClose, heightAnim]);
-
-  const clampHeight = useCallback(
-    (height: number) => Math.min(maxHeight, Math.max(MIN_HEIGHT, height)),
-    [maxHeight],
-  );
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-
-        onPanResponderMove: (_, gestureState) => {
-          // 최소 높이보다 작거나 최대 높이보다 크지 않도록 함
-          const newHeight = clampHeight(heightRef.current - gestureState.dy);
-          heightAnim.setValue(newHeight);
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          const finalHeight = heightRef.current - gestureState.dy;
-
-          if (finalHeight < CLOSE_THRESHOLD) {
-            // 최소 높이보다 작으면 닫힘
-            handleClose();
-          } else if (finalHeight > maxHeight) {
-            // 최대 높이보다 크면 최대 높이로 돌아감
-            heightRef.current = maxHeight;
-            Animated.spring(heightAnim, {
-              toValue: maxHeight,
-              useNativeDriver: false,
-            }).start();
-          } else {
-            // 최소 높이보다 작으면 최소 높이로 돌아감
-            const clampedHeight = clampHeight(finalHeight);
-            heightRef.current = clampedHeight;
-            Animated.spring(heightAnim, {
-              toValue: clampedHeight,
-              useNativeDriver: false,
-            }).start();
-          }
-        },
-      }),
-    [heightAnim, maxHeight, clampHeight, handleClose],
-  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -218,6 +91,7 @@ export default function CommentsSection({
     inputRef.current?.focus();
   };
 
+  // 댓글 작성
   const writeCommentMutation = useMutation({
     mutationFn: () =>
       createComment({
@@ -242,8 +116,8 @@ export default function CommentsSection({
     <MotionModal
       visible={visible}
       onClose={onClose}
-      maxHeight={deviceHeight - COMMENT_INPUT_HEIGHT}
-      initialHeight={(deviceHeight - COMMENT_INPUT_HEIGHT) * 0.8}
+      maxHeight={deviceHeight}
+      initialHeight={deviceHeight * 0.8}
     >
       <View className="flex-1">
         <View className="relative z-10 w-full pb-2.5">

@@ -26,7 +26,7 @@ export default function MotionModal({
   children,
   maxHeight,
   initialHeight,
-  closeThreshold = 0.1, // 닫기 높이 비율
+  closeThreshold = 0.1,
 }: CustomModalProps) {
   const slideAnim = useMemo(() => new Animated.Value(0), []);
   const heightAnim = useMemo(
@@ -34,10 +34,11 @@ export default function MotionModal({
     [initialHeight],
   );
   const heightRef = useRef(initialHeight);
+  const maxHeightRef = useRef(maxHeight);
 
   const clampHeight = useCallback(
-    (height: number) => Math.min(maxHeight, Math.max(0, height)),
-    [maxHeight],
+    (height: number) => Math.min(maxHeightRef.current, Math.max(0, height)),
+    [],
   );
 
   const handleClose = useCallback(() => {
@@ -64,14 +65,14 @@ export default function MotionModal({
         },
         onPanResponderRelease: (_, gestureState) => {
           const finalHeight = heightRef.current - gestureState.dy;
-          const closeHeight = maxHeight * closeThreshold;
+          const closeHeight = maxHeightRef.current * closeThreshold;
 
           if (finalHeight < closeHeight) {
             handleClose();
-          } else if (finalHeight > maxHeight) {
-            heightRef.current = maxHeight;
+          } else if (finalHeight > maxHeightRef.current) {
+            heightRef.current = maxHeightRef.current;
             Animated.spring(heightAnim, {
-              toValue: maxHeight,
+              toValue: maxHeightRef.current,
               useNativeDriver: false,
             }).start();
           } else {
@@ -84,14 +85,15 @@ export default function MotionModal({
           }
         },
       }),
-    [heightAnim, maxHeight, closeThreshold, clampHeight, handleClose],
+    [heightAnim, closeThreshold, clampHeight, handleClose],
   );
 
   // 키보드 이벤트 처리
   useEffect(() => {
     const handleKeyboardShow = (e: { endCoordinates: { height: number } }) => {
       const keyboardHeight = e.endCoordinates.height;
-      const newHeight = maxHeight - keyboardHeight;
+      const newHeight = maxHeightRef.current - keyboardHeight;
+      maxHeightRef.current = newHeight;
       heightRef.current = clampHeight(newHeight);
       Animated.timing(heightAnim, {
         toValue: heightRef.current,
@@ -101,7 +103,8 @@ export default function MotionModal({
     };
 
     const handleKeyboardHide = () => {
-      heightRef.current = clampHeight(maxHeight);
+      maxHeightRef.current = maxHeight;
+      heightRef.current = clampHeight(maxHeightRef.current);
       Animated.timing(heightAnim, {
         toValue: heightRef.current,
         duration: 300,
@@ -127,7 +130,7 @@ export default function MotionModal({
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [heightAnim, maxHeight, clampHeight]);
+  }, [heightAnim, clampHeight, maxHeight]);
 
   useEffect(() => {
     if (visible) {
@@ -166,7 +169,7 @@ export default function MotionModal({
                   {
                     translateY: slideAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [maxHeight, 0],
+                      outputRange: [maxHeightRef.current, 0],
                     }),
                   },
                 ],
