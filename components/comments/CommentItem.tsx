@@ -18,13 +18,13 @@ import {
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { FlatList } from "react-native";
+import Toast from "react-native-toast-message";
 import CustomModal, { DeleteModal } from "../Modal";
 
 interface CommentItemProps {
@@ -124,12 +124,20 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
+      Toast.show({
+        type: "success",
+        text1: "댓글이 삭제되었어요.",
+      });
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");
+      Toast.show({
+        type: "error",
+        text1: "댓글 삭제에 실패했어요.",
+      });
     },
   });
 

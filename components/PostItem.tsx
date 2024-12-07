@@ -7,14 +7,8 @@ import { deletePost, getCurrentUser, toggleLikePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  Alert,
-  Image,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 import Carousel from "./Carousel";
 import CustomModal, { DeleteModal } from "./Modal";
 interface PostItemProps {
@@ -89,10 +83,16 @@ export default function PostItem({
     mutationFn: () => deletePost(postId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      Alert.alert("삭제 성공", "게시물이 성공적으로 삭제되었습니다.");
+      Toast.show({
+        type: "success",
+        text1: "게시글이 삭제되었어요.",
+      });
     },
     onError: () => {
-      Alert.alert("삭제 실패", "게시물 삭제에 실패했습니다.");
+      Toast.show({
+        type: "error",
+        text1: "게시글 삭제에 실패했어요.",
+      });
     },
   });
 
