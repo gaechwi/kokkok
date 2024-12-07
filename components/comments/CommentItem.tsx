@@ -5,6 +5,7 @@ import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
   deleteComment,
+  getCommentLikes,
   getCurrentUser,
   getReplies,
   toggleLikeComment,
@@ -15,10 +16,12 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
   Text,
   TouchableOpacity,
@@ -26,6 +29,9 @@ import {
 } from "react-native";
 import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
+import MotionModal from "../MotionModal";
+
+const { height: deviceHeight } = Dimensions.get("window");
 
 interface CommentItemProps {
   id: number;
@@ -79,11 +85,19 @@ export default function CommentItem({
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
   const queryClient = useQueryClient();
   const [isMoreReply, setIsMoreReply] = useState(false);
-
   const { truncateText, calculateMaxChars } = useTruncateText();
+  const router = useRouter();
+
+  const { data: likedAuthor } = useFetchData(
+    ["likedAuthor", id],
+    () => getCommentLikes(id),
+    "좋아요 한 사용자 정보를 불러오는데 실패했습니다.",
+    isLikedModalVisible,
+  );
 
   // 답글 가져오기
   const {
@@ -206,7 +220,10 @@ export default function CommentItem({
 
           {/* likeAvatar */}
           {likedAvatars && likedAvatars.length > 0 && (
-            <TouchableOpacity className="ml-[2px] flex-row items-center">
+            <TouchableOpacity
+              onPress={() => setIsLikedModalVisible(true)}
+              className="ml-[2px] flex-row items-center"
+            >
               {likedAvatars.slice(0, 2).map((avatar, index) => (
                 <Image
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
@@ -226,6 +243,50 @@ export default function CommentItem({
                   외 여러명
                 </Text>
               )}
+
+              <MotionModal
+                visible={isLikedModalVisible}
+                onClose={() => setIsLikedModalVisible(false)}
+                maxHeight={deviceHeight}
+                initialHeight={deviceHeight * 0.6}
+              >
+                <View className="flex-1 ">
+                  <FlatList
+                    className="w-full px-4 py-2 "
+                    data={likedAuthor}
+                    keyExtractor={(item, index) => `liked-author-${index}`}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setIsLikedModalVisible(false);
+                          router.push(`/user/${user.data?.id}`);
+                        }}
+                        className="w-full flex-row items-center gap-2 px-2 py-4"
+                      >
+                        <View className="flex-1 flex-row items-center gap-2">
+                          <Image
+                            source={{
+                              uri: item.author?.avatarUrl || undefined,
+                            }}
+                            resizeMode="cover"
+                            className="size-10 rounded-full"
+                          />
+                          <Text className="font-psemibold text-[16px] text-gray-90 leading-[150%]">
+                            {item.author?.username}
+                          </Text>
+                        </View>
+
+                        <Icons.HeartIcon
+                          width={24}
+                          height={24}
+                          color={colors.secondary.red}
+                          fill={colors.secondary.red}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </MotionModal>
             </TouchableOpacity>
           )}
 

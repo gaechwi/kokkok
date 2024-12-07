@@ -17,17 +17,14 @@ import {
   FlatList,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
-  Modal,
   PanResponder,
   Platform,
   RefreshControl,
   Text,
   type TextInput,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import MotionModal from "../MotionModal";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -242,171 +239,112 @@ export default function CommentsSection({
   });
 
   return (
-    <Modal
-      transparent
+    <MotionModal
       visible={visible}
-      animationType="fade"
-      onRequestClose={handleClose}
+      onClose={onClose}
+      maxHeight={deviceHeight - COMMENT_INPUT_HEIGHT}
+      initialHeight={(deviceHeight - COMMENT_INPUT_HEIGHT) * 0.8}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+      <View className="flex-1">
+        <View className="relative z-10 w-full pb-2.5">
+          <LinearGradient
+            colors={["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 0)"]}
+            start={[0, 0]}
+            end={[0, 1]}
+            style={{
+              position: "absolute",
+              top: 36,
+              left: 0,
+              right: 0,
+              height: 10,
+              zIndex: 1,
+            }}
+          />
+          <Text className="heading-2 text-center">댓글</Text>
+        </View>
+
+        <FlatList
+          className="flex-1 px-8"
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
+          ListHeaderComponent={<View className="h-4" />}
+          data={data?.pages.flatMap((page) => page.comments) || []}
+          keyExtractor={(item) => item.id.toString()}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            if (!isFetchingNextPage) loadMore();
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          getItemLayout={(data, index) => ({
+            length: 100,
+            offset: 100 * index,
+            index,
+          })}
+          renderItem={({ item }) => (
+            <CommentItem
+              key={item.id}
+              id={Number(item.id)}
+              postId={postId}
+              contents={item.contents}
+              createdAt={item.createdAt}
+              likedAvatars={item.likedAvatars}
+              liked={item.isLiked}
+              author={item.userData}
+              totalReplies={item.totalReplies - 1}
+              topReply={item.topReply}
+              onReply={handleReply}
+            />
+          )}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator size="large" className="py-4" />
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          ListEmptyComponent={
+            <View className="flex-1 items-center justify-center">
+              <Text className="title-3 text-gray-70">아직 댓글이 없어요.</Text>
+            </View>
+          }
+        />
+      </View>
+
+      {/* comment input */}
+      <View
+        className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
       >
-        <TouchableWithoutFeedback
-          onPressOut={(e) => {
-            if (e.target === e.currentTarget) {
-              Keyboard.dismiss();
-              handleClose();
-              e.stopPropagation();
+        <Image
+          source={{ uri: user.data?.avatarUrl || undefined }}
+          resizeMode="cover"
+          className="size-12 rounded-full"
+        />
+
+        <MentionInput
+          ref={inputRef}
+          value={comment}
+          onChangeText={(text) => {
+            setComment(text);
+          }}
+          setReplyTo={setReplyTo}
+          placeholder={
+            replyTo ? `${replyTo.username}님에게 답글` : "댓글을 입력해주세요."
+          }
+          mentionUser={replyTo}
+          onSubmit={() => {
+            if (comment.trim() && !writeCommentMutation.isPending) {
+              writeCommentMutation.mutate();
             }
           }}
-        >
-          <View className="flex-1 justify-end bg-black/50">
-            {/* comment list */}
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    translateY: slideAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [MAX_HEIGHT, 0],
-                    }),
-                  },
-                ],
-              }}
-            >
-              <Animated.View
-                style={{
-                  height: heightAnim,
-                }}
-              >
-                <SafeAreaView
-                  edges={["bottom", "top"]}
-                  className="h-full rounded-t-[20px] border border-gray-20 bg-white"
-                >
-                  <View className="flex-1">
-                    <View
-                      className="w-full items-center py-2.5"
-                      {...panResponder.panHandlers}
-                    >
-                      <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
-                    </View>
-
-                    <View className="relative z-10 w-full pb-2.5">
-                      <LinearGradient
-                        colors={[
-                          "rgba(255, 255, 255, 1)",
-                          "rgba(255, 255, 255, 0)",
-                        ]}
-                        start={[0, 0]}
-                        end={[0, 1]}
-                        style={{
-                          position: "absolute",
-                          top: 36,
-                          left: 0,
-                          right: 0,
-                          height: 10,
-                          zIndex: 1,
-                        }}
-                      />
-                      <Text className="heading-2 text-center">댓글</Text>
-                    </View>
-
-                    <FlatList
-                      className="flex-1 px-8"
-                      maintainVisibleContentPosition={{
-                        minIndexForVisible: 0,
-                      }}
-                      ListHeaderComponent={<View className="h-4" />}
-                      data={data?.pages.flatMap((page) => page.comments) || []}
-                      keyExtractor={(item) => item.id.toString()}
-                      onEndReachedThreshold={0.5}
-                      onEndReached={() => {
-                        if (!isFetchingNextPage) loadMore();
-                      }}
-                      refreshControl={
-                        <RefreshControl
-                          refreshing={refreshing}
-                          onRefresh={onRefresh}
-                        />
-                      }
-                      removeClippedSubviews={false}
-                      maxToRenderPerBatch={10}
-                      windowSize={5}
-                      getItemLayout={(data, index) => ({
-                        length: 100,
-                        offset: 100 * index,
-                        index,
-                      })}
-                      renderItem={({ item }) => (
-                        <CommentItem
-                          key={item.id}
-                          id={Number(item.id)}
-                          postId={postId}
-                          contents={item.contents}
-                          createdAt={item.createdAt}
-                          likedAvatars={item.likedAvatars}
-                          liked={item.isLiked}
-                          author={item.userData}
-                          totalReplies={item.totalReplies - 1}
-                          topReply={item.topReply}
-                          onReply={handleReply}
-                        />
-                      )}
-                      ListFooterComponent={
-                        isFetchingNextPage ? (
-                          <ActivityIndicator size="large" className="py-4" />
-                        ) : null
-                      }
-                      showsVerticalScrollIndicator={false}
-                      showsHorizontalScrollIndicator={false}
-                      ListEmptyComponent={
-                        <View className="flex-1 items-center justify-center">
-                          <Text className="title-3 text-gray-70">
-                            아직 댓글이 없어요.
-                          </Text>
-                        </View>
-                      }
-                    />
-                  </View>
-                </SafeAreaView>
-              </Animated.View>
-            </Animated.View>
-          </View>
-        </TouchableWithoutFeedback>
-
-        {/* comment input */}
-        <View
-          className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
-        >
-          <Image
-            source={{ uri: user.data?.avatarUrl || undefined }}
-            resizeMode="cover"
-            className="size-12 rounded-full"
-          />
-
-          <MentionInput
-            ref={inputRef}
-            value={comment}
-            onChangeText={(text) => {
-              setComment(text);
-            }}
-            setReplyTo={setReplyTo}
-            placeholder={
-              replyTo
-                ? `${replyTo.username}님에게 답글`
-                : "댓글을 입력해주세요."
-            }
-            mentionUser={replyTo}
-            onSubmit={() => {
-              if (comment.trim() && !writeCommentMutation.isPending) {
-                writeCommentMutation.mutate();
-              }
-            }}
-            isPending={writeCommentMutation.isPending}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+          isPending={writeCommentMutation.isPending}
+        />
+      </View>
+    </MotionModal>
   );
 }
