@@ -1,3 +1,5 @@
+import type { NotificationData } from "./Notification.interface";
+
 export type Json =
   | string
   | number
@@ -175,7 +177,7 @@ export type Database = {
       notification: {
         Row: {
           createdAt: string;
-          data: Json | null;
+          data: NotificationData | null;
           from: string;
           id: number;
           to: string;
@@ -183,7 +185,7 @@ export type Database = {
         };
         Insert: {
           createdAt?: string;
-          data?: Json | null;
+          data?: NotificationData | null;
           from: string;
           id?: number;
           to: string;
@@ -191,7 +193,7 @@ export type Database = {
         };
         Update: {
           createdAt?: string;
-          data?: Json | null;
+          data?: NotificationData | null;
           from?: string;
           id?: number;
           to?: string;

@@ -878,14 +878,16 @@ export async function getMyPosts(userId: string) {
 export async function getFriends(userId: string): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
-    .select("to: to (id, username, avatarUrl, description)")
+    .select(
+      "to: user!friendRequset_to_fkey (id, username, avatarUrl, description)",
+    )
     .eq("from", userId)
     .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return data.map(({ to }) => to);
+  return data.map(({ to }) => to as UserProfile);
 }
 
 // 모든 친구의 운동 상태 조회
@@ -917,7 +919,7 @@ export async function getFriendRequests(
     .select(
       `
           id,
-          from: from (id, username, avatarUrl, description),
+          from: user!friendRequset_from_fkey (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
@@ -934,7 +936,7 @@ export async function getFriendRequests(
     data: data.map((request) => ({
       requestId: request.id,
       toUserId: request.to,
-      fromUser: request.from,
+      fromUser: request.from as UserProfile,
     })),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
@@ -955,7 +957,7 @@ export async function createFriendRequest(
 }
 
 // 친구요청 반응 업데이트
-export async function putFriendRequest(requestId: string, isAccepted: boolean) {
+export async function putFriendRequest(requestId: number, isAccepted: boolean) {
   const { error } = await supabase
     .from("friendRequest")
     .update({ isAccepted })
@@ -965,7 +967,7 @@ export async function putFriendRequest(requestId: string, isAccepted: boolean) {
 }
 
 // 친구 요청 삭제
-export async function deleteFriendRequest(requestId: string) {
+export async function deleteFriendRequest(requestId: number) {
   const { error } = await supabase
     .from("friendRequest")
     .delete()
@@ -1086,7 +1088,7 @@ export async function getNotifications(
     .select(
       `
           id,
-          from: from (username, avatarUrl),
+          from: user!notification_from_fkey (id, username, avatarUrl, description),
           type,
           data,
           createdAt
@@ -1099,7 +1101,10 @@ export async function getNotifications(
   if (error) throw error;
   if (!data) throw new Error("알림을 불러올 수 없습니다.");
 
-  return data;
+  return data.map((notification) => ({
+    ...notification,
+    from: notification.from as UserProfile,
+  }));
 }
 
 export async function getLatestNotification(userId: string): Promise<string> {

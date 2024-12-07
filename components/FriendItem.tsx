@@ -1,10 +1,16 @@
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import { Link } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "expo-router";
 import { useEffect } from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
+import { POKE_TIME } from "@/constants/time";
+import useFetchData from "@/hooks/useFetchData";
+import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
+import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
+import type { UserProfile } from "@/types/User.interface";
+import { formatTime } from "@/utils/formatTime";
 import {
   createFriendRequest,
   createNotification,
@@ -13,30 +19,17 @@ import {
   getLatestStabForFriend,
   putFriendRequest,
 } from "@/utils/supabase";
-import type { UserProfile } from "@/types/User.interface";
 import type { Session } from "@supabase/supabase-js";
-import useFetchData from "@/hooks/useFetchData";
 import { showToast } from "./ToastConfig";
-import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
-import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
-import { formatTime } from "@/utils/formatTime";
-import { POKE_TIME } from "@/constants/time";
 
 /* Interfaces */
-
-interface FriendProfileProps {
-  id: string;
-  username: string;
-  avatarUrl: string;
-  description: string;
-}
 
 interface FriendItemProps {
   friend: UserProfile;
 }
 
 interface FriendRequestProps {
-  requestId: string;
+  requestId: number;
   toUserId: string;
   fromUser: UserProfile;
   isLoading: boolean;
@@ -49,12 +42,11 @@ const FriendProfile = ({
   username,
   avatarUrl,
   description,
-}: FriendProfileProps) => (
+}: UserProfile) => (
   <Link href={`/user/${id}`}>
     <View className="flex-row gap-2">
       <Image
-        source={{ uri: avatarUrl }}
-        defaultSource={images.AvaTarDefault}
+        source={avatarUrl ? { uri: avatarUrl } : images.AvaTarDefault}
         style={{ width: 48, height: 48, borderRadius: 9999 }}
       />
 

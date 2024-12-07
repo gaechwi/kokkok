@@ -1,7 +1,7 @@
 import type { StatusType, UserProfile } from "./User.interface";
 
 export interface RequestInfo {
-  requestId: string;
+  requestId: number;
   toUserId: string;
   fromUser: UserProfile;
 }

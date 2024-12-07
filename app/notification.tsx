@@ -4,18 +4,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationItem } from "@/components/NotificationItem";
 import useFetchData from "@/hooks/useFetchData";
 import type { Session } from "@supabase/supabase-js";
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
+import ErrorScreen from "@/components/ErrorScreen";
+import LoadingScreen from "@/components/LoadingScreen";
+import type { NotificationResponse } from "@/types/Notification.interface";
 import {
   getCurrentSession,
   getNotifications,
   supabase,
   updateNotificationCheck,
 } from "@/utils/supabase";
-import ErrorScreen from "@/components/ErrorScreen";
-import LoadingScreen from "@/components/LoadingScreen";
-import type { NotificationResponse } from "@/types/Notification.interface";
 
 export default function Notification() {
   const queryClient = useQueryClient();
@@ -83,7 +83,7 @@ export default function Notification() {
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
         data={notifications}
-        keyExtractor={(notification) => notification.id}
+        keyExtractor={(notification) => String(notification.id)}
         renderItem={({ item: notification }) => (
           <NotificationItem {...notification} />
         )}

@@ -1,11 +1,11 @@
 import { Image, Text, View } from "react-native";
 
 import images from "@/constants/images";
-import { diffDate } from "@/utils/formatDate";
 import {
   NOTIFICATION_TYPE,
   type NotificationResponse,
 } from "@/types/Notification.interface";
+import { diffDate } from "@/utils/formatDate";
 
 const COMMENT_MAX_LENGTH = 18;
 const shorten_comment = (comment: string) =>
@@ -42,8 +42,9 @@ export function NotificationItem({
     <View className="w-full py-4 border-b border-gray-25 flex-row justify-between items-center">
       <View className="flex-row gap-4">
         <Image
-          source={{ uri: from.avatarUrl }}
-          defaultSource={images.AvaTarDefault}
+          source={
+            from.avatarUrl ? { uri: from.avatarUrl } : images.AvaTarDefault
+          }
           style={{ width: 48, height: 48, borderRadius: 9999 }}
         />
 
