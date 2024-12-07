@@ -1,13 +1,15 @@
-import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
-import type { Notification } from "@/types/Notification.interface";
-import type { UserProfile } from "@/types/User.interface";
-import type { Database } from "@/types/supabase";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
+
+import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
+import type { NotificationResponse } from "@/types/Notification.interface";
+import type { Notification } from "@/types/Notification.interface";
+import type { User, UserProfile } from "@/types/User.interface";
+import type { Database } from "@/types/supabase";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import { formatDate } from "./formatDate";
 
 const supabaseUrl = SUPABASE_URL;
@@ -216,9 +218,9 @@ export async function getCurrentSession(): Promise<Session> {
 }
 
 // 로그인한 유저 정보 조회
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<User> {
   const { user } = await getCurrentSession();
-  return await getUser(user.id);
+  return (await getUser(user.id)) as User;
 }
 
 // 프로필 업데이트
@@ -247,6 +249,15 @@ export async function updateMyProfile(
       error instanceof Error ? error.message : "프로필 업데이트에 실패했습니다";
     throw new Error(errorMessage);
   }
+}
+
+export async function updateNotificationCheck(userId: string) {
+  const { error } = await supabase
+    .from("user")
+    .update({ notificationCheckedAt: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) throw error;
 }
 
 // 유저 데이터베이스 삭제
@@ -867,14 +878,16 @@ export async function getMyPosts(userId: string) {
 export async function getFriends(userId: string): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
-    .select("to: to (id, username, avatarUrl, description)")
+    .select(
+      "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
+    )
     .eq("from", userId)
     .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return data.map(({ to }) => to);
+  return data.map(({ to }) => to as UserProfile);
 }
 
 // 모든 친구의 운동 상태 조회
@@ -906,7 +919,7 @@ export async function getFriendRequests(
     .select(
       `
           id,
-          from: from (id, username, avatarUrl, description),
+          from: user!friendRequest_from_fkey (id, username, avatarUrl, description),
           to
         `,
       { count: "exact" },
@@ -923,7 +936,7 @@ export async function getFriendRequests(
     data: data.map((request) => ({
       requestId: request.id,
       toUserId: request.to,
-      fromUser: request.from,
+      fromUser: request.from as UserProfile,
     })),
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
@@ -944,7 +957,7 @@ export async function createFriendRequest(
 }
 
 // 친구요청 반응 업데이트
-export async function putFriendRequest(requestId: string, isAccepted: boolean) {
+export async function putFriendRequest(requestId: number, isAccepted: boolean) {
   const { error } = await supabase
     .from("friendRequest")
     .update({ isAccepted })
@@ -954,7 +967,7 @@ export async function putFriendRequest(requestId: string, isAccepted: boolean) {
 }
 
 // 친구 요청 삭제
-export async function deleteFriendRequest(requestId: string) {
+export async function deleteFriendRequest(requestId: number) {
   const { error } = await supabase
     .from("friendRequest")
     .delete()
@@ -1066,6 +1079,48 @@ export async function deleteRestDay(
 //                 notification
 //
 // ============================================
+
+export async function getNotifications(
+  userId: string,
+): Promise<NotificationResponse[]> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select(
+      `
+          id,
+          from: user!notification_from_fkey (id, username, avatarUrl, description),
+          type,
+          data,
+          createdAt
+        `,
+    )
+    .eq("to", userId)
+    .order("createdAt", { ascending: false })
+    .limit(30);
+
+  if (error) throw error;
+  if (!data) throw new Error("알림을 불러올 수 없습니다.");
+
+  return data.map((notification) => ({
+    ...notification,
+    from: notification.from as UserProfile,
+  }));
+}
+
+export async function getLatestNotification(userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("notification")
+    .select("createdAt")
+    .eq("to", userId)
+    .order("createdAt", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("최근 알림을 불러올 수 없습니다.");
+
+  return data.createdAt;
+}
 
 // 가장 최근 특정 친구를 찌른 기록 조회
 export async function getLatestStabForFriend(

@@ -1,4 +1,5 @@
 import BellIcon from "@/assets/icons/bell.svg";
+import BellWithDotIcon from "@/assets/icons/bell-with-dot.svg";
 import CalendarIcon from "@/assets/icons/calendar.svg";
 import ChevronLeftIcon from "@/assets/icons/chevron-left.svg";
 import ChevronRightIcon from "@/assets/icons/chevron-right.svg";
@@ -27,6 +28,7 @@ import KebabMenuIcon from "@/assets/icons/kebab.svg";
 
 export default {
   BellIcon,
+  BellWithDotIcon,
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
