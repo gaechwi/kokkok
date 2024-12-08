@@ -34,7 +34,7 @@ export default function Request() {
     isLoading,
     error,
   } = useFetchData<RequestResponse>(
-    ["friendRequests", OFFSET],
+    ["friendRequests", session?.user.id, OFFSET],
     () => getFriendRequests(session?.user.id || ""),
     "친구 요청 조회에 실패했습니다.",
     !!session?.user,

@@ -13,7 +13,7 @@ const useCheckNewNotification = () => {
 
   // 유저가 받은 마지막 알람 정보 조회
   const { data: lastNotificationTime } = useFetchData<string>(
-    ["lastNotification"],
+    ["lastNotification", user?.id],
     () => getLatestNotification(user?.id || ""),
     "마지막 알림 정보 조회에 실패했습니다.",
     !!user,
