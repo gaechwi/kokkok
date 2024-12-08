@@ -261,15 +261,56 @@ export async function updateNotificationCheck(userId: string) {
   if (error) throw error;
 }
 
-// 유저 데이터베이스 삭제
+// 유저 데이터베이스 삭제 (Edge function)
 export async function deleteUser(userId: string) {
   try {
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-    if (deleteError) throw deleteError;
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+
+    // 연관된 데이터 삭제 (순서 중요)
+    // 1. 알림 삭제
+    await supabase
+      .from("notification")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 2. 친구 요청 삭제
+    await supabase
+      .from("friendRequest")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 3. 댓글 좋아요 삭제
+    await supabase.from("commentLike").delete().eq("userId", userId);
+
+    // 4. 댓글 삭제
+    await supabase.from("comment").delete().eq("userId", userId);
+
+    // 5. 게시글 좋아요 삭제
+    await supabase.from("postLike").delete().eq("userId", userId);
+
+    // 6. 게시글 삭제
+    await supabase.from("post").delete().eq("userId", userId);
+
+    // 7. 운동 기록 삭제
+    await supabase.from("workoutHistory").delete().eq("userId", userId);
+
+    // 8. 유저 데이터 삭제
     await supabase.from("user").delete().eq("id", userId);
+
+    return await response.json();
   } catch (error) {
-    console.log(error);
     const errorMessage =
       error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
     throw new Error(errorMessage);
