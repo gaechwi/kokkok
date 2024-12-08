@@ -4,6 +4,7 @@ import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
+  createNotification,
   deleteComment,
   getCurrentUser,
   getReplies,
@@ -113,11 +114,24 @@ export default function CommentItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
+      if (isLiked && user.data?.id !== author?.id) {
+        sendNotificationMutation.mutate();
+      }
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: () => {
       setIsLiked((prev) => !prev);
     },
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: () =>
+      createNotification({
+        from: user.data?.id || "",
+        to: author?.id || "",
+        type: "commentLike",
+      }),
   });
 
   const user = useFetchData(
