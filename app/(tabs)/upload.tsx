@@ -2,7 +2,12 @@ import CustomModal, { OneButtonModal } from "@/components/Modal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
-import { createPost, getPost, updatePost } from "@/utils/supabase";
+import {
+  addWorkoutHistory,
+  createPost,
+  getPost,
+  updatePost,
+} from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -81,6 +86,25 @@ export default function Upload() {
     },
   });
 
+  const addWorkoutHistoryMutation = useMutation({
+    mutationFn: () => {
+      const today = new Date();
+      const koreaTime = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(today);
+
+      return addWorkoutHistory({
+        date: koreaTime,
+      });
+    },
+    onError: () => {
+      setIsInfoModalVisible(true);
+    },
+  });
+
   const editPostMutation = useMutation({
     mutationFn: () => {
       if (!postId) {
@@ -97,7 +121,7 @@ export default function Upload() {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       Alert.alert("수정 성공", "게시물이 성공적으로 수정되었습니다.");
-      router.back();
+      router.push("/home");
     },
     onError: () => {
       Alert.alert("수정 실패", "게시물 수정에 실패했습니다.");
@@ -110,12 +134,20 @@ export default function Upload() {
       return;
     }
 
-    if (uploadPostMutation.isPending || editPostMutation.isPending) return;
+    if (uploadPostMutation.isPending || addWorkoutHistoryMutation.isPending)
+      return;
 
-    if (postId) {
-      editPostMutation.mutate();
-    } else {
-      uploadPostMutation.mutate();
+    try {
+      if (postId) {
+        await editPostMutation.mutateAsync();
+      } else {
+        await Promise.all([
+          uploadPostMutation.mutateAsync(),
+          addWorkoutHistoryMutation.mutateAsync(),
+        ]);
+      }
+    } catch (error) {
+      setIsInfoModalVisible(true);
     }
   };
 
