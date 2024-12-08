@@ -920,19 +920,23 @@ export async function getMyPosts(userId: string) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(userId: string): Promise<UserProfile[]> {
+export async function getFriends(
+  userId: string,
+  keyword = "",
+): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
     .select(
       "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
     )
     .eq("from", userId)
+    .like("to.username", `%${keyword}%`)
     .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return data.map(({ to }) => to as UserProfile);
+  return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
 }
 
 // 모든 친구의 운동 상태 조회
