@@ -1,10 +1,6 @@
 import CommentsSection from "@/components/comments/CommentsSection";
 import { getPosts } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,7 +15,6 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
-  const queryClient = useQueryClient();
 
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
