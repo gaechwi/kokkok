@@ -234,15 +234,23 @@ export async function updateMyProfile(
   },
 ) {
   try {
-    const avatarUrl = profile.avatarUrl
-      ? await uploadImage(profile.avatarUrl)
-      : DEFAULT_AVATAR_URL;
+    let newAvatarUrl: string | undefined;
+
+    if (profile.avatarUrl === null || profile.avatarUrl === undefined) {
+      // 이미지 삭제 시 기본 이미지 URL 사용
+      newAvatarUrl = DEFAULT_AVATAR_URL;
+    } else if (profile.avatarUrl && !profile.avatarUrl.uri.startsWith("http")) {
+      // 새로운 이미지이고 로컬 파일인 경우에만 업로드
+      newAvatarUrl = await uploadImage(profile.avatarUrl);
+    }
+
+    const { avatarUrl, ...profileData } = profile;
 
     await supabase
       .from("user")
       .update({
-        ...profile,
-        avatarUrl: avatarUrl,
+        ...profileData,
+        ...(newAvatarUrl && { avatarUrl: newAvatarUrl }),
       })
       .eq("id", userId);
   } catch (error) {
