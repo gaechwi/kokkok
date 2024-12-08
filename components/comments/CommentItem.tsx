@@ -4,6 +4,7 @@ import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
+  createNotification,
   deleteComment,
   getCurrentUser,
   getReplies,
@@ -42,7 +43,12 @@ interface CommentItemProps {
   parentsCommentId?: number;
   replyCommentId?: number;
   totalReplies?: number;
-  onReply: (username: string, parentId: number, replyCommentId: number) => void;
+  onReply: (
+    userId: string,
+    username: string,
+    parentId: number,
+    replyCommentId: number,
+  ) => void;
   isReply?: boolean;
 }
 
@@ -108,11 +114,24 @@ export default function CommentItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
+      if (isLiked && user.data?.id !== author?.id) {
+        sendNotificationMutation.mutate();
+      }
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: () => {
       setIsLiked((prev) => !prev);
     },
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: () =>
+      createNotification({
+        from: user.data?.id || "",
+        to: author?.id || "",
+        type: "commentLike",
+      }),
   });
 
   const user = useFetchData(
@@ -262,7 +281,7 @@ export default function CommentItem({
       <TouchableOpacity
         className={isReply ? "pb-[5px]" : "pb-[13px]"}
         onPress={() => {
-          onReply(author.username, parentsCommentId ?? id, id);
+          onReply(author.id, author.username, parentsCommentId ?? id, id);
         }}
       >
         <Text className="caption-2 text-gray-60">답글달기</Text>
