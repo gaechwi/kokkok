@@ -1,10 +1,6 @@
 import CommentsSection from "@/components/comments/CommentsSection";
 import { getPosts } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,18 +15,25 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
-  const queryClient = useQueryClient();
 
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
-  const onOpenComments = useCallback((postId: number) => {
-    setSelectedPostId(postId);
-    setIsCommentsVisible(true);
-  }, []);
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+
+  const onOpenComments = useCallback(
+    ({ postId, authorId }: { postId: number; authorId: string }) => {
+      setSelectedPostId(postId);
+      setSelectedAuthorId(authorId);
+
+      setIsCommentsVisible(true);
+    },
+    [],
+  );
 
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
     setSelectedPostId(null);
+    setSelectedAuthorId(null);
   }, []);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
@@ -87,7 +90,12 @@ export default function Home() {
               content: post.commentData?.contents ?? "",
             }}
             postId={Number(post.id)}
-            onCommentsPress={() => onOpenComments(Number(post.id))}
+            onCommentsPress={() =>
+              onOpenComments({
+                postId: Number(post.id),
+                authorId: post.userData?.id ?? "",
+              })
+            }
           />
         )}
         onEndReachedThreshold={0.5}
@@ -104,15 +112,18 @@ export default function Home() {
         showsHorizontalScrollIndicator={false}
       />
 
-      {isCommentsVisible && selectedPostId !== null && (
-        <View className="flex-1">
-          <CommentsSection
-            visible={isCommentsVisible}
-            onClose={onCloseComments}
-            postId={selectedPostId}
-          />
-        </View>
-      )}
+      {isCommentsVisible &&
+        selectedPostId !== null &&
+        selectedAuthorId !== null && (
+          <View className="flex-1">
+            <CommentsSection
+              visible={isCommentsVisible}
+              onClose={onCloseComments}
+              postId={selectedPostId}
+              authorId={selectedAuthorId}
+            />
+          </View>
+        )}
     </SafeAreaView>
   );
 }

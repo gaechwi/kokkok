@@ -6,6 +6,7 @@ interface MentionInputProps {
   onChangeText: (text: string) => void;
   setReplyTo: (
     replyTo: {
+      userId: string;
       username: string;
       parentId: number;
       replyCommentId: number;

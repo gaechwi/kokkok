@@ -42,7 +42,12 @@ interface CommentItemProps {
   parentsCommentId?: number;
   replyCommentId?: number;
   totalReplies?: number;
-  onReply: (username: string, parentId: number, replyCommentId: number) => void;
+  onReply: (
+    userId: string,
+    username: string,
+    parentId: number,
+    replyCommentId: number,
+  ) => void;
   isReply?: boolean;
 }
 
@@ -262,7 +267,7 @@ export default function CommentItem({
       <TouchableOpacity
         className={isReply ? "pb-[5px]" : "pb-[13px]"}
         onPress={() => {
-          onReply(author.username, parentsCommentId ?? id, id);
+          onReply(author.id, author.username, parentsCommentId ?? id, id);
         }}
       >
         <Text className="caption-2 text-gray-60">답글달기</Text>
