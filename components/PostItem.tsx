@@ -1,14 +1,23 @@
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
+import Icons from "@/constants/icons";
+import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
-import { deletePost, getCurrentUser, toggleLikePost } from "@/utils/supabase";
+import {
+  deletePost,
+  getCurrentUser,
+  getPostLikes,
+  toggleLikePost,
+} from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Dimensions,
+  FlatList,
   Image,
   Pressable,
   Text,
@@ -17,6 +26,7 @@ import {
 } from "react-native";
 import Carousel from "./Carousel";
 import CustomModal, { DeleteModal } from "./Modal";
+import MotionModal from "./MotionModal";
 interface PostItemProps {
   author: {
     id: string;
@@ -40,6 +50,8 @@ interface PostItemProps {
   onCommentsPress: (num: number) => void;
 }
 
+const { height: deviceHeight } = Dimensions.get("window");
+
 export default function PostItem({
   author,
   images,
@@ -57,6 +69,7 @@ export default function PostItem({
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -64,6 +77,13 @@ export default function PostItem({
     ["user"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
+  );
+
+  const { data: likedAuthorData } = useFetchData(
+    ["likedAuthorAvatar", postId],
+    () => getPostLikes(postId),
+    "좋아요한 사용자 정보를 불러오는데 실패했습니다.",
+    isLikedModalVisible,
   );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
@@ -101,7 +121,12 @@ export default function PostItem({
       <View className="grow bg-white ">
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (user.data?.id === author.id) router.push("/mypage");
+              else router.push(`/user/${author.id}`);
+            }}
+          >
             <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
@@ -116,7 +141,7 @@ export default function PostItem({
           </TouchableOpacity>
 
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleModal}>
+            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
               <icons.MeatballIcon
                 width={24}
                 height={24}
@@ -125,13 +150,13 @@ export default function PostItem({
 
               <CustomModal
                 visible={isModalVisible}
-                onClose={toggleModal}
+                onClose={() => setIsModalVisible(false)}
                 position="bottom"
               >
                 <View className="items-center">
                   <TouchableOpacity
                     onPress={() => {
-                      toggleModal();
+                      setIsModalVisible(true);
                       router.push(`/upload?postId=${postId}`);
                     }}
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
@@ -140,8 +165,8 @@ export default function PostItem({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      toggleDeleteModal();
-                      toggleModal();
+                      setIsDeleteModalVisible(true);
+                      setIsModalVisible(false);
                     }}
                     className="h-[82px] w-full items-center justify-center"
                   >
@@ -186,12 +211,15 @@ export default function PostItem({
 
             {/* likeAvatar */}
             {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
-              <TouchableOpacity className="ml-[2px] flex-row items-center">
+              <TouchableOpacity
+                className="ml-[2px] flex-row items-center"
+                onPress={() => setIsLikedModalVisible(true)}
+              >
                 {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`avatar-${index}`}
-                    source={{ uri: avatar }}
+                    source={avatar ? { uri: avatar } : imgs.AvaTarDefault}
                     resizeMode="cover"
                     className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
                     style={{
@@ -206,6 +234,54 @@ export default function PostItem({
                     외 여러명
                   </Text>
                 )}
+
+                <MotionModal
+                  visible={isLikedModalVisible}
+                  onClose={() => setIsLikedModalVisible(false)}
+                  maxHeight={deviceHeight}
+                  initialHeight={deviceHeight * 0.6}
+                >
+                  <View className="flex-1 ">
+                    <FlatList
+                      className="w-full px-4 py-2 "
+                      data={likedAuthorData}
+                      keyExtractor={(item, index) => `liked-author-${index}`}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          onPress={() => {
+                            setIsLikedModalVisible(false);
+                            if (user.data?.id === item.author?.id)
+                              router.push("/mypage");
+                            else router.push(`/user/${user.data?.id}`);
+                          }}
+                          className="w-full flex-row items-center gap-2 px-2 py-4"
+                        >
+                          <View className="flex-1 flex-row items-center gap-2">
+                            <Image
+                              source={
+                                item.author?.avatarUrl
+                                  ? { uri: item.author?.avatarUrl }
+                                  : imgs.AvaTarDefault
+                              }
+                              resizeMode="cover"
+                              className="size-10 rounded-full"
+                            />
+                            <Text className="font-psemibold text-[16px] text-gray-90 leading-[150%]">
+                              {item.author?.username}
+                            </Text>
+                          </View>
+
+                          <Icons.HeartIcon
+                            width={24}
+                            height={24}
+                            color={colors.secondary.red}
+                            fill={colors.secondary.red}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                </MotionModal>
               </TouchableOpacity>
             )}
 
