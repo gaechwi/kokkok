@@ -27,7 +27,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { showToast } from "../ToastConfig";
+import Toast from "react-native-toast-message";
+import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -408,6 +409,7 @@ export default function CommentsSection({
             isPending={writeCommentMutation.isPending}
           />
         </View>
+        <Toast config={ToastConfig} />
       </KeyboardAvoidingView>
     </Modal>
   );
