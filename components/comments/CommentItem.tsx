@@ -161,7 +161,8 @@ export default function CommentItem({
         <TouchableOpacity
           onPress={() => {
             onCommentsClose();
-            router.push(`/user/${author?.id}`);
+            if (author?.id === user.data?.id) router.push("/mypage");
+            else router.push(`/user/${author?.id}`);
           }}
           className="flex-1"
         >
@@ -245,7 +246,9 @@ export default function CommentItem({
                         onPress={() => {
                           setIsLikedModalVisible(false);
                           onCommentsClose();
-                          router.push(`/user/${user.data?.id}`);
+                          if (user.data?.id === item.author?.id)
+                            router.push("/mypage");
+                          else router.push(`/user/${user.data?.id}`);
                         }}
                         className="w-full flex-row items-center gap-2 px-2 py-4"
                       >

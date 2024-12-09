@@ -123,7 +123,8 @@ export default function PostItem({
         <View className="flex-row items-center justify-between bg-white px-4">
           <TouchableOpacity
             onPress={() => {
-              router.push(`/user/${author.id}`);
+              if (user.data?.id === author.id) router.push("/mypage");
+              else router.push(`/user/${author.id}`);
             }}
           >
             <View className="h-14 flex-row items-center gap-2">
@@ -249,7 +250,9 @@ export default function PostItem({
                         <TouchableOpacity
                           onPress={() => {
                             setIsLikedModalVisible(false);
-                            router.push(`/user/${user.data?.id}`);
+                            if (user.data?.id === item.author?.id)
+                              router.push("/mypage");
+                            else router.push(`/user/${user.data?.id}`);
                           }}
                           className="w-full flex-row items-center gap-2 px-2 py-4"
                         >
