@@ -101,7 +101,7 @@ export default function PostItem({
       <View className="grow bg-white ">
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
-          <TouchableOpacity onPress={() => router.push(`/user/${author.id}`)}>
+          <TouchableOpacity>
             <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
