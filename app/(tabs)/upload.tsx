@@ -29,6 +29,13 @@ export default function Upload() {
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const queryClient = useQueryClient();
 
+  const post = useFetchData(
+    ["post", postId],
+    () => (postId ? getPost(postId) : Promise.resolve(null)),
+    "게시글을 불러오는 도중 에러가 발생했습니다.",
+    postId !== undefined,
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (postId) {
@@ -42,14 +49,7 @@ export default function Upload() {
           }
         });
       }
-    }, [postId]),
-  );
-
-  const post = useFetchData(
-    ["post", postId],
-    () => (postId ? getPost(postId) : Promise.resolve(null)),
-    "게시글을 불러오는 도중 에러가 발생했습니다.",
-    postId !== undefined,
+    }, [postId, post.refetch]),
   );
 
   useEffect(() => {

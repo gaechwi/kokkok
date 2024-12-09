@@ -75,7 +75,7 @@ export default function Home() {
             }}
             images={post.images}
             liked={post.isLikedByUser}
-            likedAuthorAvatar={post.likedAvatars ?? []}
+            likedAuthorAvatars={post.likedAvatars ?? []}
             contents={post.contents}
             createdAt={post.createdAt}
             commentsCount={post.totalComments ?? 0}

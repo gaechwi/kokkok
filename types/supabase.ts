@@ -261,6 +261,41 @@ export type Database = {
           },
         ];
       };
+      pushToken: {
+        Row: {
+          createdAt: string;
+          deviceId: string;
+          grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
+          id: number;
+          pushToken: string;
+          userId: string;
+        };
+        Insert: {
+          createdAt?: string;
+          deviceId: string;
+          grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
+          id?: number;
+          pushToken: string;
+          userId: string;
+        };
+        Update: {
+          createdAt?: string;
+          deviceId?: string;
+          grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
+          id?: number;
+          pushToken?: string;
+          userId?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pushToken_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user: {
         Row: {
           avatarUrl: string | null;
@@ -357,12 +392,41 @@ export type Database = {
             avatarUrl: string | null;
           };
           likes: number;
-          parentsCommentId: number | null;
-          replyCommentId: number | null;
           isLiked: boolean;
           likedAvatars: string[];
+          parentsCommentId: number;
           totalReplies: number;
         }[];
+      };
+      get_post_with_details: {
+        Args: {
+          postId: number;
+        };
+        Returns: {
+          id: number;
+          images: string[];
+          contents: string;
+          createdAt: string;
+          userData: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
+          commentData: {
+            id: number;
+            contents: string;
+            createdAt: string;
+            userId: string;
+            author: {
+              id: string;
+              username: string;
+              avatarUrl: string | null;
+            };
+          };
+          totalComments: number;
+          likedAvatars: string[];
+          isLikedByUser: boolean;
+        };
       };
       get_posts_with_details: {
         Args: {

@@ -1,20 +1,20 @@
+import CustomModal from "@/components/Modal";
+import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
+import images from "@/constants/images";
+import useFetchData from "@/hooks/useFetchData";
+import { getCurrentUser, getMyPosts } from "@/utils/supabase";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  FlatList,
   Dimensions,
+  FlatList,
+  Image,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getCurrentUser, getMyPosts } from "@/utils/supabase";
-import images from "@/constants/images";
-import Icons from "@/constants/icons";
-import colors from "@/constants/colors";
-import { useState } from "react";
-import CustomModal from "@/components/Modal";
-import { useRouter } from "expo-router";
-import useFetchData from "@/hooks/useFetchData";
 
 export default function MyPage() {
   const router = useRouter();
@@ -88,16 +88,20 @@ export default function MyPage() {
                     style={{ height: size, width: size }}
                     className="bg-gray-5"
                   >
-                    <Image
-                      source={{ uri: item.images[0] }}
-                      resizeMode="cover"
-                      style={{ width: "100%", height: "100%" }}
-                    />
+                    <TouchableOpacity
+                      onPress={() => router.push(`/post/${item.id}`)}
+                    >
+                      <Image
+                        source={{ uri: item.images[0] }}
+                        resizeMode="cover"
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </TouchableOpacity>
                   </View>
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               className="mt-[32px]"
             />
           ) : (
