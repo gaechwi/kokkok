@@ -19,6 +19,7 @@ const HEADER_TITLE = {
   HISTORY: "기록",
   FRIEND: "친구",
   CHANGE_PASSWORD: "비밀번호 변경",
+  POST_DETAIL: "게시물",
 } as const;
 type HeaderType = keyof typeof HEADER_TITLE;
 
@@ -119,6 +120,28 @@ export function HeaderWithUserPage({ name }: { name: string }) {
           <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
         <Text className="heading-2">{name}님의 페이지</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export function HeaderWithBackAndPostPage({ name }: { name: string }) {
+  return (
+    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
+      <View className="h-14 flex-row items-center gap-6 px-4">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          accessibilityLabel="뒤로가기"
+          className=""
+        >
+          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
+        </TouchableOpacity>
+        <View className="flex-1 flex-row items-center">
+          <Text className="heading-2" numberOfLines={1} ellipsizeMode="tail">
+            {name}
+          </Text>
+          <Text className="heading-2 shrink-0">님의 페이지</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
