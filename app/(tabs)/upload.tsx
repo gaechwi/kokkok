@@ -2,6 +2,7 @@ import CustomModal, { OneButtonModal } from "@/components/Modal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { formatDate } from "@/utils/formatDate";
 import {
   addWorkoutHistory,
   createPost,
@@ -88,17 +89,14 @@ export default function Upload() {
 
   const addWorkoutHistoryMutation = useMutation({
     mutationFn: () => {
-      const today = new Date();
-      const koreaTime = new Intl.DateTimeFormat("ko-KR", {
-        timeZone: "Asia/Seoul",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(today);
+      const date = formatDate(new Date());
 
       return addWorkoutHistory({
-        date: koreaTime,
+        date,
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["histories"] });
     },
     onError: () => {
       setIsInfoModalVisible(true);
@@ -141,10 +139,11 @@ export default function Upload() {
       if (postId) {
         await editPostMutation.mutateAsync();
       } else {
-        await Promise.all([
-          uploadPostMutation.mutateAsync(),
-          addWorkoutHistoryMutation.mutateAsync(),
-        ]);
+        // 게시글 인증 먼저 시도
+        await addWorkoutHistoryMutation.mutateAsync();
+
+        // 인증 성공 시 게시글 업로드 시도
+        await uploadPostMutation.mutateAsync();
       }
     } catch (error) {
       setIsInfoModalVisible(true);
