@@ -3,7 +3,12 @@ import icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
-import { deletePost, getCurrentUser, toggleLikePost } from "@/utils/supabase";
+import {
+  createNotification,
+  deletePost,
+  getCurrentUser,
+  toggleLikePost,
+} from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -77,6 +82,11 @@ export default function PostItem({
     onMutate: () => {
       setIsLiked((prev) => !prev);
     },
+    onSuccess: () => {
+      if (isLiked && user.data?.id !== author.id) {
+        sendNotificationMutation.mutate();
+      }
+    },
     onError: () => {
       setIsLiked((prev) => !prev);
     },
@@ -94,6 +104,15 @@ export default function PostItem({
     onError: () => {
       Alert.alert("삭제 실패", "게시물 삭제에 실패했습니다.");
     },
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: () =>
+      createNotification({
+        from: user.data?.id || "",
+        to: author.id,
+        type: "like",
+      }),
   });
 
   return (
