@@ -1,5 +1,6 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
+import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
@@ -15,10 +16,10 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Text,
   TouchableOpacity,
@@ -26,6 +27,7 @@ import {
 } from "react-native";
 import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
+import { showToast } from "../ToastConfig";
 
 interface CommentItemProps {
   id: number;
@@ -44,6 +46,8 @@ interface CommentItemProps {
   totalReplies?: number;
   onReply: (username: string, parentId: number, replyCommentId: number) => void;
   isReply?: boolean;
+  onCommentsClose: () => void;
+  onLikedAuthorPress: (commentId: number) => void;
 }
 
 export default function CommentItem({
@@ -59,6 +63,8 @@ export default function CommentItem({
   totalReplies,
   onReply,
   isReply = false,
+  onCommentsClose,
+  onLikedAuthorPress,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -67,6 +73,7 @@ export default function CommentItem({
   const queryClient = useQueryClient();
 
   const { truncateText, calculateMaxChars } = useTruncateText();
+  const router = useRouter();
 
   // 답글 가져오기
   const {
@@ -116,7 +123,7 @@ export default function CommentItem({
   });
 
   const user = useFetchData(
-    ["user"],
+    ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
@@ -124,28 +131,39 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
+      showToast("success", "댓글이 삭제되었어요.");
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");
+      showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
 
   const diff = diffDate(new Date(createdAt));
-
-  if (!author || !author.avatarUrl) return null;
 
   return (
     <View>
       {/* header */}
       <View className="flex-row items-center justify-between pb-[13px]">
         {/* user info */}
-        <TouchableOpacity className="flex-1">
+        <TouchableOpacity
+          onPress={() => {
+            onCommentsClose();
+            if (author?.id === user.data?.id) router.push("/mypage");
+            else router.push(`/user/${author?.id}`);
+          }}
+          className="flex-1"
+        >
           <View className="flex-1 flex-row items-center gap-2 ">
             <Image
-              source={{ uri: author.avatarUrl }}
+              source={
+                author?.avatarUrl
+                  ? { uri: author.avatarUrl }
+                  : images.AvaTarDefault
+              }
               resizeMode="cover"
               className="size-12 rounded-full"
             />
@@ -155,7 +173,7 @@ export default function CommentItem({
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
-                {author.username}
+                {author?.username}
               </Text>
               <Text className="font-pmedium text-[10px] text-gray-50 leading-[150%]">
                 {diff}
@@ -181,7 +199,10 @@ export default function CommentItem({
 
           {/* likeAvatar */}
           {likedAvatars && likedAvatars.length > 0 && (
-            <TouchableOpacity className="ml-[2px] flex-row items-center">
+            <TouchableOpacity
+              onPress={() => onLikedAuthorPress(id)}
+              className="ml-[2px] flex-row items-center"
+            >
               {likedAvatars.slice(0, 2).map((avatar, index) => (
                 <Image
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
@@ -203,7 +224,7 @@ export default function CommentItem({
           )}
 
           {/* kebab menu */}
-          {user.data?.id === author.id && (
+          {user.data?.id === author?.id && (
             <TouchableOpacity onPress={toggleModal} className="ml-2">
               <Icons.KebabMenuIcon
                 width={24}
@@ -262,7 +283,7 @@ export default function CommentItem({
       <TouchableOpacity
         className={isReply ? "pb-[5px]" : "pb-[13px]"}
         onPress={() => {
-          onReply(author.username, parentsCommentId ?? id, id);
+          onReply(author?.username as string, parentsCommentId ?? id, id);
         }}
       >
         <Text className="caption-2 text-gray-60">답글달기</Text>
@@ -293,6 +314,8 @@ export default function CommentItem({
                   replyCommentId={item.replyCommentId}
                   onReply={onReply}
                   isReply={true}
+                  onCommentsClose={onCommentsClose}
+                  onLikedAuthorPress={onLikedAuthorPress}
                 />
               )}
               ListFooterComponent={() =>

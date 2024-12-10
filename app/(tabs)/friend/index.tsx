@@ -10,6 +10,7 @@ import SearchBar from "@/components/SearchBar";
 import useFetchData from "@/hooks/useFetchData";
 import type { StatusInfo } from "@/types/Friend.interface";
 import type { UserProfile } from "@/types/User.interface";
+import { debounce } from "@/utils/DelayManager";
 import { formatDate } from "@/utils/formatDate";
 import {
   getCurrentSession,
@@ -21,10 +22,15 @@ import type { Session } from "@supabase/supabase-js";
 
 interface FriendLayoutProps {
   friends: UserProfile[];
+  onChangeKeyword: (newKeyword: string) => void;
   emptyComponent: React.ReactElement;
 }
 
-function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
+function FriendLayout({
+  friends,
+  onChangeKeyword,
+  emptyComponent,
+}: FriendLayoutProps) {
   const [keyword, setKeyword] = useState("");
 
   return (
@@ -39,7 +45,10 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
           <SearchBar
             value={keyword}
             customClassName="mt-6 mb-2"
-            handleChangeText={(newKeyword: string) => setKeyword(newKeyword)}
+            handleChangeText={(newKeyword: string) => {
+              setKeyword(newKeyword);
+              onChangeKeyword(newKeyword);
+            }}
           />
         }
         ListEmptyComponent={emptyComponent}
@@ -52,6 +61,7 @@ function FriendLayout({ friends, emptyComponent }: FriendLayoutProps) {
 export default function Friend() {
   const queryClient = useQueryClient();
   const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [keyword, setKeyword] = useState("");
 
   // 로그인한 유저 정보 조회
   const { data: session, error: userError } = useFetchData<Session>(
@@ -66,8 +76,8 @@ export default function Friend() {
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends", session?.user.id],
-    () => getFriends(session?.user.id || ""),
+    ["friends", session?.user.id, keyword],
+    () => getFriends(session?.user.id || "", keyword),
     "친구 조회에 실패했습니다.",
     !!session?.user.id,
   );
@@ -85,6 +95,10 @@ export default function Friend() {
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
   );
+
+  const handleKeywordChange = debounce((newKeyword: string) => {
+    setKeyword(newKeyword);
+  }, 500);
 
   // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
@@ -150,6 +164,7 @@ export default function Friend() {
     return (
       <FriendLayout
         friends={[]}
+        onChangeKeyword={handleKeywordChange}
         emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
       />
     );
@@ -157,13 +172,26 @@ export default function Friend() {
 
   // 로딩 스크린
   if (isFriendLoading || isStatusLoading || !friendsData) {
-    return <FriendLayout friends={[]} emptyComponent={<LoadingScreen />} />;
+    return (
+      <FriendLayout
+        friends={[]}
+        onChangeKeyword={handleKeywordChange}
+        emptyComponent={<LoadingScreen />}
+      />
+    );
   }
 
   return (
     <FriendLayout
       friends={friends}
-      emptyComponent={<ErrorScreen errorMessage="아직 친구가 없습니다." />}
+      onChangeKeyword={handleKeywordChange}
+      emptyComponent={
+        <ErrorScreen
+          errorMessage={
+            keyword ? "친구를 찾지 못했어요" : "아직 친구가 없습니다."
+          }
+        />
+      }
     />
   );
 }

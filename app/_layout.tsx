@@ -5,7 +5,6 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
-
 import "../global.css";
 import { HeaderWithBack } from "@/components/Header";
 import { ToastConfig } from "@/components/ToastConfig";

@@ -48,8 +48,8 @@ export default function MyPage() {
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
-            <View className="flex-row justify-between">
-              <View className="flex-row items-center gap-6">
+            <View className="w-full flex-row justify-between pr-5">
+              <View className="w-full flex-row items-center gap-6">
                 <Image
                   source={
                     currentUser?.avatarUrl
@@ -58,7 +58,13 @@ export default function MyPage() {
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{currentUser?.username}</Text>
+                <Text
+                  className="title-3 flex-1"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {currentUser?.username}
+                </Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
