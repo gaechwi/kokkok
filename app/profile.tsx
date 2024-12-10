@@ -47,7 +47,7 @@ const Profile = () => {
   const router = useRouter();
 
   const handleEditProfile = async () => {
-    if (profileInput.username.length < 3) {
+    if (profileInput.username.trim().length < 3) {
       Alert.alert("닉네임은 3글자 이상이어야 합니다.");
       return;
     }
