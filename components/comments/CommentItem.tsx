@@ -18,7 +18,6 @@ import {
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Text,
   TouchableOpacity,
@@ -26,6 +25,7 @@ import {
 } from "react-native";
 import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
+import { showToast } from "../ToastConfig";
 
 interface CommentItemProps {
   id: number;
@@ -42,21 +42,6 @@ interface CommentItemProps {
   parentsCommentId?: number;
   replyCommentId?: number;
   totalReplies?: number;
-  topReply?: {
-    id: number;
-    contents: string;
-    userId: string;
-    createdAt: string;
-    parentsCommentId: number;
-    replyCommentId: number;
-    user: {
-      id: string;
-      username: string;
-      avatarUrl: string | null;
-    };
-    isLiked: boolean;
-    likedAvatars: string[];
-  } | null;
   onReply: (username: string, parentId: number, replyCommentId: number) => void;
   isReply?: boolean;
 }
@@ -67,12 +52,11 @@ export default function CommentItem({
   contents,
   author,
   liked = false,
-  likedAvatars,
+  likedAvatars = [],
   createdAt,
   parentsCommentId,
   replyCommentId,
   totalReplies,
-  topReply,
   onReply,
   isReply = false,
 }: CommentItemProps) {
@@ -81,7 +65,6 @@ export default function CommentItem({
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
   const queryClient = useQueryClient();
-  const [isMoreReply, setIsMoreReply] = useState(false);
 
   const { truncateText, calculateMaxChars } = useTruncateText();
 
@@ -93,10 +76,11 @@ export default function CommentItem({
     isFetchingNextPage: isReplyFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["replies", id],
-    queryFn: ({ pageParam = 0 }) => getReplies(id, pageParam, 5),
+    queryFn: ({ pageParam = 0 }) =>
+      getReplies(id, pageParam, pageParam === 0 ? 1 : 5),
     getNextPageParam: (lastPage) =>
       lastPage.hasNext ? lastPage.nextPage : undefined,
-    enabled: isMoreReply,
+    enabled: !!totalReplies && totalReplies > 0,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: keepPreviousData,
@@ -105,19 +89,10 @@ export default function CommentItem({
 
   // 답글 더 불러오기
   const loadMoreReply = useCallback(() => {
-    if (!isMoreReply) {
-      setIsMoreReply(true);
-      return;
-    }
     if (replyHasNextPage && !isReplyFetchingNextPage) {
       replyFetchNextPage();
     }
-  }, [
-    replyHasNextPage,
-    isReplyFetchingNextPage,
-    replyFetchNextPage,
-    isMoreReply,
-  ]);
+  }, [replyHasNextPage, isReplyFetchingNextPage, replyFetchNextPage]);
 
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
@@ -141,7 +116,7 @@ export default function CommentItem({
   });
 
   const user = useFetchData(
-    ["user"],
+    ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
@@ -149,18 +124,20 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
+      showToast("success", "댓글이 삭제되었어요.");
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");
+      showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
 
   const diff = diffDate(new Date(createdAt));
 
-  if (!author) return null;
-  if (!author.avatarUrl) return null;
+  if (!author || !author.avatarUrl) return null;
 
   return (
     <View>
@@ -213,11 +190,9 @@ export default function CommentItem({
                   key={`avatar-${index}`}
                   source={{ uri: avatar }}
                   resizeMode="cover"
-                  className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
+                  className={`size-[24px] rounded-full border border-white ${index !== 0 ? "-ml-[9px]" : ""}`}
                   style={{
                     zIndex: 5 - index,
-                    borderWidth: 1,
-                    borderColor: "white",
                   }}
                 />
               ))}
@@ -269,15 +244,12 @@ export default function CommentItem({
           )}
         </View>
       </View>
-
       {/* contents */}
       <View className="flex-1 flex-row flex-wrap pb-[13px]">
         <Text
-          onPress={() => {
-            if (contents.length > calculateMaxChars) {
-              setIsTextMore(!isTextMore);
-            }
-          }}
+          onPress={() =>
+            contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
+          }
           className="title-5 flex-1 text-gray-90"
         >
           {isTextMore ? contents : truncateText(contents)}
@@ -288,7 +260,6 @@ export default function CommentItem({
           )}
         </Text>
       </View>
-
       {/* reply button */}
       <TouchableOpacity
         className={isReply ? "pb-[5px]" : "pb-[13px]"}
@@ -299,33 +270,15 @@ export default function CommentItem({
         <Text className="caption-2 text-gray-60">답글달기</Text>
       </TouchableOpacity>
 
-      {/* top reply */}
-      {topReply && (
+      {/* reply */}
+      {!!totalReplies && totalReplies > 0 && (
         <View className="px-4">
-          <CommentItem
-            id={topReply.id}
-            postId={postId}
-            contents={topReply.contents}
-            author={{
-              id: topReply.user.id,
-              username: topReply.user.username,
-              avatarUrl: topReply.user.avatarUrl,
-            }}
-            liked={topReply.isLiked}
-            likedAvatars={topReply.likedAvatars}
-            createdAt={topReply.createdAt}
-            parentsCommentId={topReply.parentsCommentId}
-            replyCommentId={topReply.replyCommentId}
-            onReply={onReply}
-            isReply={true}
-          />
-
-          {replyData && replyData.pages.length > 0 && (
+          {!!replyData && (
             <FlatList
               className="gap-2"
               data={replyData.pages.flatMap((page) => page.replies)}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <CommentItem
                   id={item.id}
                   postId={postId}
@@ -352,15 +305,14 @@ export default function CommentItem({
             />
           )}
 
-          {totalReplies &&
+          {(totalReplies > 1 || replyHasNextPage) &&
             !!(
               totalReplies -
               (replyData?.pages.reduce(
                 (acc, page) => acc + page.replies.length,
                 0,
               ) ?? 0)
-            ) &&
-            (!isMoreReply || replyHasNextPage) && (
+            ) && (
               <TouchableOpacity
                 onPress={loadMoreReply}
                 className="w-full flex-1 items-center justify-center"
@@ -378,7 +330,6 @@ export default function CommentItem({
             )}
         </View>
       )}
-
       {/* divider */}
       {!isReply && <View className="mt-2 mb-4 h-[1px] w-full bg-gray-20" />}
     </View>
