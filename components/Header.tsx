@@ -129,13 +129,13 @@ export function HeaderWithUsername({
         </TouchableOpacity>
         <View className="w-[285px] flex-row items-center">
           <Text
-            className="title-2 flex-1"
+            className="title-2 flex-shrink"
             numberOfLines={1}
             ellipsizeMode="tail"
           >
             {name}
           </Text>
-          <Text className="title-2 shrink-0">
+          <Text className="title-2 flex-shrink-0">
             {isMyPage ? "님의 페이지" : "님의 게시글"}
           </Text>
         </View>
