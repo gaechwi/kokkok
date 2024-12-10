@@ -7,7 +7,7 @@ import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { getCurrentUser, getPost, getPostLikes } from "@/utils/supabase";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, Image, Text, TouchableOpacity } from "react-native";
 import { Dimensions, View } from "react-native";
@@ -43,6 +43,10 @@ export default function PostDetail() {
     "좋아요한 사용자 정보를 불러오는데 실패했습니다.",
     isLikedModalVisible,
   );
+
+  useFocusEffect(() => {
+    if (!post) router.back();
+  });
 
   const onOpenLikedAuthor = useCallback((postId: number) => {
     setSelectedPostId(postId);
@@ -88,6 +92,7 @@ export default function PostDetail() {
           onAuthorPress={onOpenLikedAuthor}
         />
       </SafeAreaView>
+
       {isCommentsVisible && (
         <View className="flex-1">
           <CommentsSection
@@ -98,56 +103,58 @@ export default function PostDetail() {
         </View>
       )}
 
-      <View className="flex-1 ">
-        <MotionModal
-          visible={isLikedModalVisible}
-          onClose={() => setIsLikedModalVisible(false)}
-          maxHeight={deviceHeight}
-          initialHeight={deviceHeight * 0.6}
-        >
-          <View className="flex-1 ">
-            <FlatList
-              className="w-full px-4 py-2 "
-              data={likedAuthorData}
-              keyExtractor={(item, index) => `liked-author-${index}`}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setIsLikedModalVisible(false);
-                    if (user?.id === item.author?.id) router.push("/mypage");
-                    else router.push(`/user/${item.author?.id}`);
-                  }}
-                  className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
-                >
-                  <Image
-                    source={
-                      item.author?.avatarUrl
-                        ? { uri: item.author?.avatarUrl }
-                        : images.AvaTarDefault
-                    }
-                    resizeMode="cover"
-                    className="size-10 rounded-full"
-                  />
-                  <Text
-                    className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
+      {isLikedModalVisible && (
+        <View className="flex-1 ">
+          <MotionModal
+            visible={isLikedModalVisible}
+            onClose={() => setIsLikedModalVisible(false)}
+            maxHeight={deviceHeight}
+            initialHeight={deviceHeight * 0.6}
+          >
+            <View className="flex-1 ">
+              <FlatList
+                className="w-full px-4 py-2 "
+                data={likedAuthorData}
+                keyExtractor={(item, index) => `liked-author-${index}`}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsLikedModalVisible(false);
+                      if (user?.id === item.author?.id) router.push("/mypage");
+                      else router.push(`/user/${item.author?.id}`);
+                    }}
+                    className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
                   >
-                    {item.author?.username}
-                  </Text>
+                    <Image
+                      source={
+                        item.author?.avatarUrl
+                          ? { uri: item.author?.avatarUrl }
+                          : images.AvaTarDefault
+                      }
+                      resizeMode="cover"
+                      className="size-10 rounded-full"
+                    />
+                    <Text
+                      className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {item.author?.username}
+                    </Text>
 
-                  <Icons.HeartIcon
-                    width={24}
-                    height={24}
-                    color={colors.secondary.red}
-                    fill={colors.secondary.red}
-                  />
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </MotionModal>
-      </View>
+                    <Icons.HeartIcon
+                      width={24}
+                      height={24}
+                      color={colors.secondary.red}
+                      fill={colors.secondary.red}
+                    />
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </MotionModal>
+        </View>
+      )}
     </>
   );
 }
