@@ -1105,7 +1105,6 @@ export async function checkFriendRequest(requestId: string): Promise<boolean> {
   if (error) throw error;
   if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
 
-  console.log(!!data.length);
   return !!data.length;
 }
 
@@ -1121,7 +1120,6 @@ export async function checkFriendRequestWithUserId(
 
   if (error) throw error;
   if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
-  console.log(!!data.length);
 
   return !!data.length;
 }

@@ -85,7 +85,6 @@ const useManageFriend = () => {
           ? await checkFriendRequest(String(requestId))
           : await checkFriendRequestWithUserId(fromUserId, toUserId);
         if (!hasFriendRequest) {
-          console.log("dd");
           throw new NoRequestError(
             "친구 요청이 유효하지 않습니다.",
             fromUserId,
