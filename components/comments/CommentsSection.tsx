@@ -239,22 +239,24 @@ export default function CommentsSection({
                   if (user.data?.id === item.author?.id) router.push("/mypage");
                   else router.push(`/user/${item.author?.id}`);
                 }}
-                className="w-full flex-row items-center gap-2 px-2 py-4"
+                className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
               >
-                <View className="flex-1 flex-row items-center gap-2">
-                  <Image
-                    source={
-                      item.author?.avatarUrl
-                        ? { uri: item.author.avatarUrl }
-                        : images.AvaTarDefault
-                    }
-                    resizeMode="cover"
-                    className="size-10 rounded-full"
-                  />
-                  <Text className="font-psemibold text-[16px] text-gray-90 leading-[150%]">
-                    {item.author?.username}
-                  </Text>
-                </View>
+                <Image
+                  source={
+                    item.author?.avatarUrl
+                      ? { uri: item.author?.avatarUrl }
+                      : images.AvaTarDefault
+                  }
+                  resizeMode="cover"
+                  className="size-10 rounded-full"
+                />
+                <Text
+                  className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {item.author?.username}
+                </Text>
 
                 <Icons.HeartIcon
                   width={24}
