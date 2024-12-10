@@ -117,8 +117,8 @@ const User = () => {
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
-            <View className="flex-row justify-between">
-              <View className="flex-row items-center gap-6">
+            <View className="w-full flex-row justify-between pr-5">
+              <View className="w-full flex-row items-center gap-6">
                 <Image
                   source={
                     user?.avatarUrl
@@ -127,7 +127,13 @@ const User = () => {
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{user?.username}</Text>
+                <Text
+                  className="title-3 flex-1"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {user?.username}
+                </Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
@@ -166,7 +172,7 @@ const User = () => {
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => String(item.id)}
+              keyExtractor={(item) => item.id.toString()}
               className="mt-[32px]"
             />
           ) : (

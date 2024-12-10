@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -46,6 +47,11 @@ const Profile = () => {
   const router = useRouter();
 
   const handleEditProfile = async () => {
+    if (profileInput.username.trim().length < 3) {
+      Alert.alert("닉네임은 3글자 이상이어야 합니다.");
+      return;
+    }
+
     await updateMyProfile(currentUser?.id!, {
       ...profileInput,
       avatarUrl: profileInput.avatarUrl
@@ -120,6 +126,7 @@ const Profile = () => {
                 onChangeText={(text) =>
                   setProfileInput({ ...profileInput, description: text })
                 }
+                textAlignVertical="top"
               />
             </View>
 

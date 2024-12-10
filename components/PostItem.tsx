@@ -1,5 +1,6 @@
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
+import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
@@ -32,6 +33,7 @@ interface PostItemProps {
   } | null;
   postId: number;
   onCommentsPress: (num: number) => void;
+  onAuthorPress: (id: number) => void;
 }
 
 export default function PostItem({
@@ -45,6 +47,7 @@ export default function PostItem({
   comment,
   postId,
   onCommentsPress,
+  onAuthorPress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
@@ -61,8 +64,6 @@ export default function PostItem({
   );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
-
-  const toggleModal = () => setIsModalVisible((prev) => !prev);
 
   const toggleDeleteModal = () => setIsDeleteModalVisible((prev) => !prev);
 
@@ -95,7 +96,12 @@ export default function PostItem({
       <View className="grow bg-white ">
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (user.data?.id === author.id) router.push("/mypage");
+              else router.push(`/user/${author.id}`);
+            }}
+          >
             <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
@@ -110,7 +116,7 @@ export default function PostItem({
           </TouchableOpacity>
 
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleModal}>
+            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
               <icons.MeatballIcon
                 width={24}
                 height={24}
@@ -119,13 +125,13 @@ export default function PostItem({
 
               <CustomModal
                 visible={isModalVisible}
-                onClose={toggleModal}
+                onClose={() => setIsModalVisible(false)}
                 position="bottom"
               >
                 <View className="items-center">
                   <TouchableOpacity
                     onPress={() => {
-                      toggleModal();
+                      setIsModalVisible(true);
                       router.push(`/upload?postId=${postId}`);
                     }}
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
@@ -134,8 +140,8 @@ export default function PostItem({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      toggleDeleteModal();
-                      toggleModal();
+                      setIsDeleteModalVisible(true);
+                      setIsModalVisible(false);
                     }}
                     className="h-[82px] w-full items-center justify-center"
                   >
@@ -180,12 +186,15 @@ export default function PostItem({
 
             {/* likeAvatar */}
             {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
-              <TouchableOpacity className="ml-[2px] flex-row items-center">
+              <TouchableOpacity
+                className="ml-[2px] flex-row items-center"
+                onPress={() => onAuthorPress(postId)}
+              >
                 {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`avatar-${index}`}
-                    source={{ uri: avatar }}
+                    source={avatar ? { uri: avatar } : imgs.AvaTarDefault}
                     resizeMode="cover"
                     className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
                     style={{

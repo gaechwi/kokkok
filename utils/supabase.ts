@@ -477,6 +477,28 @@ export async function getPost(postId: number) {
   }
 }
 
+// 게시글 좋아요 조회
+export async function getPostLikes(postId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("postLike")
+      .select("author:user (id, username, avatarUrl)")
+      .eq("postId", postId)
+      .order("createdAt", { ascending: true });
+
+    if (error) throw error;
+    if (!data) throw new Error("게시글 좋아요를 불러올 수 없습니다.");
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "게시글 좋아요 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // 게시글 좋아요 토글
 export async function toggleLikePost(postId: number) {
   try {
@@ -756,6 +778,28 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
     throw new Error(
       error instanceof Error ? error.message : "답글 조회에 실패했습니다",
     );
+  }
+}
+
+// 댓글 좋아요 조회
+export async function getCommentLikes(commentId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("commentLike")
+      .select("author:user (id, username, avatarUrl)")
+      .eq("commentId", commentId)
+      .order("createdAt", { ascending: true });
+
+    if (error) throw error;
+    if (!data) throw new Error("댓글 좋아요를 불러올 수 없습니다.");
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "댓글 좋아요 조회에 실패했습니다";
+    throw new Error(errorMessage);
   }
 }
 
