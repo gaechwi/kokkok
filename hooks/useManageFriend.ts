@@ -2,14 +2,13 @@ import { showToast } from "@/components/ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 import type { UserProfile } from "@/types/User.interface";
 import {
+  acceptFriendRequest,
   checkFriendRequest,
   checkFriendRequestWithUserId,
   createFriendRequest,
   createNotification,
   deleteFriendRequest,
   deleteFriendRequestWithUserId,
-  putFriendRequest,
-  putFriendRequestWithUserId,
 } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -92,12 +91,7 @@ const useManageFriend = () => {
           );
         }
 
-        await Promise.all([
-          requestId
-            ? putFriendRequest(requestId, true)
-            : putFriendRequestWithUserId(fromUserId, toUserId, true),
-          createFriendRequest(toUserId, fromUserId, true),
-        ]);
+        await acceptFriendRequest(fromUserId, toUserId, requestId);
         return { fromUserId, toUserId };
       },
       onSuccess: ({ fromUserId, toUserId }) => {

@@ -1137,27 +1137,16 @@ export async function createFriendRequest(
   if (error) throw error;
 }
 
-// 친구요청 반응 업데이트
-export async function putFriendRequest(requestId: number, isAccepted: boolean) {
-  const { error } = await supabase
-    .from("friendRequest")
-    .update({ isAccepted })
-    .eq("id", requestId);
-
-  if (error) throw error;
-}
-
-// 친구요청 반응 업데이트
-export async function putFriendRequestWithUserId(
-  from: string,
-  to: string,
-  isAccepted: boolean,
+export async function acceptFriendRequest(
+  fromUserId: string,
+  toUserId: string,
+  requestId: number | null = null,
 ) {
-  const { error } = await supabase
-    .from("friendRequest")
-    .update({ isAccepted })
-    .eq("from", from)
-    .eq("to", to);
+  const { data, error } = await supabase.rpc("accept_friend_request", {
+    from_user_id: fromUserId,
+    request_id: requestId,
+    to_user_id: toUserId,
+  });
 
   if (error) throw error;
 }
