@@ -142,9 +142,9 @@ export function OneButtonModal({
             onPress();
             onClose();
           }}
-          className="mt-5 h-[52px] grow flex-row items-center justify-center rounded-[8px] bg-primary"
+          className="mt-5 h-[52px] w-full grow flex-row items-center justify-center rounded-[8px] bg-primary"
         >
-          <Text className="title-3 text-white">{buttonText}</Text>
+          <Text className="title-3 text-center text-white">{buttonText}</Text>
         </TouchableOpacity>
       </View>
     </CustomModal>
