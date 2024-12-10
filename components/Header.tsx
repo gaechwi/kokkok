@@ -46,7 +46,7 @@ export function HeaderWithBack({ name }: HeaderProps) {
           accessibilityLabel="뒤로가기"
           className="absolute left-4"
         >
-          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
+          <icons.BackIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
         <Text className="heading-2">{HEADER_TITLE[name]}</Text>
       </View>
@@ -125,7 +125,7 @@ export function HeaderWithUsername({
           accessibilityLabel="뒤로가기"
           className=""
         >
-          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
+          <icons.BackIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
         <View className="w-[285px] flex-row items-center">
           <Text
