@@ -76,7 +76,7 @@ export default function Friend() {
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends", keyword],
+    ["friends", session?.user.id, keyword],
     () => getFriends(session?.user.id || "", keyword),
     "친구 조회에 실패했습니다.",
     !!session?.user.id,
@@ -90,7 +90,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus"],
+    ["friendsStatus", session?.user.id],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
