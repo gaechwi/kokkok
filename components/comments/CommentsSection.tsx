@@ -1,6 +1,13 @@
+import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import { createComment, getComments, getCurrentUser } from "@/utils/supabase";
+import {
+  createComment,
+  getCommentLikes,
+  getComments,
+  getCurrentUser,
+} from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -8,6 +15,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +27,7 @@ import {
   RefreshControl,
   Text,
   type TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import MotionModal from "../MotionModal";
@@ -45,8 +54,22 @@ export default function CommentsSection({
     parentId: number;
     replyCommentId: number;
   } | null>(null);
+  const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
+  const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
+
+  const router = useRouter();
+
+  const { data: likedAuthor } = useFetchData(
+    ["likedAuthor", likedAuthorId],
+    () => {
+      if (likedAuthorId) return getCommentLikes(likedAuthorId);
+      return Promise.resolve([]);
+    },
+    "좋아요 한 사용자 정보를 불러오는데 실패했습니다.",
+    isLikedModalVisible,
+  );
 
   // 유저 정보 가져오기
   const user = useFetchData(
@@ -113,6 +136,11 @@ export default function CommentsSection({
     },
   });
 
+  const onLikedAuthorPress = useCallback((commentId: number) => {
+    setLikedAuthorId(commentId);
+    setIsLikedModalVisible(true);
+  }, []);
+
   return (
     <MotionModal
       visible={visible}
@@ -174,6 +202,7 @@ export default function CommentsSection({
               totalReplies={item.totalReplies}
               onReply={handleReply}
               onCommentsClose={onClose}
+              onLikedAuthorPress={onLikedAuthorPress}
             />
           )}
           ListFooterComponent={
@@ -190,6 +219,54 @@ export default function CommentsSection({
           }
         />
       </View>
+
+      <MotionModal
+        visible={isLikedModalVisible}
+        onClose={() => setIsLikedModalVisible(false)}
+        maxHeight={deviceHeight}
+        initialHeight={deviceHeight * 0.6}
+      >
+        <View className="flex-1 ">
+          <FlatList
+            className="w-full px-4 py-2 "
+            data={likedAuthor}
+            keyExtractor={(item, index) => `liked-author-${index}`}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setIsLikedModalVisible(false);
+                  onClose();
+                  if (user.data?.id === item.author?.id) router.push("/mypage");
+                  else router.push(`/user/${item.author?.id}`);
+                }}
+                className="w-full flex-row items-center gap-2 px-2 py-4"
+              >
+                <View className="flex-1 flex-row items-center gap-2">
+                  <Image
+                    source={
+                      item.author?.avatarUrl
+                        ? { uri: item.author.avatarUrl }
+                        : images.AvaTarDefault
+                    }
+                    resizeMode="cover"
+                    className="size-10 rounded-full"
+                  />
+                  <Text className="font-psemibold text-[16px] text-gray-90 leading-[150%]">
+                    {item.author?.username}
+                  </Text>
+                </View>
+
+                <Icons.HeartIcon
+                  width={24}
+                  height={24}
+                  color={colors.secondary.red}
+                  fill={colors.secondary.red}
+                />
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </MotionModal>
 
       {/* comment input */}
       <View
