@@ -61,6 +61,8 @@ export default function CommentsSection({
   } | null>(null);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
+  const [isToast, setIsToast] = useState(false);
+
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
 
@@ -173,7 +175,11 @@ export default function CommentsSection({
   return (
     <MotionModal
       visible={visible}
-      onClose={onClose}
+      onClose={() => {
+        onClose();
+        queryClient.removeQueries({ queryKey: ["comments", postId] });
+        setIsToast(false);
+      }}
       maxHeight={deviceHeight}
       initialHeight={deviceHeight * 0.8}
     >
@@ -200,7 +206,38 @@ export default function CommentsSection({
           maintainVisibleContentPosition={{
             minIndexForVisible: 0,
           }}
-          ListHeaderComponent={<View className="h-4" />}
+          ListHeaderComponent={
+            !data ? (
+              <View className="mt-4">
+                {[...Array(5)].map((_, index) => (
+                  <View
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`skeleton-${index}`}
+                    className="mb-6 animate-pulse gap-2"
+                  >
+                    <View className="h-12 flex-1 flex-row items-center gap-2">
+                      <View className="size-12 rounded-full bg-gray-40" />
+
+                      <View className="h-12 flex-1 justify-center gap-1">
+                        <View className="h-5 w-28 rounded-md bg-gray-40" />
+                        <View className="h-4 w-10 rounded-md bg-gray-40" />
+                      </View>
+
+                      <View className="size-10 rounded-full bg-gray-40" />
+                      <View className="mr-3 h-7 w-2 rounded-lg bg-gray-40" />
+                    </View>
+
+                    <View className="gap-2">
+                      <View className="h-6 w-[80%] rounded-md bg-gray-40" />
+                      <View className="h-3 w-12 rounded-md bg-gray-40" />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="h-4" />
+            )
+          }
           data={data?.pages.flatMap((page) => page.comments) || []}
           keyExtractor={(item) => item.id.toString()}
           onEndReachedThreshold={0.5}
@@ -249,59 +286,62 @@ export default function CommentsSection({
         />
       </View>
 
-      <MotionModal
-        visible={isLikedModalVisible}
-        onClose={() => setIsLikedModalVisible(false)}
-        maxHeight={deviceHeight}
-        initialHeight={deviceHeight * 0.6}
-      >
-        <View className="flex-1 ">
-          <FlatList
-            className="w-full px-4 py-2 "
-            data={likedAuthor}
-            keyExtractor={(item, index) => `liked-author-${index}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setIsLikedModalVisible(false);
-                  onClose();
-                  if (user.data?.id === item.author?.id) router.push("/mypage");
-                  else router.push(`/user/${item.author?.id}`);
-                }}
-                className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
-              >
-                <Image
-                  source={
-                    item.author?.avatarUrl
-                      ? { uri: item.author?.avatarUrl }
-                      : images.AvaTarDefault
-                  }
-                  resizeMode="cover"
-                  className="size-10 rounded-full"
-                />
-                <Text
-                  className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
+      {isLikedModalVisible && (
+        <MotionModal
+          visible={isLikedModalVisible}
+          onClose={() => setIsLikedModalVisible(false)}
+          maxHeight={deviceHeight}
+          initialHeight={deviceHeight * 0.6}
+        >
+          <View className="flex-1 ">
+            <FlatList
+              className="w-full px-4 py-2 "
+              data={likedAuthor}
+              keyExtractor={(item, index) => `liked-author-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsLikedModalVisible(false);
+                    onClose();
+                    if (user.data?.id === item.author?.id)
+                      router.push("/mypage");
+                    else router.push(`/user/${item.author?.id}`);
+                  }}
+                  className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
                 >
-                  {item.author?.username}
-                </Text>
+                  <Image
+                    source={
+                      item.author?.avatarUrl
+                        ? { uri: item.author?.avatarUrl }
+                        : images.AvaTarDefault
+                    }
+                    resizeMode="cover"
+                    className="size-10 rounded-full"
+                  />
+                  <Text
+                    className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.author?.username}
+                  </Text>
 
-                <Icons.HeartIcon
-                  width={24}
-                  height={24}
-                  color={colors.secondary.red}
-                  fill={colors.secondary.red}
-                />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </MotionModal>
+                  <Icons.HeartIcon
+                    width={24}
+                    height={24}
+                    color={colors.secondary.red}
+                    fill={colors.secondary.red}
+                  />
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </MotionModal>
+      )}
 
       {/* comment input */}
       <View
-        className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
+        className={`z-10 h-20 w-full flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
       >
         <Image
           source={
@@ -326,13 +366,14 @@ export default function CommentsSection({
           mentionUser={replyTo}
           onSubmit={() => {
             if (comment.trim() && !writeCommentMutation.isPending) {
+              setIsToast(true);
               writeCommentMutation.mutate();
             }
           }}
           isPending={writeCommentMutation.isPending}
         />
       </View>
-      <Toast config={ToastConfig} />
+      {isToast && <Toast config={ToastConfig} />}
     </MotionModal>
   );
 }
