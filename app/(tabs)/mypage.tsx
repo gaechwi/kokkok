@@ -1,20 +1,20 @@
+import CustomModal from "@/components/Modal";
+import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
+import images from "@/constants/images";
+import useFetchData from "@/hooks/useFetchData";
+import { getCurrentUser, getMyPosts } from "@/utils/supabase";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  FlatList,
   Dimensions,
+  FlatList,
+  Image,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getCurrentUser, getMyPosts } from "@/utils/supabase";
-import images from "@/constants/images";
-import Icons from "@/constants/icons";
-import colors from "@/constants/colors";
-import { useState } from "react";
-import CustomModal from "@/components/Modal";
-import { useRouter } from "expo-router";
-import useFetchData from "@/hooks/useFetchData";
 
 export default function MyPage() {
   const router = useRouter();
@@ -48,8 +48,8 @@ export default function MyPage() {
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
-            <View className="flex-row justify-between">
-              <View className="flex-row items-center gap-6">
+            <View className="w-full flex-row justify-between pr-5">
+              <View className="w-full flex-row items-center gap-6">
                 <Image
                   source={
                     currentUser?.avatarUrl
@@ -58,7 +58,13 @@ export default function MyPage() {
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{currentUser?.username}</Text>
+                <Text
+                  className="title-3 flex-1"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {currentUser?.username}
+                </Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
@@ -97,7 +103,7 @@ export default function MyPage() {
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               className="mt-[32px]"
             />
           ) : (

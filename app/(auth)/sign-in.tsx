@@ -1,24 +1,24 @@
 import {
+  Alert,
+  Image,
   ScrollView,
   Text,
-  View,
-  Image,
   TextInput,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
 
-import images from "@constants/images";
-import icons from "@constants/icons";
-import { useState } from "react";
-import { Link } from "expo-router";
 import { signIn, supabase } from "@/utils/supabase";
-import { useRouter } from "expo-router";
+import icons from "@constants/icons";
+import images from "@constants/images";
+import type { Provider } from "@supabase/supabase-js";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
-import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import type { Provider } from "@supabase/supabase-js";
+import { Link } from "expo-router";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { useState } from "react";
 
 WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri({});
