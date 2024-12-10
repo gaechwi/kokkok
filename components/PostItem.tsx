@@ -1,5 +1,6 @@
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
+import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
@@ -12,16 +13,10 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  Alert,
-  Image,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import Carousel from "./Carousel";
 import CustomModal, { DeleteModal } from "./Modal";
+import { showToast } from "./ToastConfig";
 interface PostItemProps {
   author: {
     id: string;
@@ -43,6 +38,7 @@ interface PostItemProps {
   } | null;
   postId: number;
   onCommentsPress: (num: number) => void;
+  onAuthorPress: (id: number) => void;
 }
 
 export default function PostItem({
@@ -56,6 +52,7 @@ export default function PostItem({
   comment,
   postId,
   onCommentsPress,
+  onAuthorPress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
@@ -66,14 +63,12 @@ export default function PostItem({
   const router = useRouter();
 
   const user = useFetchData(
-    ["user"],
+    ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
-
-  const toggleModal = () => setIsModalVisible((prev) => !prev);
 
   const toggleDeleteModal = () => setIsDeleteModalVisible((prev) => !prev);
 
@@ -98,11 +93,11 @@ export default function PostItem({
   const deletePostMutation = useMutation({
     mutationFn: () => deletePost(postId),
     onSuccess: () => {
+      showToast("success", "게시글이 삭제되었어요.");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      Alert.alert("삭제 성공", "게시물이 성공적으로 삭제되었습니다.");
     },
     onError: () => {
-      Alert.alert("삭제 실패", "게시물 삭제에 실패했습니다.");
+      showToast("fail", "게시글 삭제에 실패했어요.");
     },
   });
 
@@ -120,7 +115,12 @@ export default function PostItem({
       <View className="grow bg-white ">
         {/* header */}
         <View className="flex-row items-center justify-between bg-white px-4">
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (user.data?.id === author.id) router.push("/mypage");
+              else router.push(`/user/${author.id}`);
+            }}
+          >
             <View className="h-14 flex-row items-center gap-2">
               <Image
                 source={{ uri: author.avatar }}
@@ -135,7 +135,7 @@ export default function PostItem({
           </TouchableOpacity>
 
           {user.data?.id === author.id && (
-            <TouchableOpacity onPress={toggleModal}>
+            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
               <icons.MeatballIcon
                 width={24}
                 height={24}
@@ -144,13 +144,13 @@ export default function PostItem({
 
               <CustomModal
                 visible={isModalVisible}
-                onClose={toggleModal}
+                onClose={() => setIsModalVisible(false)}
                 position="bottom"
               >
                 <View className="items-center">
                   <TouchableOpacity
                     onPress={() => {
-                      toggleModal();
+                      setIsModalVisible(true);
                       router.push(`/upload?postId=${postId}`);
                     }}
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
@@ -159,8 +159,8 @@ export default function PostItem({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      toggleDeleteModal();
-                      toggleModal();
+                      setIsDeleteModalVisible(true);
+                      setIsModalVisible(false);
                     }}
                     className="h-[82px] w-full items-center justify-center"
                   >
@@ -205,12 +205,15 @@ export default function PostItem({
 
             {/* likeAvatar */}
             {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
-              <TouchableOpacity className="ml-[2px] flex-row items-center">
+              <TouchableOpacity
+                className="ml-[2px] flex-row items-center"
+                onPress={() => onAuthorPress(postId)}
+              >
                 {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`avatar-${index}`}
-                    source={{ uri: avatar }}
+                    source={avatar ? { uri: avatar } : imgs.AvaTarDefault}
                     resizeMode="cover"
                     className={`size-[24px] rounded-full ${index !== 0 ? "-ml-[9px]" : ""}`}
                     style={{

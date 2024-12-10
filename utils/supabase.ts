@@ -234,15 +234,23 @@ export async function updateMyProfile(
   },
 ) {
   try {
-    const avatarUrl = profile.avatarUrl
-      ? await uploadImage(profile.avatarUrl)
-      : DEFAULT_AVATAR_URL;
+    let newAvatarUrl: string | undefined;
+
+    if (profile.avatarUrl === null || profile.avatarUrl === undefined) {
+      // 이미지 삭제 시 기본 이미지 URL 사용
+      newAvatarUrl = DEFAULT_AVATAR_URL;
+    } else if (profile.avatarUrl && !profile.avatarUrl.uri.startsWith("http")) {
+      // 새로운 이미지이고 로컬 파일인 경우에만 업로드
+      newAvatarUrl = await uploadImage(profile.avatarUrl);
+    }
+
+    const { avatarUrl, ...profileData } = profile;
 
     await supabase
       .from("user")
       .update({
-        ...profile,
-        avatarUrl: avatarUrl,
+        ...profileData,
+        ...(newAvatarUrl && { avatarUrl: newAvatarUrl }),
       })
       .eq("id", userId);
   } catch (error) {
@@ -261,15 +269,56 @@ export async function updateNotificationCheck(userId: string) {
   if (error) throw error;
 }
 
-// 유저 데이터베이스 삭제
+// 유저 데이터베이스 삭제 (Edge function)
 export async function deleteUser(userId: string) {
   try {
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-    if (deleteError) throw deleteError;
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+
+    // 연관된 데이터 삭제 (순서 중요)
+    // 1. 알림 삭제
+    await supabase
+      .from("notification")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 2. 친구 요청 삭제
+    await supabase
+      .from("friendRequest")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 3. 댓글 좋아요 삭제
+    await supabase.from("commentLike").delete().eq("userId", userId);
+
+    // 4. 댓글 삭제
+    await supabase.from("comment").delete().eq("userId", userId);
+
+    // 5. 게시글 좋아요 삭제
+    await supabase.from("postLike").delete().eq("userId", userId);
+
+    // 6. 게시글 삭제
+    await supabase.from("post").delete().eq("userId", userId);
+
+    // 7. 운동 기록 삭제
+    await supabase.from("workoutHistory").delete().eq("userId", userId);
+
+    // 8. 유저 데이터 삭제
     await supabase.from("user").delete().eq("id", userId);
+
+    return await response.json();
   } catch (error) {
-    console.log(error);
     const errorMessage =
       error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
     throw new Error(errorMessage);
@@ -419,6 +468,28 @@ export async function getPost(postId: number) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 게시글 좋아요 조회
+export async function getPostLikes(postId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("postLike")
+      .select("author:user (id, username, avatarUrl)")
+      .eq("postId", postId)
+      .order("createdAt", { ascending: true });
+
+    if (error) throw error;
+    if (!data) throw new Error("게시글 좋아요를 불러올 수 없습니다.");
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "게시글 좋아요 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
 }
@@ -705,6 +776,28 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
   }
 }
 
+// 댓글 좋아요 조회
+export async function getCommentLikes(commentId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("commentLike")
+      .select("author:user (id, username, avatarUrl)")
+      .eq("commentId", commentId)
+      .order("createdAt", { ascending: true });
+
+    if (error) throw error;
+    if (!data) throw new Error("댓글 좋아요를 불러올 수 없습니다.");
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "댓글 좋아요 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // 댓글 좋아요 토글
 export async function toggleLikeComment(commentId: number) {
   try {
@@ -879,19 +972,23 @@ export async function getMyPosts(userId: string) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(userId: string): Promise<UserProfile[]> {
+export async function getFriends(
+  userId: string,
+  keyword = "",
+): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
     .select(
       "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
     )
     .eq("from", userId)
+    .ilike("to.username", `%${keyword}%`)
     .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return data.map(({ to }) => to as UserProfile);
+  return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
 }
 
 // 모든 친구의 운동 상태 조회
@@ -1078,6 +1175,42 @@ export async function deleteRestDay(
   }
 }
 
+// 운동 기록 추가
+export async function addWorkoutHistory({ date }: { date: string }) {
+  const { user } = await getCurrentSession();
+
+  const { data: todayHistory, error: selectError } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", user.id)
+    .eq("date", date)
+    .single();
+
+  if (selectError && selectError.code !== "PGRST116") {
+    throw selectError;
+  }
+
+  if (todayHistory) {
+    return todayHistory;
+  }
+
+  const { data, error: insertError } = await supabase
+    .from("workoutHistory")
+    .insert([
+      {
+        userId: user.id,
+        date,
+        status: "done",
+      },
+    ]);
+
+  if (insertError) {
+    throw insertError;
+  }
+
+  return { message: "운동 기록이 추가되었습니다." };
+}
+
 // ============================================
 //
 //                 notification
@@ -1158,16 +1291,6 @@ export async function createNotification(notification: Notification) {
 //                    type
 //
 // ============================================
-
-// 게시글 타입 정의
-interface Post {
-  id: string;
-  images: string[];
-  contents: string;
-  createdAt: string;
-  likes: number;
-  // author: User;
-}
 
 // 운동 기록 타입 정의
 type HistoryDate = `${number}-${number}-${number}`;

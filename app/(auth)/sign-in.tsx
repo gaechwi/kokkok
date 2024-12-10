@@ -1,24 +1,24 @@
 import {
+  Alert,
+  Image,
   ScrollView,
   Text,
-  View,
-  Image,
   TextInput,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
 
-import images from "@constants/images";
-import icons from "@constants/icons";
-import { useState } from "react";
-import { Link } from "expo-router";
 import { signIn, supabase } from "@/utils/supabase";
-import { useRouter } from "expo-router";
+import icons from "@constants/icons";
+import images from "@constants/images";
+import type { Provider } from "@supabase/supabase-js";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
-import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import type { Provider } from "@supabase/supabase-js";
+import { Link } from "expo-router";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { useState } from "react";
 
 WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri({});
@@ -147,6 +147,7 @@ const SignIn = () => {
               <TextInput
                 className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
                 placeholder="비밀번호를 입력해주세요."
+                autoCapitalize="none"
                 secureTextEntry={!showPassword}
                 accessibilityLabel="비밀번호 입력"
                 accessibilityHint="비밀번호를 입력해주세요."

@@ -1,4 +1,7 @@
+import { HeaderWithUserPage } from "@/components/Header";
+import CustomModal from "@/components/Modal";
 import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import {
@@ -8,19 +11,16 @@ import {
   getUser,
 } from "@/utils/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   Dimensions,
   FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import Icons from "@/constants/icons";
-import CustomModal from "@/components/Modal";
-import { HeaderWithUserPage } from "@/components/Header";
 
 const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -52,8 +52,8 @@ const User = () => {
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
-            <View className="flex-row justify-between">
-              <View className="flex-row items-center gap-6">
+            <View className="w-full flex-row justify-between pr-5">
+              <View className="w-full flex-row items-center gap-6">
                 <Image
                   source={
                     user?.avatarUrl
@@ -62,7 +62,13 @@ const User = () => {
                   }
                   className="size-[88px] rounded-full"
                 />
-                <Text className="title-3">{user?.username}</Text>
+                <Text
+                  className="title-3 flex-1"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {user?.username}
+                </Text>
               </View>
               <View>
                 <TouchableOpacity onPress={() => setIsModalVisible(true)}>
@@ -101,7 +107,7 @@ const User = () => {
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               className="mt-[32px]"
             />
           ) : (
