@@ -127,20 +127,26 @@ export function HeaderWithUserPage({ name }: { name: string }) {
 
 export function HeaderWithBackAndPostPage({ name }: { name: string }) {
   return (
-    <SafeAreaView edges={[]} className="border-gray-25 border-b bg-white">
-      <View className="h-14 flex-row items-center gap-6 px-4">
+    <SafeAreaView
+      edges={[]}
+      className="border-gray-25 border-b bg-white w-full"
+    >
+      <View className="h-14 flex-row items-center gap-6 px-4 w-full">
         <TouchableOpacity
           onPress={() => router.back()}
           accessibilityLabel="뒤로가기"
-          className=""
         >
           <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
         <View className="flex-1 flex-row items-center">
-          <Text className="heading-2" numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            className="heading-2 flex-shrink"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {name}
           </Text>
-          <Text className="heading-2 shrink-0">님의 게시글</Text>
+          <Text className="heading-2 flex-shrink-0"> 님의 게시글</Text>
         </View>
       </View>
     </SafeAreaView>
