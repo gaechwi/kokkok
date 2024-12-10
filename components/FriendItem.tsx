@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useEffect } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
@@ -7,20 +7,12 @@ import icons from "@/constants/icons";
 import images from "@/constants/images";
 import { POKE_TIME } from "@/constants/time";
 import useFetchData from "@/hooks/useFetchData";
+import useManageFriend from "@/hooks/useManageFriend";
 import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
-import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 import type { UserProfile } from "@/types/User.interface";
 import { formatTime } from "@/utils/formatTime";
-import {
-  createFriendRequest,
-  createNotification,
-  deleteFriendRequest,
-  getCurrentSession,
-  getLatestStabForFriend,
-  putFriendRequest,
-} from "@/utils/supabase";
+import { getCurrentSession, getLatestStabForFriend } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
-import { showToast } from "./ToastConfig";
 
 /* Interfaces */
 
@@ -85,28 +77,8 @@ export function FriendItem({ friend }: FriendItemProps) {
   const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();
   const isPokeDisable = !!friend.status || !!timeLeft;
 
-  // 친구 콕 찌르기
-  const { mutate: handlePoke } = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error("로그인한 유저 정보가 없습니다.");
-
-      await createNotification({
-        from: user.id,
-        to: friend.id,
-        type: NOTIFICATION_TYPE.POKE,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["poke", user?.id, friend.id],
-      });
-      showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
-    },
-    onError: (error) => {
-      console.error("콕 찌르기 실패:", error);
-      showToast("fail", "콕 찌르기에 실패했어요!");
-    },
-  });
+  const { usePoke } = useManageFriend();
+  const { mutate: handlePoke } = usePoke();
 
   useEffect(() => {
     if (lastPokeCreatedAt) timerStart(Date.parse(lastPokeCreatedAt), POKE_TIME);
@@ -121,7 +93,7 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => handlePoke()}
+        onPress={() => handlePoke({ userId: user?.id, friend })}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
@@ -151,37 +123,11 @@ export function FriendRequest({
 }: FriendRequestProps) {
   const queryClient = useQueryClient();
 
-  // 친구 요청 수락
-  const { mutate: handleAccept, isPending: isAcceptPending } = useMutation({
-    mutationFn: async () => {
-      await Promise.all([
-        putFriendRequest(requestId, true),
-        createFriendRequest(toUserId, fromUser.id, true),
-      ]);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-      queryClient.invalidateQueries({ queryKey: ["friends"] });
-    },
-    onError: (error) => {
-      console.error("친구 요청 수락 실패:", error);
-      showToast("fail", "요청 수락에 실패했어요!");
-    },
-  });
-
-  // 친구 요청 거절
-  const { mutate: handleRefuse, isPending: isRefusePending } = useMutation({
-    mutationFn: async () => {
-      await deleteFriendRequest(requestId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-    },
-    onError: (error) => {
-      console.error("친구 요청 거절 실패:", error);
-      showToast("fail", "요청 거절에 실패했어요!");
-    },
-  });
+  const { useAcceptRequest, useRefuseRequest } = useManageFriend();
+  const { mutate: handleAccept, isPending: isAcceptPending } =
+    useAcceptRequest();
+  const { mutate: handleRefuse, isPending: isRefusePending } =
+    useRefuseRequest();
 
   return (
     <View className="py-4 border-b-[1px] border-gray-25 flex-row justify-between items-center">
@@ -190,7 +136,9 @@ export function FriendRequest({
       <View className="flex-row gap-[11px]">
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
-          onPress={() => handleAccept()}
+          onPress={() =>
+            handleAccept({ requestId, fromUserId: fromUser.id, toUserId })
+          }
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 수락"
           accessibilityHint="이 버튼을 누르면 친구 요청을 수락합니다"
@@ -200,7 +148,9 @@ export function FriendRequest({
 
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
-          onPress={() => handleRefuse()}
+          onPress={() =>
+            handleRefuse({ requestId, fromUserId: fromUser.id, toUserId })
+          }
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 거절"
           accessibilityHint="이 버튼을 누르면 친구 요청을 거절합니다"

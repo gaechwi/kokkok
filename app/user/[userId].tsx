@@ -1,26 +1,84 @@
+import { HeaderWithUserPage } from "@/components/Header";
+import CustomModal from "@/components/Modal";
 import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
+import useManageFriend from "@/hooks/useManageFriend";
+import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
 import {
-  createFriendRequest,
   getCurrentUser,
+  getFriendStatus,
   getMyPosts,
   getUser,
 } from "@/utils/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   Dimensions,
   FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import Icons from "@/constants/icons";
-import CustomModal from "@/components/Modal";
-import { HeaderWithUserPage } from "@/components/Header";
+
+interface RequestButtonProps {
+  currentUserId: string;
+  userId: string;
+  relation: RelationType;
+  onPress: () => void;
+}
+
+function RequestButton({
+  currentUserId,
+  userId,
+  relation,
+  onPress,
+}: RequestButtonProps) {
+  const { useUnfriend, useAcceptRequest, useCreateRequest } = useManageFriend();
+  const { mutate: handleUnfriend } = useUnfriend();
+  const { mutate: handleAccept } = useAcceptRequest();
+  const { mutate: handleCreate } = useCreateRequest();
+
+  const BUTTON_CONFIG = {
+    [RELATION_TYPE.FRIEND]: {
+      message: "친구 끊기",
+      onPress: () =>
+        handleUnfriend({ fromUserId: currentUserId, toUserId: userId }),
+    },
+    [RELATION_TYPE.ASKING]: {
+      message: "친구 요청 취소",
+      onPress: () =>
+        handleUnfriend({ fromUserId: currentUserId, toUserId: userId }),
+    },
+    [RELATION_TYPE.ASKED]: {
+      message: "친구 요청 수락",
+      onPress: () =>
+        handleAccept({ fromUserId: userId, toUserId: currentUserId }),
+    },
+    [RELATION_TYPE.NONE]: {
+      message: "친구 요청",
+      onPress: () =>
+        handleCreate({ fromUserId: currentUserId, toUserId: userId }),
+    },
+  };
+
+  return (
+    <TouchableOpacity
+      className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+      onPress={() => {
+        BUTTON_CONFIG[relation].onPress();
+        onPress();
+      }}
+    >
+      <Text className="title-2 text-gray-90">
+        {BUTTON_CONFIG[relation].message}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -44,6 +102,13 @@ const User = () => {
     ["posts", userId],
     () => getMyPosts(userId as string),
     "게시물을 불러올 수 없습니다.",
+  );
+
+  const { data: relation, error: relationError } = useFetchData(
+    ["relation", currentUser?.id, userId],
+    () => getFriendStatus(currentUser?.id || "", userId as string),
+    "친구 정보를 불러올 수 없습니다.",
+    !!currentUser,
   );
 
   return (
@@ -101,7 +166,7 @@ const User = () => {
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => String(item.id)}
               className="mt-[32px]"
             />
           ) : (
@@ -121,20 +186,15 @@ const User = () => {
         position="bottom"
       >
         <View className="items-center">
-          <TouchableOpacity
-            className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-            onPress={async () => {
-              await createFriendRequest(
-                currentUser?.id as string,
-                userId as string,
-                null,
-              );
-
-              setIsModalVisible(false);
-            }}
-          >
-            <Text className="title-2 text-gray-90">친구 요청하기</Text>
-          </TouchableOpacity>
+          {/* relation이 올바르고, 유저 정보 있을 때에만 친구관련 버튼 보이도록 설정 */}
+          {relation && currentUser && (
+            <RequestButton
+              currentUserId={currentUser.id}
+              userId={userId as string}
+              relation={relation}
+              onPress={() => setIsModalVisible(false)}
+            />
+          )}
           <TouchableOpacity
             className="h-[82px] w-full items-center justify-center"
             onPress={() => {
