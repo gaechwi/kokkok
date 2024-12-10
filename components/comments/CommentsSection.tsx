@@ -19,8 +19,6 @@ import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Animated,
   Dimensions,
   FlatList,
   Image,
@@ -31,8 +29,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MotionModal from "../MotionModal";
 import Toast from "react-native-toast-message";
+import MotionModal from "../MotionModal";
 import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
@@ -309,7 +307,7 @@ export default function CommentsSection({
           isPending={writeCommentMutation.isPending}
         />
       </View>
-        <Toast config={ToastConfig} />
+      <Toast config={ToastConfig} />
     </MotionModal>
   );
 }
