@@ -402,73 +402,16 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
 // 게시글 상세 조회
 export async function getPost(postId: number) {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data, error } = await supabase.rpc("get_post_with_details", {
+      postId,
+    });
 
-    const { data: post, error: postError } = await supabase
-      .from("post")
-      .select(
-        `
-        id,
-        images,
-        contents,
-        likes,
-        createdAt,
-        user (id, username, avatarUrl)
-      `,
-      )
-      .eq("id", postId)
-      .single();
+    if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 
-    if (postError) throw postError;
-    if (!post) throw new Error("게시글을 찾을 수 없습니다.");
-
-    const {
-      data: comment,
-      error: commentError,
-      count,
-    } = await supabase
-      .from("comment")
-      .select("id, contents, likes, author:user (id, username, avatarUrl)", {
-        count: "exact",
-      })
-      .eq("postId", postId)
-      .order("likes", { ascending: false })
-      .order("createdAt", { ascending: false })
-      .single();
-
-    if (commentError && commentError.code !== "PGRST116") {
-      // 댓글이 없는 경우 오류 처리
-      throw commentError;
-    }
-
-    let isLiked = false;
-
-    if (user) {
-      // postLike 테이블에서 좋아요 여부 확인
-      const { data: likeData, error: likeError } = await supabase
-        .from("postLike")
-        .select("id")
-        .eq("postId", postId)
-        .eq("userId", user.id)
-        .single();
-
-      if (likeError && likeError.code !== "PGRST116") {
-        throw likeError;
-      }
-      isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
-    }
-
-    return {
-      ...post,
-      comment: { ...comment, totalComments: count },
-      isLiked,
-    };
+    return data;
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
-    throw new Error(errorMessage);
+    console.error("Error in getPost:", error);
+    throw new Error("게시글을 가져오는데 실패했습니다.");
   }
 }
 

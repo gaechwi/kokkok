@@ -26,7 +26,7 @@ interface PostItemProps {
   images: string[];
   contents?: string | null;
   liked: boolean;
-  likedAuthorAvatar?: string[];
+  likedAuthorAvatars?: string[];
   createdAt: string;
   commentsCount?: number;
   comment?: {
@@ -46,7 +46,7 @@ export default function PostItem({
   images,
   contents,
   liked,
-  likedAuthorAvatar,
+  likedAuthorAvatars,
   createdAt,
   commentsCount = 0,
   comment,
@@ -123,7 +123,9 @@ export default function PostItem({
           >
             <View className="h-14 flex-row items-center gap-2">
               <Image
-                source={{ uri: author.avatar }}
+                source={
+                  author.avatar ? { uri: author.avatar } : imgs.AvaTarDefault
+                }
                 resizeMode="cover"
                 className="size-8 rounded-full"
               />
@@ -204,12 +206,12 @@ export default function PostItem({
             </TouchableOpacity>
 
             {/* likeAvatar */}
-            {likedAuthorAvatar && likedAuthorAvatar.length > 0 && (
+            {likedAuthorAvatars && likedAuthorAvatars.length > 0 && (
               <TouchableOpacity
                 className="ml-[2px] flex-row items-center"
                 onPress={() => onAuthorPress(postId)}
               >
-                {likedAuthorAvatar.slice(0, 2).map((avatar, index) => (
+                {likedAuthorAvatars.slice(0, 2).map((avatar, index) => (
                   <Image
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`avatar-${index}`}
@@ -223,7 +225,7 @@ export default function PostItem({
                     }}
                   />
                 ))}
-                {likedAuthorAvatar.length > 2 && (
+                {likedAuthorAvatars.length > 2 && (
                   <Text className="pl-[2px] font-psemibold text-[13px] text-gray-90 leading-[150%]">
                     외 여러명
                   </Text>

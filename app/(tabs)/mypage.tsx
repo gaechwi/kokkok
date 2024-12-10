@@ -94,11 +94,15 @@ export default function MyPage() {
                     style={{ height: size, width: size }}
                     className="bg-gray-5"
                   >
-                    <Image
-                      source={{ uri: item.images[0] }}
-                      resizeMode="cover"
-                      style={{ width: "100%", height: "100%" }}
-                    />
+                    <TouchableOpacity
+                      onPress={() => router.push(`/post/${item.id}`)}
+                    >
+                      <Image
+                        source={{ uri: item.images[0] }}
+                        resizeMode="cover"
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </TouchableOpacity>
                   </View>
                 );
               }}

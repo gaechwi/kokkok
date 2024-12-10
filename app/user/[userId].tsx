@@ -1,4 +1,4 @@
-import { HeaderWithUserPage } from "@/components/Header";
+import { HeaderWithUsername } from "@/components/Header";
 import CustomModal from "@/components/Modal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -48,7 +48,7 @@ const User = () => {
 
   return (
     <>
-      <HeaderWithUserPage name={user?.username || ""} />
+      <HeaderWithUsername name={user?.username || ""} />
       <SafeAreaView edges={[]} className="flex-1 bg-white">
         <View className="w-full flex-1">
           <View className="mt-6 px-5">
@@ -98,11 +98,15 @@ const User = () => {
                     style={{ height: size, width: size }}
                     className="bg-gray-5"
                   >
-                    <Image
-                      source={{ uri: item.images[0] }}
-                      resizeMode="cover"
-                      style={{ width: "100%", height: "100%" }}
-                    />
+                    <TouchableOpacity
+                      onPress={() => router.push(`/post/${item.id}`)}
+                    >
+                      <Image
+                        source={{ uri: item.images[0] }}
+                        resizeMode="cover"
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </TouchableOpacity>
                   </View>
                 );
               }}

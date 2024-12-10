@@ -1,17 +1,17 @@
-import { HeaderWithBack } from "@/components/Header";
-import { ToastConfig } from "@/components/ToastConfig";
-import { useAppState } from "@/hooks/useAppState";
-import { useOnlineManager } from "@/hooks/useOnlineManager";
-import { supabase } from "@/utils/supabase";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
+import { HeaderWithBack } from "@/components/Header";
+import { ToastConfig } from "@/components/ToastConfig";
+import { useAppState } from "@/hooks/useAppState";
+import { useOnlineManager } from "@/hooks/useOnlineManager";
+import { supabase } from "@/utils/supabase";
+import { useFonts } from "expo-font";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,6 +84,7 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+        <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
       </Stack>
       <Toast config={ToastConfig} />
     </QueryClientProvider>
