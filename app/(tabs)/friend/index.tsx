@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
-import { View, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { FlatList, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import ErrorScreen from "@/components/ErrorScreen";
 import { FriendItem } from "@/components/FriendItem";
+import LoadingScreen from "@/components/LoadingScreen";
 import SearchBar from "@/components/SearchBar";
+import useFetchData from "@/hooks/useFetchData";
+import type { StatusInfo } from "@/types/Friend.interface";
+import type { UserProfile } from "@/types/User.interface";
+import { formatDate } from "@/utils/formatDate";
 import {
   getCurrentSession,
   getFriends,
   getFriendsStatus,
   supabase,
 } from "@/utils/supabase";
-import useFetchData from "@/hooks/useFetchData";
-import ErrorScreen from "@/components/ErrorScreen";
-import LoadingScreen from "@/components/LoadingScreen";
-import type { UserProfile } from "@/types/User.interface";
 import type { Session } from "@supabase/supabase-js";
-import type { StatusInfo } from "@/types/Friend.interface";
-import { formatDate } from "@/utils/formatDate";
 
 interface FriendLayoutProps {
   friends: UserProfile[];
@@ -66,7 +66,7 @@ export default function Friend() {
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends"],
+    ["friends", session?.user.id],
     () => getFriends(session?.user.id || ""),
     "친구 조회에 실패했습니다.",
     !!session?.user.id,
@@ -80,7 +80,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus"],
+    ["friendsStatus", session?.user.id],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,

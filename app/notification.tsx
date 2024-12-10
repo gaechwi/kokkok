@@ -30,7 +30,7 @@ export default function Notification() {
     isLoading,
     error: notificationError,
   } = useFetchData<NotificationResponse[]>(
-    ["notification"],
+    ["notification", session?.user.id],
     () => getNotifications(session?.user.id || ""),
     "알림 조회에 실패했습니다.",
     !!session?.user,
