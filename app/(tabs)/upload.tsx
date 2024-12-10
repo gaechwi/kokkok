@@ -3,7 +3,13 @@ import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
-import { createPost, getPost, updatePost } from "@/utils/supabase";
+import { formatDate } from "@/utils/formatDate";
+import {
+  addWorkoutHistory,
+  createPost,
+  getPost,
+  updatePost,
+} from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -82,6 +88,22 @@ export default function Upload() {
     },
   });
 
+  const addWorkoutHistoryMutation = useMutation({
+    mutationFn: () => {
+      const date = formatDate(new Date());
+
+      return addWorkoutHistory({
+        date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["histories"] });
+    },
+    onError: () => {
+      setIsInfoModalVisible(true);
+    },
+  });
+
   const editPostMutation = useMutation({
     mutationFn: () => {
       if (!postId) {
@@ -99,7 +121,7 @@ export default function Upload() {
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      router.back();
+      router.push("/home");
     },
     onError: () => {
       setIsInfoModalVisible(true);
@@ -107,12 +129,26 @@ export default function Upload() {
   });
 
   const handleUpload = async () => {
-    if (uploadPostMutation.isPending || editPostMutation.isPending) return;
+    if (images.length === 0 && prevImages.length === 0) {
+      Alert.alert("알림", "이미지를 추가해주세요.");
+      return;
+    }
 
-    if (postId) {
-      editPostMutation.mutate();
-    } else {
-      uploadPostMutation.mutate();
+    if (uploadPostMutation.isPending || addWorkoutHistoryMutation.isPending || editPostMutation.isPending)
+      return;
+
+    try {
+      if (postId) {
+        await editPostMutation.mutateAsync();
+      } else {
+        // 게시글 인증 먼저 시도
+        await addWorkoutHistoryMutation.mutateAsync();
+
+        // 인증 성공 시 게시글 업로드 시도
+        await uploadPostMutation.mutateAsync();
+      }
+    } catch (error) {
+      setIsInfoModalVisible(true);
     }
   };
 

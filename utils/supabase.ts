@@ -1127,6 +1127,42 @@ export async function deleteRestDay(
   }
 }
 
+// 운동 기록 추가
+export async function addWorkoutHistory({ date }: { date: string }) {
+  const { user } = await getCurrentSession();
+
+  const { data: todayHistory, error: selectError } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", user.id)
+    .eq("date", date)
+    .single();
+
+  if (selectError && selectError.code !== "PGRST116") {
+    throw selectError;
+  }
+
+  if (todayHistory) {
+    return todayHistory;
+  }
+
+  const { data, error: insertError } = await supabase
+    .from("workoutHistory")
+    .insert([
+      {
+        userId: user.id,
+        date,
+        status: "done",
+      },
+    ]);
+
+  if (insertError) {
+    throw insertError;
+  }
+
+  return { message: "운동 기록이 추가되었습니다." };
+}
+
 // ============================================
 //
 //                 notification
@@ -1207,16 +1243,6 @@ export async function createNotification(notification: Notification) {
 //                    type
 //
 // ============================================
-
-// 게시글 타입 정의
-interface Post {
-  id: string;
-  images: string[];
-  contents: string;
-  createdAt: string;
-  likes: number;
-  // author: User;
-}
 
 // 운동 기록 타입 정의
 type HistoryDate = `${number}-${number}-${number}`;

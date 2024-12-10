@@ -68,7 +68,7 @@ export default function CommentsSection({
 
   // 유저 정보 가져오기
   const user = useFetchData(
-    ["user"],
+    ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
