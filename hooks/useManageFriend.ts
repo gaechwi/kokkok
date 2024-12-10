@@ -2,6 +2,8 @@ import { showToast } from "@/components/ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 import type { UserProfile } from "@/types/User.interface";
 import {
+  checkFriendRequest,
+  checkFriendRequestWithUserId,
   createFriendRequest,
   createNotification,
   deleteFriendRequest,
@@ -38,6 +40,17 @@ interface PokeProps {
   friend: UserProfile;
 }
 
+class NoRequestError extends Error {
+  from: string;
+  to: string;
+
+  constructor(message: string, from: string, to: string) {
+    super(message);
+    this.from = from;
+    this.to = to;
+  }
+}
+
 const useManageFriend = () => {
   const queryClient = useQueryClient();
 
@@ -67,6 +80,19 @@ const useManageFriend = () => {
   const useAcceptRequest = () => {
     const { mutate, isPending } = useMutation<AcceptProps, Error, AcceptProps>({
       mutationFn: async ({ requestId, fromUserId, toUserId }) => {
+        // 친구 요청이 그사이 취소되었는지 확인
+        const hasFriendRequest = requestId
+          ? await checkFriendRequest(String(requestId))
+          : await checkFriendRequestWithUserId(fromUserId, toUserId);
+        if (!hasFriendRequest) {
+          console.log("dd");
+          throw new NoRequestError(
+            "친구 요청이 유효하지 않습니다.",
+            fromUserId,
+            toUserId,
+          );
+        }
+
         await Promise.all([
           requestId
             ? putFriendRequest(requestId, true)
@@ -83,6 +109,13 @@ const useManageFriend = () => {
         });
       },
       onError: (error) => {
+        if (error instanceof NoRequestError) {
+          // 친구 요청이 취소되어 발생한 에러라면 관련된 값 다시 불러오도록
+          queryClient.invalidateQueries({ queryKey: ["friendRequest"] });
+          queryClient.invalidateQueries({
+            queryKey: ["relation", error.to, error.from],
+          });
+        }
         console.error("친구 요청 수락 실패:", error);
         showToast("fail", "요청 수락에 실패했어요!");
       },

@@ -1060,7 +1060,7 @@ export async function getFriendsStatus(
   return data;
 }
 
-// 친구요청 조회 조회
+// 친구요청 조회
 export async function getFriendRequests(
   userId: string,
   offset = 0,
@@ -1093,6 +1093,37 @@ export async function getFriendRequests(
     total: count || 0,
     hasMore: count ? offset + limit < count : false,
   };
+}
+
+// 친구요청 있는지 조회
+export async function checkFriendRequest(requestId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("id", requestId);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+  console.log(!!data.length);
+  return !!data.length;
+}
+
+export async function checkFriendRequestWithUserId(
+  from: string,
+  to: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("from", from)
+    .eq("to", to);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+  console.log(!!data.length);
+
+  return !!data.length;
 }
 
 // 친구요청 생성
