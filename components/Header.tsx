@@ -108,7 +108,12 @@ export function HeaderWithSettingAndNotification({ name }: HeaderProps) {
   );
 }
 
-export function HeaderWithUserPage({ name }: { name: string }) {
+export function HeaderWithUsername({
+  name,
+  type = "MY_PAGE",
+}: { name: string; type?: "MY_PAGE" | "POST_PAGE" }) {
+  const isMyPage = type === "MY_PAGE";
+
   return (
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
       <View className="h-14 flex-row items-center gap-6 px-4">
@@ -127,35 +132,9 @@ export function HeaderWithUserPage({ name }: { name: string }) {
           >
             {name}
           </Text>
-          <Text className="title-2 shrink-0">님의 페이지</Text>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-export function HeaderWithBackAndPostPage({ name }: { name: string }) {
-  return (
-    <SafeAreaView
-      edges={[]}
-      className="border-gray-25 border-b bg-white w-full"
-    >
-      <View className="h-14 flex-row items-center gap-6 px-4 w-full">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          accessibilityLabel="뒤로가기"
-        >
-          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
-        </TouchableOpacity>
-        <View className="flex-1 flex-row items-center">
-          <Text
-            className="heading-2 flex-shrink"
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {name}
+          <Text className="title-2 shrink-0">
+            {isMyPage ? "님의 페이지" : "님의 게시글"}
           </Text>
-          <Text className="heading-2 flex-shrink-0"> 님의 게시글</Text>
         </View>
       </View>
     </SafeAreaView>

@@ -1,4 +1,4 @@
-import { HeaderWithBackAndPostPage } from "@/components/Header";
+import { HeaderWithUsername } from "@/components/Header";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
 import CommentsSection from "@/components/comments/CommentsSection";
@@ -56,7 +56,10 @@ export default function PostDetail() {
   return (
     <>
       <SafeAreaView edges={["top"]} className="flex-1 bg-white">
-        <HeaderWithBackAndPostPage name={post?.userData.username ?? ""} />
+        <HeaderWithUsername
+          name={post?.userData.username ?? ""}
+          type="POST_PAGE"
+        />
         <PostItem
           author={{
             id: post?.userData?.id || "",
