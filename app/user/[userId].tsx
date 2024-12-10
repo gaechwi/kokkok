@@ -11,9 +11,11 @@ import {
   getFriendStatus,
   getMyPosts,
   getUser,
+  supabase,
 } from "@/utils/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -84,6 +86,7 @@ const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { userId } = useLocalSearchParams();
 
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const { data: currentUser } = useFetchData(
@@ -104,12 +107,40 @@ const User = () => {
     "게시물을 불러올 수 없습니다.",
   );
 
-  const { data: relation, error: relationError } = useFetchData(
+  const { data: relation, isPending: isRelationPending } = useFetchData(
     ["relation", currentUser?.id, userId],
     () => getFriendStatus(currentUser?.id || "", userId as string),
     "친구 정보를 불러올 수 없습니다.",
     !!currentUser,
   );
+
+  // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const requestChannel = supabase
+      .channel("friendRequest")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "friendRequest",
+          filter: `to=eq.${currentUser.id}`,
+        },
+        (payload) => {
+          if (payload.new.from === userId)
+            queryClient.invalidateQueries({
+              queryKey: ["relation", currentUser.id, userId],
+            });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(requestChannel);
+    };
+  }, [currentUser, userId, queryClient.invalidateQueries]);
 
   return (
     <>
@@ -193,7 +224,7 @@ const User = () => {
       >
         <View className="items-center">
           {/* relation이 올바르고, 유저 정보 있을 때에만 친구관련 버튼 보이도록 설정 */}
-          {relation && currentUser && (
+          {relation && currentUser && !isRelationPending && (
             <RequestButton
               currentUserId={currentUser.id}
               userId={userId as string}
