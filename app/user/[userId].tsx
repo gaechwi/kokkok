@@ -107,7 +107,7 @@ const User = () => {
                 );
               }}
               numColumns={3}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               className="mt-[32px]"
             />
           ) : (
