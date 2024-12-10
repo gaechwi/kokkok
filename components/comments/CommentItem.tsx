@@ -20,7 +20,6 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Text,
   TouchableOpacity,
@@ -28,6 +27,7 @@ import {
 } from "react-native";
 import { FlatList } from "react-native";
 import CustomModal, { DeleteModal } from "../Modal";
+import { showToast } from "../ToastConfig";
 
 interface CommentItemProps {
   id: number;
@@ -123,7 +123,7 @@ export default function CommentItem({
   });
 
   const user = useFetchData(
-    ["user"],
+    ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
@@ -131,12 +131,14 @@ export default function CommentItem({
   const deleteCommentMutation = useMutation({
     mutationFn: () => deleteComment(id),
     onSuccess: () => {
+      showToast("success", "댓글이 삭제되었어요.");
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Alert.alert("삭제 실패", "댓글 삭제에 실패했습니다.");
+      showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
 
