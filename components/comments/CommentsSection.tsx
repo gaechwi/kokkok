@@ -4,6 +4,7 @@ import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import {
   createComment,
+  createNotification,
   getCommentLikes,
   getComments,
   getCurrentUser,
@@ -41,16 +42,19 @@ interface CommentsSectionProps {
   visible: boolean;
   onClose: () => void;
   postId: number;
+  authorId: string;
 }
 
 export default function CommentsSection({
   visible,
   onClose,
   postId,
+  authorId,
 }: CommentsSectionProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
+    userId: string;
     username: string;
     parentId: number;
     replyCommentId: number;
@@ -108,11 +112,12 @@ export default function CommentsSection({
 
   // 답글달기 핸들러
   const handleReply = (
+    userId: string,
     username: string,
     parentId: number,
     replyCommentId: number,
   ) => {
-    setReplyTo({ username, parentId, replyCommentId: replyCommentId });
+    setReplyTo({ userId, username, parentId, replyCommentId: replyCommentId });
     inputRef.current?.focus();
   };
 
@@ -125,8 +130,13 @@ export default function CommentsSection({
         parentId: replyTo?.parentId,
         replyCommentId: replyTo?.replyCommentId,
       }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       showToast("success", "댓글이 작성되었어요!");
+
+      const replyToId = replyTo?.userId || authorId;
+      if (replyToId !== user.data?.id) {
+        sendNotificationMutation.mutate({ commentId: data.id });
+      }
 
       setComment("");
       setReplyTo(null);
@@ -140,6 +150,21 @@ export default function CommentsSection({
     },
   });
 
+  const sendNotificationMutation = useMutation({
+    mutationFn: ({ commentId }: { commentId: number }) =>
+      createNotification({
+        from: user.data?.id || "",
+        to: replyTo?.userId || authorId || "",
+        type: "comment",
+        data: {
+          postId,
+          commentInfo: {
+            id: commentId,
+            content: comment,
+          },
+        },
+      }),
+  });
   const onLikedAuthorPress = useCallback((commentId: number) => {
     setLikedAuthorId(commentId);
     setIsLikedModalVisible(true);

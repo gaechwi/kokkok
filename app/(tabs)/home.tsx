@@ -30,6 +30,8 @@ export default function Home() {
 
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
 
   const router = useRouter();
@@ -55,14 +57,20 @@ export default function Home() {
     setIsLikedModalVisible(true);
   }, []);
 
-  const onOpenComments = useCallback((postId: number) => {
-    setSelectedPostId(postId);
-    setIsCommentsVisible(true);
-  }, []);
+  const onOpenComments = useCallback(
+    ({ postId, authorId }: { postId: number; authorId: string }) => {
+      setSelectedPostId(postId);
+      setSelectedAuthorId(authorId);
+
+      setIsCommentsVisible(true);
+    },
+    [],
+  );
 
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
     setSelectedPostId(null);
+    setSelectedAuthorId(null);
   }, []);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
@@ -119,7 +127,12 @@ export default function Home() {
               content: post.commentData?.contents ?? "",
             }}
             postId={Number(post.id)}
-            onCommentsPress={() => onOpenComments(Number(post.id))}
+            onCommentsPress={() =>
+              onOpenComments({
+                postId: Number(post.id),
+                authorId: post.userData?.id ?? "",
+              })
+            }
             onAuthorPress={onOpenLikedAuthor}
           />
         )}
@@ -137,15 +150,18 @@ export default function Home() {
         showsHorizontalScrollIndicator={false}
       />
 
-      {isCommentsVisible && selectedPostId !== null && (
-        <View className="flex-1">
-          <CommentsSection
-            visible={isCommentsVisible}
-            onClose={onCloseComments}
-            postId={selectedPostId}
-          />
-        </View>
-      )}
+      {isCommentsVisible &&
+        selectedPostId !== null &&
+        selectedAuthorId !== null && (
+          <View className="flex-1">
+            <CommentsSection
+              visible={isCommentsVisible}
+              onClose={onCloseComments}
+              postId={selectedPostId}
+              authorId={selectedAuthorId}
+            />
+          </View>
+        )}
 
       <View className="flex-1 ">
         <MotionModal
