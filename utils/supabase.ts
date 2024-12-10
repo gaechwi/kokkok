@@ -930,7 +930,7 @@ export async function getFriends(
       "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
     )
     .eq("from", userId)
-    .like("to.username", `%${keyword}%`)
+    .ilike("to.username", `%${keyword}%`)
     .eq("isAccepted", true);
 
   if (error) throw error;
