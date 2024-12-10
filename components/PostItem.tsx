@@ -104,7 +104,9 @@ export default function PostItem({
           >
             <View className="h-14 flex-row items-center gap-2">
               <Image
-                source={{ uri: author.avatar }}
+                source={
+                  author.avatar ? { uri: author.avatar } : imgs.AvaTarDefault
+                }
                 resizeMode="cover"
                 className="size-8 rounded-full"
               />

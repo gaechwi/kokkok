@@ -207,7 +207,7 @@ export default function CommentItem({
                 <Image
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   key={`avatar-${index}`}
-                  source={{ uri: avatar }}
+                  source={avatar ? { uri: avatar } : images.AvaTarDefault}
                   resizeMode="cover"
                   className={`size-[24px] rounded-full border border-white ${index !== 0 ? "-ml-[9px]" : ""}`}
                   style={{
