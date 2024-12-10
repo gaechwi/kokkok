@@ -185,7 +185,13 @@ export default function Friend() {
     <FriendLayout
       friends={friends}
       onChangeKeyword={handleKeywordChange}
-      emptyComponent={<ErrorScreen errorMessage="아직 친구가 없습니다." />}
+      emptyComponent={
+        <ErrorScreen
+          errorMessage={
+            keyword ? "친구를 찾지 못했어요" : "아직 친구가 없습니다."
+          }
+        />
+      }
     />
   );
 }
