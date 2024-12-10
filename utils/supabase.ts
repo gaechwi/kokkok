@@ -5,7 +5,12 @@ import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
 
-import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
+import {
+  RELATION_TYPE,
+  type RelationType,
+  type RequestResponse,
+  type StatusInfo,
+} from "@/types/Friend.interface";
 import type { NotificationResponse } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
@@ -934,6 +939,52 @@ export async function getFriends(
   return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
 }
 
+export async function getFriendStatus(
+  userId: string,
+  friendId: string,
+): Promise<RelationType> {
+  // 내가 보낸 요청
+  const { data: asking, error: askingError } = await supabase
+    .from("friendRequest")
+    .select("isAccepted")
+    .eq("from", userId)
+    .eq("to", friendId)
+    .limit(1);
+  if (askingError) throw askingError;
+
+  // 내가 받은 요청
+  const { data: asked, error: askedError } = await supabase
+    .from("friendRequest")
+    .select("isAccepted")
+    .eq("from", friendId)
+    .eq("to", userId)
+    .limit(1);
+  if (askedError) throw askedError;
+
+  if (!asked || !asking)
+    throw new Error(
+      `친구 관계를 불러올 수 없습니다.
+      asking: ${asking}, asked: ${asked}`,
+    );
+
+  // 서로 친구 요청 없으면 NONE
+  if (!asked.length && !asking.length) return RELATION_TYPE.NONE;
+  // 내가 보낸 요청만 있고, 아직 수락 전이면 ASKING
+  if (!asked.length && asking[0]?.isAccepted === null)
+    return RELATION_TYPE.ASKING;
+  // 내가 받은 요청만 있고, 아직 수락 전이면 ASKED
+  if (asked[0]?.isAccepted === null && !asking.length)
+    return RELATION_TYPE.ASKED;
+  // 서로 친구요청 수락 상태면 FRIEND
+  if (asked[0]?.isAccepted && asking[0]?.isAccepted)
+    return RELATION_TYPE.FRIEND;
+
+  // 나머지는 DB가 잘못된 상황
+  throw new Error(`친구 DB 확인 필요합니다!
+    내 요청: ${asking[0]?.isAccepted}
+    상대방 요청: ${asked[0]?.isAccepted}`);
+}
+
 // 모든 친구의 운동 상태 조회
 export async function getFriendsStatus(
   friendIds: string[],
@@ -952,7 +1003,7 @@ export async function getFriendsStatus(
   return data;
 }
 
-// 친구요청 조회 조회
+// 친구요청 조회
 export async function getFriendRequests(
   userId: string,
   offset = 0,
@@ -987,6 +1038,35 @@ export async function getFriendRequests(
   };
 }
 
+// 친구요청 있는지 조회
+export async function checkFriendRequest(requestId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("id", requestId);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+  return !!data.length;
+}
+
+export async function checkFriendRequestWithUserId(
+  from: string,
+  to: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("from", from)
+    .eq("to", to);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+  return !!data.length;
+}
+
 // 친구요청 생성
 export async function createFriendRequest(
   from: string,
@@ -1000,12 +1080,16 @@ export async function createFriendRequest(
   if (error) throw error;
 }
 
-// 친구요청 반응 업데이트
-export async function putFriendRequest(requestId: number, isAccepted: boolean) {
-  const { error } = await supabase
-    .from("friendRequest")
-    .update({ isAccepted })
-    .eq("id", requestId);
+export async function acceptFriendRequest(
+  fromUserId: string,
+  toUserId: string,
+  requestId: number | null = null,
+) {
+  const { data, error } = await supabase.rpc("accept_friend_request", {
+    from_user_id: fromUserId,
+    request_id: requestId,
+    to_user_id: toUserId,
+  });
 
   if (error) throw error;
 }
@@ -1016,6 +1100,17 @@ export async function deleteFriendRequest(requestId: number) {
     .from("friendRequest")
     .delete()
     .eq("id", requestId);
+
+  if (error) throw error;
+}
+
+// 유저 아이디로 친구 요청 삭제
+export async function deleteFriendRequestWithUserId(from: string, to: string) {
+  const { error } = await supabase
+    .from("friendRequest")
+    .delete()
+    .eq("from", from)
+    .eq("to", to);
 
   if (error) throw error;
 }
