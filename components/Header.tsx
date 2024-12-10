@@ -127,7 +127,7 @@ export function HeaderWithUserPage({ name }: { name: string }) {
 
 export function HeaderWithBackAndPostPage({ name }: { name: string }) {
   return (
-    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
+    <SafeAreaView edges={[]} className="border-gray-25 border-b bg-white">
       <View className="h-14 flex-row items-center gap-6 px-4">
         <TouchableOpacity
           onPress={() => router.back()}
@@ -140,7 +140,7 @@ export function HeaderWithBackAndPostPage({ name }: { name: string }) {
           <Text className="heading-2" numberOfLines={1} ellipsizeMode="tail">
             {name}
           </Text>
-          <Text className="heading-2 shrink-0">님의 페이지</Text>
+          <Text className="heading-2 shrink-0">님의 게시글</Text>
         </View>
       </View>
     </SafeAreaView>

@@ -6,6 +6,7 @@ import { getCurrentUser, getPost } from "@/utils/supabase";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PostDetail() {
   const { postId } = useLocalSearchParams();
@@ -28,35 +29,36 @@ export default function PostDetail() {
   }, []);
 
   return (
-    <View className="flex-1 bg-white">
-      <HeaderWithBackAndPostPage name={user?.username as string} />
-      <PostItem
-        author={{
-          id: post?.userData?.id || "",
-          name: post?.userData?.username || "",
-          avatar: post?.userData?.avatarUrl || "",
-        }}
-        images={post?.images || []}
-        contents={post?.contents || ""}
-        liked={post?.isLikedByUser || false}
-        likedAuthorAvatars={post?.likedAvatars || []}
-        createdAt={post?.createdAt || ""}
-        commentsCount={post?.totalComments || 0}
-        comment={
-          post?.commentData
-            ? {
-                author: {
-                  name: post.commentData.author.username,
-                  avatar: post.commentData.author.avatarUrl || "",
-                },
-                content: post.commentData.contents,
-              }
-            : null
-        }
-        postId={Number(postId)}
-        onCommentsPress={() => setIsCommentsVisible(true)}
-      />
-
+    <>
+      <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+        <HeaderWithBackAndPostPage name={post?.userData.username ?? ""} />
+        <PostItem
+          author={{
+            id: post?.userData?.id || "",
+            name: post?.userData?.username || "",
+            avatar: post?.userData?.avatarUrl || "",
+          }}
+          images={post?.images || []}
+          contents={post?.contents || ""}
+          liked={post?.isLikedByUser || false}
+          likedAuthorAvatars={post?.likedAvatars || []}
+          createdAt={post?.createdAt || ""}
+          commentsCount={post?.totalComments || 0}
+          comment={
+            post?.commentData
+              ? {
+                  author: {
+                    name: post.commentData.author.username,
+                    avatar: post.commentData.author.avatarUrl || "",
+                  },
+                  content: post.commentData.contents,
+                }
+              : null
+          }
+          postId={Number(postId)}
+          onCommentsPress={() => setIsCommentsVisible(true)}
+        />
+      </SafeAreaView>
       {isCommentsVisible && (
         <View className="flex-1">
           <CommentsSection
@@ -66,6 +68,6 @@ export default function PostDetail() {
           />
         </View>
       )}
-    </View>
+    </>
   );
 }
