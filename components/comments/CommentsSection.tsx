@@ -10,7 +10,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -28,6 +27,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -230,14 +231,17 @@ export default function CommentsSection({
         replyCommentId: replyTo?.replyCommentId,
       }),
     onSuccess: () => {
+      showToast("success", "댓글이 작성되었어요!");
+
       setComment("");
       setReplyTo(null);
+
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
-      Alert.alert("댓글 작성 실패", "댓글 작성에 실패했습니다.");
+      showToast("fail", "댓글 작성에 실패했어요!");
     },
   });
 
@@ -405,6 +409,7 @@ export default function CommentsSection({
             isPending={writeCommentMutation.isPending}
           />
         </View>
+        <Toast config={ToastConfig} />
       </KeyboardAvoidingView>
     </Modal>
   );

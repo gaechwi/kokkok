@@ -1,18 +1,17 @@
+import { HeaderWithBack } from "@/components/Header";
+import { ToastConfig } from "@/components/ToastConfig";
+import { useAppState } from "@/hooks/useAppState";
+import { useOnlineManager } from "@/hooks/useOnlineManager";
+import { supabase } from "@/utils/supabase";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
+import type { Session } from "@supabase/supabase-js";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Session } from "@supabase/supabase-js";
-
 import "../global.css";
-import { useFonts } from "expo-font";
-import { HeaderWithBack } from "@/components/Header";
-import { supabase } from "@/utils/supabase";
-import { useOnlineManager } from "@/hooks/useOnlineManager";
-import { useAppState } from "@/hooks/useAppState";
-import { ToastConfig } from "@/components/ToastConfig";
 
 SplashScreen.preventAutoHideAsync();
 
