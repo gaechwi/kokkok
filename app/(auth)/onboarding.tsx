@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -13,6 +13,7 @@ import images from "@/constants/images";
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 
@@ -57,8 +58,12 @@ export default function Onboarding() {
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={{ width }}>{item.component}</View>
+          renderItem={({ item, index }) => (
+            <View style={{ width }}>
+              {React.cloneElement(item.component, {
+                isActive: index === currentIndex,
+              })}
+            </View>
           )}
         />
 
@@ -83,79 +88,208 @@ export default function Onboarding() {
   );
 }
 
-function Slide1() {
+interface SlideProps {
+  isActive?: boolean;
+}
+
+function Slide1({ isActive = false }: SlideProps) {
+  const text1Offset = useSharedValue(30);
+  const text2Offset = useSharedValue(30);
+  const opacity1 = useSharedValue(0);
+  const opacity2 = useSharedValue(0);
+
+  useEffect(() => {
+    if (isActive) {
+      text1Offset.value = withTiming(0, {
+        duration: 1000,
+      });
+      text2Offset.value = withTiming(0, {
+        duration: 1800,
+      });
+      opacity1.value = withTiming(1, {
+        duration: 1000,
+      });
+      opacity2.value = withTiming(1, {
+        duration: 1800,
+      });
+    }
+  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
+
+  const text1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text1Offset.value }],
+    opacity: opacity1.value,
+  }));
+
+  const text2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text2Offset.value }],
+    opacity: opacity2.value,
+  }));
+
   return (
     <ImageBackground
       source={images.OnBoarding1}
       className="relative flex-1 items-center bg-yellow-100"
     >
-      <Text className="absolute top-[177px] font-pbold text-[40px] text-gray-90">
+      <Animated.Text
+        style={text1Style}
+        className="absolute top-[177px] font-pbold text-[40px] text-gray-90"
+      >
         같이 운동하실래요?
-      </Text>
-      <Text className="absolute bottom-[186px] font-psemibold text-[17px] text-gray-50">
+      </Animated.Text>
+      <Animated.Text
+        style={text2Style}
+        className="absolute bottom-[186px] font-psemibold text-[17px] text-gray-50"
+      >
         콕콕의 사용법에 대해 알아봐요
-      </Text>
+      </Animated.Text>
     </ImageBackground>
   );
 }
 
-function Slide2() {
+function Slide2({ isActive = false }: SlideProps) {
+  const text1Offset = useSharedValue(30);
+  const text2Offset = useSharedValue(30);
+  const opacity1 = useSharedValue(0);
+  const opacity2 = useSharedValue(0);
+
+  useEffect(() => {
+    if (isActive) {
+      text1Offset.value = withTiming(0, { duration: 1000 });
+      opacity1.value = withTiming(1, { duration: 1000 });
+      text2Offset.value = withTiming(0, { duration: 1800 });
+      opacity2.value = withTiming(1, { duration: 1800 });
+    }
+  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
+
+  const text1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text1Offset.value }],
+    opacity: opacity1.value,
+  }));
+
+  const text2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text2Offset.value }],
+    opacity: opacity2.value,
+  }));
+
   return (
     <ImageBackground
       source={images.OnBoarding2}
-      className="relative flex-1 items-center bg-emerald-100"
+      className="relative flex-1 items-center"
     >
       <View className="absolute top-[130px] items-center gap-[6px]">
-        <Text className="font-pbold text-[40px] text-gray-90">
+        <Animated.Text
+          style={text1Style}
+          className="font-pbold text-[40px] text-gray-90"
+        >
           운동이 끝나면
-        </Text>
-        <Text className="font-pbold text-[40px] text-gray-90">
+        </Animated.Text>
+        <Animated.Text
+          style={text2Style}
+          className="font-pbold text-[40px] text-gray-90"
+        >
           사진으로 인증해요
-        </Text>
+        </Animated.Text>
       </View>
     </ImageBackground>
   );
 }
 
-function Slide3() {
+function Slide3({ isActive = false }: SlideProps) {
+  const text1Offset = useSharedValue(30);
+  const text2Offset = useSharedValue(30);
+  const opacity1 = useSharedValue(0);
+  const opacity2 = useSharedValue(0);
+
+  useEffect(() => {
+    if (isActive) {
+      text1Offset.value = withTiming(0, { duration: 1000 });
+      opacity1.value = withTiming(1, { duration: 1000 });
+      text2Offset.value = withTiming(0, { duration: 1800 });
+      opacity2.value = withTiming(1, { duration: 1800 });
+    }
+  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
+
+  const text1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text1Offset.value }],
+    opacity: opacity1.value,
+  }));
+
+  const text2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text2Offset.value }],
+    opacity: opacity2.value,
+  }));
+
   return (
     <ImageBackground
       source={images.OnBoarding3}
-      className="relative flex-1 items-center bg-sky-100"
+      className="relative flex-1 items-center"
     >
-      <View className="absolute top-[89px] right-[59px] rotate-[8.5deg]">
+      <Animated.View
+        style={text1Style}
+        className="absolute top-[89px] right-[59px] rotate-[8.5deg]"
+      >
         <Text className="text-[110px] text-primary">콕!</Text>
-      </View>
-      <View className="absolute bottom-[204px] items-center gap-[6px]">
+      </Animated.View>
+      <Animated.View
+        style={text2Style}
+        className="absolute bottom-[204px] items-center gap-[6px]"
+      >
         <Text className="font-pbold text-[40px] text-gray-90">운동 안 한</Text>
         <Text className="font-pbold text-[40px] text-gray-90">
           친구를 찔러요
         </Text>
-      </View>
+      </Animated.View>
     </ImageBackground>
   );
 }
 
-function Slide4() {
+function Slide4({ isActive = false }: SlideProps) {
+  const text1Offset = useSharedValue(30);
+  const text2Offset = useSharedValue(30);
+  const opacity1 = useSharedValue(0);
+  const opacity2 = useSharedValue(0);
+
+  useEffect(() => {
+    if (isActive) {
+      text1Offset.value = withTiming(0, { duration: 1000 });
+      opacity1.value = withTiming(1, { duration: 1000 });
+      text2Offset.value = withTiming(0, { duration: 1800 });
+      opacity2.value = withTiming(1, { duration: 1800 });
+    }
+  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
+
+  const text1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text1Offset.value }],
+    opacity: opacity1.value,
+  }));
+
+  const text2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: text2Offset.value }],
+    opacity: opacity2.value,
+  }));
+
   return (
-    <ImageBackground
-      source={images.OnBoarding4}
-      className="relative flex-1 bg-rose-100"
-    >
-      <View className="absolute top-[95px] left-[60px] gap-[6px]">
+    <ImageBackground source={images.OnBoarding4} className="relative flex-1">
+      <Animated.View
+        style={text1Style}
+        className="absolute top-[95px] left-[60px] gap-[6px]"
+      >
         <Text className="font-pbold text-[40px] text-gray-90">
           귀여운 이모지로
         </Text>
         <Text className="ml-[30px] font-pbold text-[40px] text-gray-90">
           한눈에
         </Text>
-      </View>
-      <View className="absolute right-[60px] bottom-[187px] items-end gap-[6px]">
+      </Animated.View>
+      <Animated.View
+        style={text2Style}
+        className="absolute right-[60px] bottom-[187px] items-end gap-[6px]"
+      >
         <Text className="font-pbold text-[40px] text-gray-90 ">내 기록을</Text>
         <Text className="mr-[30px] font-pbold text-[40px] text-gray-90">
           확인해요
         </Text>
-      </View>
+      </Animated.View>
     </ImageBackground>
   );
 }
