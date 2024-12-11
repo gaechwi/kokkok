@@ -92,7 +92,7 @@ const User = () => {
     "유저를 불러올 수 없습니다.",
   );
 
-  const { data: posts } = useFetchData(
+  const { data: posts, isError: isPostsError } = useFetchData(
     ["posts", userId],
     () => getMyPosts(userId as string),
     "게시물을 불러올 수 없습니다.",
@@ -150,6 +150,7 @@ const User = () => {
                 ? posts.map((post) => ({ ...post, id: post.id.toString() }))
                 : null
             }
+            isError={isPostsError}
           />
         </View>
       </SafeAreaView>

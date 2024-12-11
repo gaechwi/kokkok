@@ -15,10 +15,25 @@ interface Post {
 
 interface PostGridProps {
   posts: Post[] | null;
+  isError?: boolean;
 }
 
-export default function PostGrid({ posts }: PostGridProps) {
+export default function PostGrid({ posts, isError }: PostGridProps) {
   const router = useRouter();
+
+  if (isError) {
+    return (
+      <View className="mt-8 flex-1 items-center justify-center bg-gray-5">
+        <Image
+          source={images.ErrorPost}
+          className="h-[178px] w-[234px]"
+          resizeMode="contain"
+          accessibilityLabel="이미지를 불러오지 못했습니다."
+          accessibilityRole="image"
+        />
+      </View>
+    );
+  }
 
   if (!posts || posts.length === 0) {
     return (
@@ -47,6 +62,7 @@ export default function PostGrid({ posts }: PostGridProps) {
                   source={{ uri: item.images[0] }}
                   resizeMode="cover"
                   style={{ width: "100%", height: "100%" }}
+                  defaultSource={images.ErrorPost}
                 />
               </TouchableOpacity>
             </View>

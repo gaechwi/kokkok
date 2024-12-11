@@ -18,7 +18,11 @@ export default function MyPage() {
     "현재 사용자를 불러올 수 없습니다.",
   );
 
-  const { data: posts, isLoading: isPostsLoading } = useFetchData(
+  const {
+    data: posts,
+    isLoading: isPostsLoading,
+    isError: isPostsError,
+  } = useFetchData(
     ["userPosts", currentUser?.id],
     () => getMyPosts(currentUser?.id!),
     "게시물을 불러올 수 없습니다.",
@@ -51,6 +55,7 @@ export default function MyPage() {
                 ? posts.map((post) => ({ ...post, id: post.id.toString() }))
                 : null
             }
+            isError={isPostsError}
           />
         </View>
       </SafeAreaView>
