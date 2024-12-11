@@ -36,7 +36,7 @@ import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
-const { height: deviceHeight } = Dimensions.get("window");
+const { height: deviceHeight, width: deviceWidth } = Dimensions.get("window");
 
 interface CommentsSectionProps {
   visible: boolean;
@@ -302,15 +302,23 @@ export default function CommentsSection({
       {/* comment input */}
       <>
         {replyTo?.username && (
-          <View className="relative h-[40px] w-full flex-row items-center bg-gray-20">
-            <Text className="w-full flex-1 items-center justify-center text-center font-pmedium text-[14px] text-gray-60 leading-[150%]">
-              <Text className="font-pmedium text-[#000] text-[14px] leading-[150%]">
-                {replyTo.username.length > 20
-                  ? `${replyTo.username.slice(0, 20)}...`
-                  : replyTo.username}
+          <View className="relative h-[40px] w-full flex-row items-center justify-center bg-gray-20">
+            <View
+              className="flex-row items-center justify-center text-center"
+              style={{ width: "70%" }}
+            >
+              <Text
+                className="shrink font-pmedium text-[#000] text-[14px] leading-[150%]"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {replyTo.username}
               </Text>
-              님께 답글 달기
-            </Text>
+
+              <Text className="shrink-0 font-pmedium text-[14px] text-gray-60 leading-[150%]">
+                님께 답글 달기
+              </Text>
+            </View>
 
             <TouchableOpacity
               className="-translate-y-1/2 absolute top-1/2 right-5"
