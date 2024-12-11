@@ -27,6 +27,8 @@ export default function PostGrid({ posts }: PostGridProps) {
           source={images.NoPost}
           className="h-[178px] w-[234px]"
           resizeMode="contain"
+          accessibilityLabel="게시물이 없습니다."
+          accessibilityRole="image"
         />
       </View>
     );

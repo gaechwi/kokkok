@@ -23,6 +23,8 @@ export default function ProfileSection({
           <Image
             source={avatarUrl ? { uri: avatarUrl } : images.AvaTarDefault}
             className="size-[88px] rounded-full"
+            accessibilityLabel="프로필 이미지"
+            accessibilityRole="image"
           />
           <Text
             className="title-3 flex-1"
@@ -33,7 +35,10 @@ export default function ProfileSection({
           </Text>
         </View>
         <View>
-          <TouchableOpacity onPress={onSettingsPress}>
+          <TouchableOpacity
+            onPress={onSettingsPress}
+            accessibilityRole="button"
+          >
             <Icons.MeatballIcon
               height={24}
               width={24}
