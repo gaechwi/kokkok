@@ -32,9 +32,7 @@ const MentionInput = forwardRef<TextInput, MentionInputProps>(
               }
             }}
             placeholder={placeholder}
-            style={{
-              flex: 1,
-            }}
+            multiline={false}
           />
         </View>
       </View>

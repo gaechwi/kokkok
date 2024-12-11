@@ -305,7 +305,9 @@ export default function CommentsSection({
           <View className="relative h-[40px] w-full flex-row items-center bg-gray-20">
             <Text className="w-full flex-1 items-center justify-center text-center font-pmedium text-[14px] text-gray-60 leading-[150%]">
               <Text className="font-pmedium text-[#000] text-[14px] leading-[150%]">
-                {replyTo.username}
+                {replyTo.username.length > 20
+                  ? `${replyTo.username.slice(0, 20)}...`
+                  : replyTo.username}
               </Text>
               님께 답글 달기
             </Text>
@@ -340,7 +342,7 @@ export default function CommentsSection({
             }}
             placeholder={
               replyTo
-                ? `${replyTo.username}님에게 답글`
+                ? `${replyTo.username.length > 10 ? `${replyTo.username.slice(0, 10)}...` : replyTo.username}님께 답글을 남겨보세요.`
                 : "댓글을 입력해주세요."
             }
             onSubmit={() => {
