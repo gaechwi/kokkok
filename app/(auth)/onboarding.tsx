@@ -226,7 +226,7 @@ function Slide3({ isActive = false }: SlideProps) {
     >
       <Animated.View
         style={text1Style}
-        className="absolute top-[89px] right-[59px] rotate-[8.5deg]"
+        className="absolute top-[130px] right-[70px]"
       >
         <Text className="font-pjalnan text-[110px] text-primary">콕!</Text>
       </Animated.View>
