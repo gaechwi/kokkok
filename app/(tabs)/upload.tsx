@@ -134,7 +134,11 @@ export default function Upload() {
       return;
     }
 
-    if (uploadPostMutation.isPending || addWorkoutHistoryMutation.isPending || editPostMutation.isPending)
+    if (
+      uploadPostMutation.isPending ||
+      addWorkoutHistoryMutation.isPending ||
+      editPostMutation.isPending
+    )
       return;
 
     try {
@@ -311,9 +315,9 @@ export default function Upload() {
                 <View className="w-full items-center">
                   <TouchableOpacity
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-                    onPress={() => {
+                    onPress={async () => {
+                      await takePhoto();
                       setIsModalVisible(false);
-                      takePhoto();
                     }}
                   >
                     <Text className="title-2 text-gray-90">카메라</Text>
@@ -321,9 +325,9 @@ export default function Upload() {
 
                   <TouchableOpacity
                     className="h-[82px] w-full items-center justify-center"
-                    onPress={() => {
+                    onPress={async () => {
+                      await pickImage();
                       setIsModalVisible(false);
-                      pickImage();
                     }}
                   >
                     <Text className="title-2 text-gray-90">갤러리</Text>
