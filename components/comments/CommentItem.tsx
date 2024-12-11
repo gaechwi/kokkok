@@ -43,7 +43,11 @@ interface CommentItemProps {
   likedAvatars: string[];
   createdAt: string;
   parentsCommentId?: number;
-  replyCommentId?: number;
+  replyTo?: {
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+  };
   totalReplies?: number;
   onReply: (
     userId: string,
@@ -65,7 +69,7 @@ export default function CommentItem({
   likedAvatars = [],
   createdAt,
   parentsCommentId,
-  replyCommentId,
+  replyTo,
   totalReplies,
   onReply,
   isReply = false,
@@ -126,6 +130,7 @@ export default function CommentItem({
       }
 
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
     },
     onError: () => {
       setIsLiked((prev) => !prev);
@@ -290,6 +295,9 @@ export default function CommentItem({
           }
           className="title-5 flex-1 text-gray-90"
         >
+          {isReply && replyTo?.username && (
+            <Text className="title-5 text-primary">@{replyTo.username} </Text>
+          )}
           {isTextMore ? contents : truncateText(contents)}
           {contents.length > calculateMaxChars && (
             <Text className="title-5 -mb-[3px] text-gray-45">
@@ -332,7 +340,7 @@ export default function CommentItem({
                   likedAvatars={item.likedAvatars}
                   createdAt={item.createdAt}
                   parentsCommentId={item.parentsCommentId}
-                  replyCommentId={item.replyCommentId}
+                  replyTo={item.replyTo}
                   onReply={onReply}
                   isReply={true}
                   onCommentsClose={onCommentsClose}

@@ -300,38 +300,58 @@ export default function CommentsSection({
       </MotionModal>
 
       {/* comment input */}
-      <View
-        className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
-      >
-        <Image
-          source={
-            user.data?.avatarUrl
-              ? { uri: user.data.avatarUrl }
-              : images.AvaTarDefault
-          }
-          resizeMode="cover"
-          className="size-12 rounded-full"
-        />
+      <>
+        {replyTo?.username && (
+          <View className="relative h-[40px] w-full flex-row items-center bg-gray-20">
+            <Text className="w-full flex-1 items-center justify-center text-center font-pmedium text-[14px] text-gray-60 leading-[150%]">
+              <Text className="font-pmedium text-[#000] text-[14px] leading-[150%]">
+                {replyTo.username}
+              </Text>
+              님께 답글 달기
+            </Text>
 
-        <MentionInput
-          ref={inputRef}
-          value={comment}
-          onChangeText={(text) => {
-            setComment(text);
-          }}
-          setReplyTo={setReplyTo}
-          placeholder={
-            replyTo ? `${replyTo.username}님에게 답글` : "댓글을 입력해주세요."
-          }
-          mentionUser={replyTo}
-          onSubmit={() => {
-            if (comment.trim() && !writeCommentMutation.isPending) {
-              writeCommentMutation.mutate();
+            <TouchableOpacity
+              className="-translate-y-1/2 absolute top-1/2 right-5"
+              onPress={() => setReplyTo(null)}
+            >
+              <Icons.XIcon width={16} height={16} color={colors.gray[90]} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View
+          className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
+        >
+          <Image
+            source={
+              user.data?.avatarUrl
+                ? { uri: user.data.avatarUrl }
+                : images.AvaTarDefault
             }
-          }}
-          isPending={writeCommentMutation.isPending}
-        />
-      </View>
+            resizeMode="cover"
+            className="size-12 rounded-full"
+          />
+
+          <MentionInput
+            ref={inputRef}
+            value={comment}
+            onChangeText={(text) => {
+              setComment(text);
+            }}
+            placeholder={
+              replyTo
+                ? `${replyTo.username}님에게 답글`
+                : "댓글을 입력해주세요."
+            }
+            onSubmit={() => {
+              if (comment.trim() && !writeCommentMutation.isPending) {
+                writeCommentMutation.mutate();
+              }
+            }}
+            isPending={writeCommentMutation.isPending}
+          />
+        </View>
+      </>
       <Toast config={ToastConfig} />
     </MotionModal>
   );
