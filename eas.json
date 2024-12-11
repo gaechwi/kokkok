@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 14.1.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "$(SUPABASE_URL)",
+        "SUPABASE_ANON_KEY": "$(SUPABASE_ANON_KEY)"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "$(SUPABASE_URL)",
+        "SUPABASE_ANON_KEY": "$(SUPABASE_ANON_KEY)"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "SUPABASE_URL": "$(SUPABASE_URL)",
+        "SUPABASE_ANON_KEY": "$(SUPABASE_ANON_KEY)"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
