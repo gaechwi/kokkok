@@ -177,7 +177,7 @@ export default function MotionModal({
               }}
             >
               <SafeAreaView
-                edges={["bottom", "top"]}
+                edges={["top"]}
                 className="h-full rounded-t-[20px] border border-gray-20 bg-white"
               >
                 <View
