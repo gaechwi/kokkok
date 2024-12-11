@@ -134,7 +134,11 @@ export default function Upload() {
       return;
     }
 
-    if (uploadPostMutation.isPending || addWorkoutHistoryMutation.isPending || editPostMutation.isPending)
+    if (
+      uploadPostMutation.isPending ||
+      addWorkoutHistoryMutation.isPending ||
+      editPostMutation.isPending
+    )
       return;
 
     try {
@@ -171,22 +175,22 @@ export default function Upload() {
     }
 
     // 권한 요청
-    const { status, accessPrivileges } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted" && accessPrivileges !== "limited") {
-      Alert.alert(
-        "사진 접근 권한 필요",
-        "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
-        [
-          { text: "취소", style: "cancel" },
-          {
-            text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
-          },
-        ],
-      );
-      return;
-    }
+    // const { status, accessPrivileges } =
+    //   await ImagePicker.requestMediaLibraryPermissionsAsync();
+    // if (status !== "granted" && accessPrivileges !== "limited") {
+    //   Alert.alert(
+    //     "사진 접근 권한 필요",
+    //     "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+    //     [
+    //       { text: "취소", style: "cancel" },
+    //       {
+    //         text: "설정으로 이동",
+    //         onPress: () => Linking.openURL("app-settings:"),
+    //       },
+    //     ],
+    //   );
+    //   return;
+    // }
 
     // 이미지 선택 모달 표시
     const result = await ImagePicker.launchImageLibraryAsync(imageOptions);
@@ -205,21 +209,21 @@ export default function Upload() {
       return;
     }
     // 카메라 권한 요청
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "카메라 접근 권한 필요",
-        "앱에서 카메라에 접근하려면 설정에서 권한을 변경해주세요.",
-        [
-          { text: "취소", style: "cancel" },
-          {
-            text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
-          },
-        ],
-      );
-      return;
-    }
+    // const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    // if (status !== "granted") {
+    //   Alert.alert(
+    //     "카메라 접근 권한 필요",
+    //     "앱에서 카메라에 접근하려면 설정에서 권한을 변경해주세요.",
+    //     [
+    //       { text: "취소", style: "cancel" },
+    //       {
+    //         text: "설정으로 이동",
+    //         onPress: () => Linking.openURL("app-settings:"),
+    //       },
+    //     ],
+    //   );
+    //   return;
+    // }
 
     // 카메라 실행
     const result = await ImagePicker.launchCameraAsync(imageOptions);
