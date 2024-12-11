@@ -28,7 +28,7 @@ export default function PostGrid({ posts, isError }: PostGridProps) {
           source={images.ErrorPost}
           className="h-[178px] w-[234px]"
           resizeMode="contain"
-          accessibilityLabel="이미지를 불러오지 못했습니다."
+          accessibilityLabel="게시물을 불러오지 못했습니다."
           accessibilityRole="image"
         />
       </View>
