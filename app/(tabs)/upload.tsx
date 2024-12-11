@@ -157,11 +157,11 @@ export default function Upload() {
   };
 
   const imageOptions: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ["images"],
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.8,
-    exif: false,
+    // exif: false,
   };
 
   const pickImage = async () => {
