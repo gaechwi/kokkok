@@ -2,6 +2,7 @@ import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
+import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
 
@@ -15,11 +16,14 @@ import type { NotificationResponse } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@env";
 import { formatDate } from "./formatDate";
 
-const supabaseUrl = SUPABASE_URL;
-const supabaseAnonKey = SUPABASE_ANON_KEY;
+const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
+const supabaseAnonKey = Constants.expoConfig?.extra?.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("환경 변수 로드가 잘못되었습니다.");
+}
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -277,11 +281,11 @@ export async function updateNotificationCheck(userId: string) {
 // 유저 데이터베이스 삭제 (Edge function)
 export async function deleteUser(userId: string) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        Authorization: `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ userId }),
     });
