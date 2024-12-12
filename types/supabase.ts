@@ -480,6 +480,11 @@ export type Database = {
           createdAt: string;
           parentsCommentId: number;
           replyCommentId: number;
+          replyTo: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
           userData: {
             id: string;
             username: string;
@@ -498,7 +503,7 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like" | "commentLike";
+      notificationtype: "poke" | "comment" | "like" | "commentLike" | "mention";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {

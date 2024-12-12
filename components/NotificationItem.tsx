@@ -34,6 +34,10 @@ export function NotificationItem({
     [NOTIFICATION_TYPE.LIKE]: {
       title: [`${from.username}님이`, "게시글에 좋아요를 눌렀어요❤️"],
     },
+    [NOTIFICATION_TYPE.MENTION]: {
+      title: `${from.username}님이 회원님을 언급했어요`,
+      content: shorten_comment(data?.commentInfo?.content || ""),
+    },
   };
 
   const diff = diffDate(new Date(createdAt));
