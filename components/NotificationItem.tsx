@@ -28,6 +28,10 @@ export function NotificationItem({
       title: `${from.username}님의 댓글`,
       content: shorten_comment(data?.commentInfo?.content || ""),
     },
+    [NOTIFICATION_TYPE.MENTION]: {
+      title: `${from.username}님의 멘션`,
+      content: shorten_comment(data?.commentInfo?.content || ""),
+    },
     [NOTIFICATION_TYPE.COMMENT_LIKE]: {
       title: [`${from.username}님이`, "댓글에 좋아요를 눌렀어요❤️"],
     },
