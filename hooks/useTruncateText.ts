@@ -18,10 +18,7 @@ export const useTruncateText = () => {
 
       let result: string;
       if (lastSentence?.length) {
-        result = truncated.slice(
-          0,
-          truncated.lastIndexOf(lastSentence[lastSentence.length - 1]) + 1,
-        );
+        result = lastSentence[0].replace(/[.!?]+$/, "");
       } else {
         const lastSpace = truncated.lastIndexOf(" ");
         result = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;

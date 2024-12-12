@@ -36,7 +36,7 @@ import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
-const { height: deviceHeight } = Dimensions.get("window");
+const { height: deviceHeight, width: deviceWidth } = Dimensions.get("window");
 
 interface CommentsSectionProps {
   visible: boolean;
@@ -135,7 +135,10 @@ export default function CommentsSection({
 
       const replyToId = replyTo?.userId || authorId;
       if (replyToId !== user.data?.id) {
-        sendNotificationMutation.mutate({ commentId: data.id });
+        sendNotificationMutation.mutate({
+          commentId: data.id,
+          type: replyToId === authorId ? "comment" : "mention",
+        });
       }
 
       setComment("");
@@ -151,11 +154,14 @@ export default function CommentsSection({
   });
 
   const sendNotificationMutation = useMutation({
-    mutationFn: ({ commentId }: { commentId: number }) =>
+    mutationFn: ({
+      commentId,
+      type = "comment",
+    }: { commentId: number; type?: "comment" | "mention" }) =>
       createNotification({
         from: user.data?.id || "",
         to: replyTo?.userId || authorId || "",
-        type: "comment",
+        type: type,
         data: {
           postId,
           commentInfo: {
@@ -300,38 +306,68 @@ export default function CommentsSection({
       </MotionModal>
 
       {/* comment input */}
-      <View
-        className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
-      >
-        <Image
-          source={
-            user.data?.avatarUrl
-              ? { uri: user.data.avatarUrl }
-              : images.AvaTarDefault
-          }
-          resizeMode="cover"
-          className="size-12 rounded-full"
-        />
+      <>
+        {replyTo?.username && (
+          <View className="relative h-[40px] w-full flex-row items-center justify-center bg-gray-20">
+            <View
+              className="flex-row items-center justify-center text-center"
+              style={{ width: "70%" }}
+            >
+              <Text
+                className="shrink font-pmedium text-[#000] text-[14px] leading-[150%]"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {replyTo.username}
+              </Text>
 
-        <MentionInput
-          ref={inputRef}
-          value={comment}
-          onChangeText={(text) => {
-            setComment(text);
-          }}
-          setReplyTo={setReplyTo}
-          placeholder={
-            replyTo ? `${replyTo.username}님에게 답글` : "댓글을 입력해주세요."
-          }
-          mentionUser={replyTo}
-          onSubmit={() => {
-            if (comment.trim() && !writeCommentMutation.isPending) {
-              writeCommentMutation.mutate();
+              <Text className="shrink-0 font-pmedium text-[14px] text-gray-60 leading-[150%]">
+                님께 답글 달기
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              className="-translate-y-1/2 absolute top-1/2 right-5"
+              onPress={() => setReplyTo(null)}
+            >
+              <Icons.XIcon width={16} height={16} color={colors.gray[90]} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View
+          className={`z-10 h-20 flex-row items-center gap-4 bg-white px-[18px] pt-4 ${Platform.OS === "ios" ? "pb-8" : "pb-4"}`}
+        >
+          <Image
+            source={
+              user.data?.avatarUrl
+                ? { uri: user.data.avatarUrl }
+                : images.AvaTarDefault
             }
-          }}
-          isPending={writeCommentMutation.isPending}
-        />
-      </View>
+            resizeMode="cover"
+            className="size-12 rounded-full"
+          />
+
+          <MentionInput
+            ref={inputRef}
+            value={comment}
+            onChangeText={(text) => {
+              setComment(text);
+            }}
+            placeholder={
+              replyTo
+                ? `${replyTo.username.length > 10 ? `${replyTo.username.slice(0, 10)}...` : replyTo.username}님께 답글을 남겨보세요.`
+                : "댓글을 입력해주세요."
+            }
+            onSubmit={() => {
+              if (comment.trim() && !writeCommentMutation.isPending) {
+                writeCommentMutation.mutate();
+              }
+            }}
+            isPending={writeCommentMutation.isPending}
+          />
+        </View>
+      </>
       <Toast config={ToastConfig} />
     </MotionModal>
   );
