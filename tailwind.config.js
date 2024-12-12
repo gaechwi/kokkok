@@ -30,6 +30,7 @@ module.exports = {
         pregular: ["Pretendard-Regular"],
         psemibold: ["Pretendard-SemiBold"],
         pthin: ["Pretendard-Thin"],
+        pjalnan: ["Jalnan"],
       },
     },
   },

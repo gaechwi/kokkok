@@ -32,6 +32,7 @@ export default function RootLayout() {
     "Pretendard-Regular": require("../assets/fonts/Pretendard-Regular.otf"),
     "Pretendard-SemiBold": require("../assets/fonts/Pretendard-SemiBold.otf"),
     "Pretendard-Thin": require("../assets/fonts/Pretendard-Thin.otf"),
+    Jalnan: require("../assets/fonts/Jalnan2.otf"),
   });
 
   useOnlineManager();
