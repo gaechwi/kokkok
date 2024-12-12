@@ -21,6 +21,10 @@ import { formatDate } from "./formatDate";
 const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
 const supabaseAnonKey = Constants.expoConfig?.extra?.SUPABASE_ANON_KEY;
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("환경 변수 로드가 잘못되었습니다.");
+}
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
