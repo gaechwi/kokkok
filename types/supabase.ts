@@ -498,7 +498,7 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like" | "commentLike";
+      notificationtype: "poke" | "comment" | "like" | "commentLike" | "mention";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {
