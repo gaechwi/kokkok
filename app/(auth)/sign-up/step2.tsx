@@ -1,26 +1,26 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
-import images from "@constants/images";
-import { useAtom } from "jotai";
-import { signUpFormAtom } from "@contexts/auth";
-import { useRouter } from "expo-router";
-import { signUp, verifySignUpOTP } from "@/utils/supabase";
-import { useState } from "react";
-import { formatTime } from "@/utils/formatTime";
+import { OTP_TIME } from "@/constants/time";
 import {
   alertExpirationOnTimeout,
   useTimerWithDuration,
 } from "@/hooks/useTimer";
-import { OTP_TIME } from "@/constants/time";
+import { formatTime } from "@/utils/formatTime";
+import { signUp, verifySignUpOTP } from "@/utils/supabase";
+import images from "@constants/images";
+import { signUpFormAtom } from "@contexts/auth";
+import { useRouter } from "expo-router";
+import { useAtom } from "jotai";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
@@ -46,7 +46,7 @@ const Step2 = () => {
         description: signUpForm.description,
       });
 
-      router.replace("/home");
+      router.replace("/onboarding");
     } catch (error) {
       if (
         error instanceof Error &&

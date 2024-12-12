@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import images from "@/constants/images";
+import { router } from "expo-router";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -43,7 +44,7 @@ export default function Onboarding() {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
       setCurrentIndex((prev) => prev + 1);
     } else {
-      console.log("온보딩 완료");
+      router.replace("/home");
     }
   };
 
