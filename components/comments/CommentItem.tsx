@@ -143,6 +143,12 @@ export default function CommentItem({
         from: user.data?.id || "",
         to: author?.id || "",
         type: "commentLike",
+        data: {
+          postId,
+          commentInfo: {
+            id,
+          },
+        },
       }),
   });
 

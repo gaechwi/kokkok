@@ -107,6 +107,7 @@ export default function PostItem({
         from: user.data?.id || "",
         to: author.id,
         type: "like",
+        data: { postId },
       }),
   });
 

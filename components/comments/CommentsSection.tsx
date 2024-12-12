@@ -135,7 +135,10 @@ export default function CommentsSection({
 
       const replyToId = replyTo?.userId || authorId;
       if (replyToId !== user.data?.id) {
-        sendNotificationMutation.mutate({ commentId: data.id });
+        sendNotificationMutation.mutate({
+          commentId: data.id,
+          type: replyToId === authorId ? "comment" : "mention",
+        });
       }
 
       setComment("");
@@ -151,11 +154,14 @@ export default function CommentsSection({
   });
 
   const sendNotificationMutation = useMutation({
-    mutationFn: ({ commentId }: { commentId: number }) =>
+    mutationFn: ({
+      commentId,
+      type = "comment",
+    }: { commentId: number; type?: "comment" | "mention" }) =>
       createNotification({
         from: user.data?.id || "",
         to: replyTo?.userId || authorId || "",
-        type: "comment",
+        type: type,
         data: {
           postId,
           commentInfo: {
