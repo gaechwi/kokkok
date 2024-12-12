@@ -1,10 +1,16 @@
+import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Session, createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
 
-import type { RequestResponse, StatusInfo } from "@/types/Friend.interface";
+import {
+  RELATION_TYPE,
+  type RelationType,
+  type RequestResponse,
+  type StatusInfo,
+} from "@/types/Friend.interface";
 import type { NotificationResponse } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
@@ -233,15 +239,23 @@ export async function updateMyProfile(
   },
 ) {
   try {
-    const avatarUrl = profile.avatarUrl
-      ? await uploadImage(profile.avatarUrl)
-      : null;
+    let newAvatarUrl: string | undefined;
+
+    if (profile.avatarUrl === null || profile.avatarUrl === undefined) {
+      // 이미지 삭제 시 기본 이미지 URL 사용
+      newAvatarUrl = DEFAULT_AVATAR_URL;
+    } else if (profile.avatarUrl && !profile.avatarUrl.uri.startsWith("http")) {
+      // 새로운 이미지이고 로컬 파일인 경우에만 업로드
+      newAvatarUrl = await uploadImage(profile.avatarUrl);
+    }
+
+    const { avatarUrl, ...profileData } = profile;
 
     await supabase
       .from("user")
       .update({
-        ...profile,
-        avatarUrl: avatarUrl || null,
+        ...profileData,
+        ...(newAvatarUrl && { avatarUrl: newAvatarUrl }),
       })
       .eq("id", userId);
   } catch (error) {
@@ -260,15 +274,56 @@ export async function updateNotificationCheck(userId: string) {
   if (error) throw error;
 }
 
-// 유저 데이터베이스 삭제
+// 유저 데이터베이스 삭제 (Edge function)
 export async function deleteUser(userId: string) {
   try {
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-    if (deleteError) throw deleteError;
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+
+    // 연관된 데이터 삭제 (순서 중요)
+    // 1. 알림 삭제
+    await supabase
+      .from("notification")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 2. 친구 요청 삭제
+    await supabase
+      .from("friendRequest")
+      .delete()
+      .or(`from.eq.${userId},to.eq.${userId}`);
+
+    // 3. 댓글 좋아요 삭제
+    await supabase.from("commentLike").delete().eq("userId", userId);
+
+    // 4. 댓글 삭제
+    await supabase.from("comment").delete().eq("userId", userId);
+
+    // 5. 게시글 좋아요 삭제
+    await supabase.from("postLike").delete().eq("userId", userId);
+
+    // 6. 게시글 삭제
+    await supabase.from("post").delete().eq("userId", userId);
+
+    // 7. 운동 기록 삭제
+    await supabase.from("workoutHistory").delete().eq("userId", userId);
+
+    // 8. 유저 데이터 삭제
     await supabase.from("user").delete().eq("id", userId);
+
+    return await response.json();
   } catch (error) {
-    console.log(error);
     const errorMessage =
       error instanceof Error ? error.message : "유저 삭제에 실패했습니다";
     throw new Error(errorMessage);
@@ -340,7 +395,7 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
     return {
       posts: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -352,72 +407,37 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
 // 게시글 상세 조회
 export async function getPost(postId: number) {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data, error } = await supabase.rpc("get_post_with_details", {
+      postId,
+    });
 
-    const { data: post, error: postError } = await supabase
-      .from("post")
-      .select(
-        `
-        id,
-        images,
-        contents,
-        likes,
-        createdAt,
-        user (id, username, avatarUrl)
-      `,
-      )
-      .eq("id", postId)
-      .single();
+    if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 
-    if (postError) throw postError;
-    if (!post) throw new Error("게시글을 찾을 수 없습니다.");
+    return data;
+  } catch (error) {
+    console.error("Error in getPost:", error);
+    throw new Error("게시글을 가져오는데 실패했습니다.");
+  }
+}
 
-    const {
-      data: comment,
-      error: commentError,
-      count,
-    } = await supabase
-      .from("comment")
-      .select("id, contents, likes, author:user (id, username, avatarUrl)", {
-        count: "exact",
-      })
+// 게시글 좋아요 조회
+export async function getPostLikes(postId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("postLike")
+      .select("author:user (id, username, avatarUrl)")
       .eq("postId", postId)
-      .order("likes", { ascending: false })
-      .order("createdAt", { ascending: false })
-      .single();
+      .order("createdAt", { ascending: true });
 
-    if (commentError && commentError.code !== "PGRST116") {
-      // 댓글이 없는 경우 오류 처리
-      throw commentError;
-    }
+    if (error) throw error;
+    if (!data) throw new Error("게시글 좋아요를 불러올 수 없습니다.");
 
-    let isLiked = false;
-
-    if (user) {
-      // postLike 테이블에서 좋아요 여부 확인
-      const { data: likeData, error: likeError } = await supabase
-        .from("postLike")
-        .select("id")
-        .eq("postId", postId)
-        .eq("userId", user.id)
-        .single();
-
-      if (likeError && likeError.code !== "PGRST116") {
-        throw likeError;
-      }
-      isLiked = !!likeData; // 좋아요 데이터가 존재하면 true
-    }
-
-    return {
-      ...post,
-      comment: { ...comment, totalComments: count },
-      isLiked,
-    };
+    return data;
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "게시글 조회에 실패했습니다";
+      error instanceof Error
+        ? error.message
+        : "게시글 좋아요 조회에 실패했습니다";
     throw new Error(errorMessage);
   }
 }
@@ -638,7 +658,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
       .eq("postId", postId)
       .is("parentsCommentId", null);
 
-    const { data, error } = await supabase.rpc("get_comments_with_top_reply", {
+    const { data, error } = await supabase.rpc("get_comments", {
       postid: postId,
       startindex: start,
       endindex: end,
@@ -650,7 +670,7 @@ export async function getComments(postId: number, page = 0, limit = 10) {
     return {
       comments: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -663,8 +683,8 @@ export async function getComments(postId: number, page = 0, limit = 10) {
 // 답글 조회
 export async function getReplies(parentId: number, page = 0, limit = 10) {
   try {
-    const start = page * limit;
-    const end = start + limit - 1;
+    const start = page === 0 ? 0 : (page - 1) * limit + 1;
+    const end = page === 0 ? 1 : start + limit;
 
     const { count } = await supabase
       .from("comment")
@@ -689,10 +709,12 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
     if (error) throw error;
     if (!data) throw new Error("답글을 가져올 수 없습니다.");
 
+    const hasNext = page === 0 ? count > 1 : data.length === limit;
+
     return {
       replies: data,
       total: count ?? data.length,
-      hasNext: data.length === limit,
+      hasNext,
       nextPage: page + 1,
     };
   } catch (error) {
@@ -701,6 +723,29 @@ export async function getReplies(parentId: number, page = 0, limit = 10) {
     );
   }
 }
+
+// 댓글 좋아요 조회
+export async function getCommentLikes(commentId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("commentLike")
+      .select("author:user (id, username, avatarUrl)")
+      .eq("commentId", commentId)
+      .order("createdAt", { ascending: true });
+
+    if (error) throw error;
+    if (!data) throw new Error("댓글 좋아요를 불러올 수 없습니다.");
+
+    return data;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "댓글 좋아요 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
 // 댓글 좋아요 토글
 export async function toggleLikeComment(commentId: number) {
   try {
@@ -875,19 +920,69 @@ export async function getMyPosts(userId: string) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(userId: string): Promise<UserProfile[]> {
+export async function getFriends(
+  userId: string,
+  keyword = "",
+): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from("friendRequest")
     .select(
       "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
     )
     .eq("from", userId)
+    .ilike("to.username", `%${keyword}%`)
     .eq("isAccepted", true);
 
   if (error) throw error;
   if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  return data.map(({ to }) => to as UserProfile);
+  return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
+}
+
+export async function getFriendStatus(
+  userId: string,
+  friendId: string,
+): Promise<RelationType> {
+  // 내가 보낸 요청
+  const { data: asking, error: askingError } = await supabase
+    .from("friendRequest")
+    .select("isAccepted")
+    .eq("from", userId)
+    .eq("to", friendId)
+    .limit(1);
+  if (askingError) throw askingError;
+
+  // 내가 받은 요청
+  const { data: asked, error: askedError } = await supabase
+    .from("friendRequest")
+    .select("isAccepted")
+    .eq("from", friendId)
+    .eq("to", userId)
+    .limit(1);
+  if (askedError) throw askedError;
+
+  if (!asked || !asking)
+    throw new Error(
+      `친구 관계를 불러올 수 없습니다.
+      asking: ${asking}, asked: ${asked}`,
+    );
+
+  // 서로 친구 요청 없으면 NONE
+  if (!asked.length && !asking.length) return RELATION_TYPE.NONE;
+  // 내가 보낸 요청만 있고, 아직 수락 전이면 ASKING
+  if (!asked.length && asking[0]?.isAccepted === null)
+    return RELATION_TYPE.ASKING;
+  // 내가 받은 요청만 있고, 아직 수락 전이면 ASKED
+  if (asked[0]?.isAccepted === null && !asking.length)
+    return RELATION_TYPE.ASKED;
+  // 서로 친구요청 수락 상태면 FRIEND
+  if (asked[0]?.isAccepted && asking[0]?.isAccepted)
+    return RELATION_TYPE.FRIEND;
+
+  // 나머지는 DB가 잘못된 상황
+  throw new Error(`친구 DB 확인 필요합니다!
+    내 요청: ${asking[0]?.isAccepted}
+    상대방 요청: ${asked[0]?.isAccepted}`);
 }
 
 // 모든 친구의 운동 상태 조회
@@ -908,7 +1003,7 @@ export async function getFriendsStatus(
   return data;
 }
 
-// 친구요청 조회 조회
+// 친구요청 조회
 export async function getFriendRequests(
   userId: string,
   offset = 0,
@@ -943,6 +1038,35 @@ export async function getFriendRequests(
   };
 }
 
+// 친구요청 있는지 조회
+export async function checkFriendRequest(requestId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("id", requestId);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+  return !!data.length;
+}
+
+export async function checkFriendRequestWithUserId(
+  from: string,
+  to: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("friendRequest")
+    .select("id")
+    .eq("from", from)
+    .eq("to", to);
+
+  if (error) throw error;
+  if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
+
+  return !!data.length;
+}
+
 // 친구요청 생성
 export async function createFriendRequest(
   from: string,
@@ -956,12 +1080,16 @@ export async function createFriendRequest(
   if (error) throw error;
 }
 
-// 친구요청 반응 업데이트
-export async function putFriendRequest(requestId: number, isAccepted: boolean) {
-  const { error } = await supabase
-    .from("friendRequest")
-    .update({ isAccepted })
-    .eq("id", requestId);
+export async function acceptFriendRequest(
+  fromUserId: string,
+  toUserId: string,
+  requestId: number | null = null,
+) {
+  const { data, error } = await supabase.rpc("accept_friend_request", {
+    from_user_id: fromUserId,
+    request_id: requestId,
+    to_user_id: toUserId,
+  });
 
   if (error) throw error;
 }
@@ -972,6 +1100,17 @@ export async function deleteFriendRequest(requestId: number) {
     .from("friendRequest")
     .delete()
     .eq("id", requestId);
+
+  if (error) throw error;
+}
+
+// 유저 아이디로 친구 요청 삭제
+export async function deleteFriendRequestWithUserId(from: string, to: string) {
+  const { error } = await supabase
+    .from("friendRequest")
+    .delete()
+    .eq("from", from)
+    .eq("to", to);
 
   if (error) throw error;
 }
@@ -1074,6 +1213,42 @@ export async function deleteRestDay(
   }
 }
 
+// 운동 기록 추가
+export async function addWorkoutHistory({ date }: { date: string }) {
+  const { user } = await getCurrentSession();
+
+  const { data: todayHistory, error: selectError } = await supabase
+    .from("workoutHistory")
+    .select("date")
+    .eq("userId", user.id)
+    .eq("date", date)
+    .single();
+
+  if (selectError && selectError.code !== "PGRST116") {
+    throw selectError;
+  }
+
+  if (todayHistory) {
+    return todayHistory;
+  }
+
+  const { data, error: insertError } = await supabase
+    .from("workoutHistory")
+    .insert([
+      {
+        userId: user.id,
+        date,
+        status: "done",
+      },
+    ]);
+
+  if (insertError) {
+    throw insertError;
+  }
+
+  return { message: "운동 기록이 추가되었습니다." };
+}
+
 // ============================================
 //
 //                 notification
@@ -1154,16 +1329,6 @@ export async function createNotification(notification: Notification) {
 //                    type
 //
 // ============================================
-
-// 게시글 타입 정의
-interface Post {
-  id: string;
-  images: string[];
-  contents: string;
-  createdAt: string;
-  likes: number;
-  // author: User;
-}
 
 // 운동 기록 타입 정의
 type HistoryDate = `${number}-${number}-${number}`;

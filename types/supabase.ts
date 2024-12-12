@@ -19,6 +19,7 @@ export type Database = {
           likes: number | null;
           parentsCommentId: number | null;
           postId: number;
+          replyCommentId: number | null;
           userId: string;
         };
         Insert: {
@@ -28,6 +29,7 @@ export type Database = {
           likes?: number | null;
           parentsCommentId?: number | null;
           postId: number;
+          replyCommentId?: number | null;
           userId?: string;
         };
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           likes?: number | null;
           parentsCommentId?: number | null;
           postId?: number;
+          replyCommentId?: number | null;
           userId?: string;
         };
         Relationships: [
@@ -52,6 +55,13 @@ export type Database = {
             columns: ["postId"];
             isOneToOne: false;
             referencedRelation: "post";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comment_replyCommentId_fkey";
+            columns: ["replyCommentId"];
+            isOneToOne: false;
+            referencedRelation: "comment";
             referencedColumns: ["id"];
           },
           {
@@ -92,42 +102,6 @@ export type Database = {
           },
           {
             foreignKeyName: "commentLike_userId_fkey";
-            columns: ["userId"];
-            isOneToOne: false;
-            referencedRelation: "user";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      friendHistory: {
-        Row: {
-          createAt: string | null;
-          historyId: number | null;
-          id: number;
-          userId: string | null;
-        };
-        Insert: {
-          createAt?: string | null;
-          historyId?: number | null;
-          id?: number;
-          userId?: string | null;
-        };
-        Update: {
-          createAt?: string | null;
-          historyId?: number | null;
-          id?: number;
-          userId?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "friendHistory_historyId_fkey";
-            columns: ["historyId"];
-            isOneToOne: false;
-            referencedRelation: "workoutHistory";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "friendHistory_userId_fkey";
             columns: ["userId"];
             isOneToOne: false;
             referencedRelation: "user";
@@ -287,6 +261,41 @@ export type Database = {
           },
         ];
       };
+      pushToken: {
+        Row: {
+          createdAt: string;
+          deviceId: string;
+          grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
+          id: number;
+          pushToken: string;
+          userId: string;
+        };
+        Insert: {
+          createdAt?: string;
+          deviceId: string;
+          grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
+          id?: number;
+          pushToken: string;
+          userId: string;
+        };
+        Update: {
+          createdAt?: string;
+          deviceId?: string;
+          grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
+          id?: number;
+          pushToken?: string;
+          userId?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pushToken_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "user";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user: {
         Row: {
           avatarUrl: string | null;
@@ -360,13 +369,21 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_friend_request: {
+        Args: {
+          request_id: number | null;
+          from_user_id: string;
+          to_user_id: string;
+        };
+        Returns: undefined;
+      };
       decrement_comment_likes: {
         Args: {
           p_comment_id: number;
         };
         Returns: undefined;
       };
-      get_comments_with_top_reply: {
+      get_comments: {
         Args: {
           postid: number;
           startindex: number;
@@ -383,27 +400,41 @@ export type Database = {
             avatarUrl: string | null;
           };
           likes: number;
-          parentsCommentId: number | null;
-          replyCommentId: number | null;
           isLiked: boolean;
           likedAvatars: string[];
+          parentsCommentId: number;
           totalReplies: number;
-          topReply: {
+        }[];
+      };
+      get_post_with_details: {
+        Args: {
+          postId: number;
+        };
+        Returns: {
+          id: number;
+          images: string[];
+          contents: string;
+          createdAt: string;
+          userData: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
+          commentData: {
             id: number;
             contents: string;
-            userId: string;
             createdAt: string;
-            parentsCommentId: number;
-            replyCommentId: number;
-            user: {
+            userId: string;
+            author: {
               id: string;
               username: string;
               avatarUrl: string | null;
             };
-            isLiked: boolean;
-            likedAvatars: string[];
-          } | null;
-        }[];
+          };
+          totalComments: number;
+          likedAvatars: string[];
+          isLikedByUser: boolean;
+        };
       };
       get_posts_with_details: {
         Args: {

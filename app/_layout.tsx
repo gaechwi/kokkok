@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
-
+import Toast from "react-native-toast-message";
 import "../global.css";
 import { HeaderWithBack } from "@/components/Header";
 import { ToastConfig } from "@/components/ToastConfig";
@@ -12,7 +12,6 @@ import { useAppState } from "@/hooks/useAppState";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import { supabase } from "@/utils/supabase";
 import { useFonts } from "expo-font";
-import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -62,7 +61,12 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
+        }}
+      >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -81,6 +85,7 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+        <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
       </Stack>
       <Toast config={ToastConfig} />
     </QueryClientProvider>

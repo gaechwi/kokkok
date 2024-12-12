@@ -1,8 +1,15 @@
 import CustomModal, { OneButtonModal } from "@/components/Modal";
+import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
-import { createPost, getPost, updatePost } from "@/utils/supabase";
+import { formatDate } from "@/utils/formatDate";
+import {
+  addWorkoutHistory,
+  createPost,
+  getPost,
+  updatePost,
+} from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -29,6 +36,13 @@ export default function Upload() {
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const queryClient = useQueryClient();
 
+  const post = useFetchData(
+    ["post", postId],
+    () => (postId ? getPost(postId) : Promise.resolve(null)),
+    "게시글을 불러오는 도중 에러가 발생했습니다.",
+    postId !== undefined,
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (postId) {
@@ -42,14 +56,7 @@ export default function Upload() {
           }
         });
       }
-    }, [postId]),
-  );
-
-  const post = useFetchData(
-    ["post", postId],
-    () => (postId ? getPost(postId) : Promise.resolve(null)),
-    "게시글을 불러오는 도중 에러가 발생했습니다.",
-    postId !== undefined,
+    }, [postId, post.refetch]),
   );
 
   useEffect(() => {
@@ -73,8 +80,24 @@ export default function Upload() {
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      Alert.alert("업로드 성공", "게시물이 성공적으로 업로드되었습니다.");
+      showToast("success", "글이 작성되었어요!");
       router.back();
+    },
+    onError: () => {
+      setIsInfoModalVisible(true);
+    },
+  });
+
+  const addWorkoutHistoryMutation = useMutation({
+    mutationFn: () => {
+      const date = formatDate(new Date());
+
+      return addWorkoutHistory({
+        date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["histories"] });
     },
     onError: () => {
       setIsInfoModalVisible(true);
@@ -90,17 +113,18 @@ export default function Upload() {
       return updatePost({ postId, contents, images, prevImages });
     },
     onSuccess: () => {
+      showToast("success", "글이 수정되었어요!");
+
       setImages([]);
       setPrevImages([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      Alert.alert("수정 성공", "게시물이 성공적으로 수정되었습니다.");
-      router.back();
+      router.push("/home");
     },
     onError: () => {
-      Alert.alert("수정 실패", "게시물 수정에 실패했습니다.");
+      setIsInfoModalVisible(true);
     },
   });
 
@@ -110,12 +134,25 @@ export default function Upload() {
       return;
     }
 
-    if (uploadPostMutation.isPending || editPostMutation.isPending) return;
+    if (
+      uploadPostMutation.isPending ||
+      addWorkoutHistoryMutation.isPending ||
+      editPostMutation.isPending
+    )
+      return;
 
-    if (postId) {
-      editPostMutation.mutate();
-    } else {
-      uploadPostMutation.mutate();
+    try {
+      if (postId) {
+        await editPostMutation.mutateAsync();
+      } else {
+        // 게시글 인증 먼저 시도
+        await addWorkoutHistoryMutation.mutateAsync();
+
+        // 인증 성공 시 게시글 업로드 시도
+        await uploadPostMutation.mutateAsync();
+      }
+    } catch (error) {
+      setIsInfoModalVisible(true);
     }
   };
 
@@ -132,9 +169,11 @@ export default function Upload() {
 
     const totalImages = images.length + prevImages.length;
     if (totalImages >= 5) {
-      Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
+      showToast("fail", "이미지는 5개까지 선택가능해요");
+
       return;
     }
+
     // 권한 요청
     const { status, accessPrivileges } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -166,7 +205,7 @@ export default function Upload() {
 
     const totalImages = images.length + prevImages.length;
     if (totalImages >= 5) {
-      Alert.alert("알림", "이미지는 최대 5개까지 선택 가능합니다.");
+      showToast("fail", "이미지는 5개까지 선택가능해요");
       return;
     }
     // 카메라 권한 요청
@@ -276,9 +315,9 @@ export default function Upload() {
                 <View className="w-full items-center">
                   <TouchableOpacity
                     className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-                    onPress={() => {
+                    onPress={async () => {
+                      await takePhoto();
                       setIsModalVisible(false);
-                      takePhoto();
                     }}
                   >
                     <Text className="title-2 text-gray-90">카메라</Text>
@@ -286,9 +325,9 @@ export default function Upload() {
 
                   <TouchableOpacity
                     className="h-[82px] w-full items-center justify-center"
-                    onPress={() => {
+                    onPress={async () => {
+                      await pickImage();
                       setIsModalVisible(false);
-                      pickImage();
                     }}
                   >
                     <Text className="title-2 text-gray-90">갤러리</Text>
@@ -336,7 +375,7 @@ export default function Upload() {
 
       <OneButtonModal
         buttonText="확인"
-        contents="업로드에 실패했습니다 \n 다시한번 시도해주세요"
+        contents={"업로드에 실패했습니다 \n다시한번 시도해주세요"}
         isVisible={isInfoModalVisible}
         onClose={() => setIsInfoModalVisible(false)}
         onPress={() => setIsInfoModalVisible(false)}

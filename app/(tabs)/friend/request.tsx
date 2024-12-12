@@ -14,6 +14,7 @@ import {
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
 
 const OFFSET = 0;
 const LIMIT = 12;
@@ -34,11 +35,16 @@ export default function Request() {
     isLoading,
     error,
   } = useFetchData<RequestResponse>(
-    ["friendRequests", OFFSET],
+    ["friendRequests", session?.user.id, OFFSET],
     () => getFriendRequests(session?.user.id || ""),
     "친구 요청 조회에 실패했습니다.",
     !!session?.user,
   );
+
+  // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침
+  useFocusEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+  });
 
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {

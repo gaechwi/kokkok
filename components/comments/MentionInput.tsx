@@ -6,6 +6,7 @@ interface MentionInputProps {
   onChangeText: (text: string) => void;
   setReplyTo: (
     replyTo: {
+      userId: string;
       username: string;
       parentId: number;
       replyCommentId: number;
@@ -57,11 +58,11 @@ const MentionInput = forwardRef<TextInput, MentionInputProps>(
       <View className="flex-1 flex-row items-center">
         <View
           pointerEvents="box-only"
-          className="h-[50px] w-full flex-1 flex-row items-center gap-2 rounded-[10px] border border-gray-20 px-[13px]"
+          className="h-[50px] w-full flex-1 flex-row items-center gap-2 rounded-[10px] border border-gray-20 px-[13px] "
         >
           <TextInput
             ref={ref}
-            className="flex-1 text-gray-90"
+            className="flex-1 font-pregular text-[16px] text-gray-90 leading-[150%]"
             autoCapitalize="none"
             keyboardType="default"
             textAlignVertical="center"
@@ -80,7 +81,7 @@ const MentionInput = forwardRef<TextInput, MentionInputProps>(
             }}
           />
           {mentionText ? (
-            <Text className="absolute bg-white pl-[14px] font-pbold text-primary">
+            <Text className="absolute bg-white pl-[11.5px] font-pmedium text-[16px] text-primary leading-[150%]">
               {mentionText}
             </Text>
           ) : null}

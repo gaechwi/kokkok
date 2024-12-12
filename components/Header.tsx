@@ -19,6 +19,7 @@ const HEADER_TITLE = {
   HISTORY: "기록",
   FRIEND: "친구",
   CHANGE_PASSWORD: "비밀번호 변경",
+  POST_DETAIL: "게시물",
 } as const;
 type HeaderType = keyof typeof HEADER_TITLE;
 
@@ -45,7 +46,7 @@ export function HeaderWithBack({ name }: HeaderProps) {
           accessibilityLabel="뒤로가기"
           className="absolute left-4"
         >
-          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
+          <icons.BackIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
         <Text className="heading-2">{HEADER_TITLE[name]}</Text>
       </View>
@@ -107,18 +108,37 @@ export function HeaderWithSettingAndNotification({ name }: HeaderProps) {
   );
 }
 
-export function HeaderWithUserPage({ name }: { name: string }) {
+export function HeaderWithUsername({
+  name,
+  type = "MY_PAGE",
+}: { name: string; type?: "MY_PAGE" | "POST_PAGE" }) {
+  const isMyPage = type === "MY_PAGE";
+
   return (
-    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
+    <SafeAreaView
+      edges={isMyPage ? ["top"] : []}
+      className="border-gray-25 border-b bg-white"
+    >
       <View className="h-14 flex-row items-center gap-6 px-4">
         <TouchableOpacity
           onPress={() => router.back()}
           accessibilityLabel="뒤로가기"
           className=""
         >
-          <icons.ChevronLeftIcon width={24} height={24} color="#727272" />
+          <icons.BackIcon width={24} height={24} color="#727272" />
         </TouchableOpacity>
-        <Text className="heading-2">{name}님의 페이지</Text>
+        <View className="w-[285px] flex-row items-center">
+          <Text
+            className="title-2 flex-shrink"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {name}
+          </Text>
+          <Text className="title-2 flex-shrink-0">
+            {isMyPage ? "님의 페이지" : "님의 게시글"}
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );

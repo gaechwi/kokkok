@@ -1,36 +1,76 @@
+import MotionModal from "@/components/MotionModal";
 import CommentsSection from "@/components/comments/CommentsSection";
-import { getPosts } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import colors from "@/constants/colors";
+import Icons from "@/constants/icons";
+import { default as imgs } from "@/constants/images";
+import useFetchData from "@/hooks/useFetchData";
+import { getCurrentUser, getPostLikes, getPosts } from "@/utils/supabase";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
+  Image,
   RefreshControl,
   SafeAreaView,
+  Text,
+  TouchableOpacity,
 } from "react-native";
 import { View } from "react-native";
 import PostItem from "../../components/PostItem";
+
+const { height: deviceHeight } = Dimensions.get("window");
 
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
-  const queryClient = useQueryClient();
 
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
-  const onOpenComments = useCallback((postId: number) => {
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+
+  const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
+
+  const router = useRouter();
+
+  const user = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "사용자 정보를 불러오는데 실패했습니다.",
+  );
+
+  const { data: likedAuthorData } = useFetchData(
+    ["likedAuthorAvatar", selectedPostId],
+    () => {
+      if (selectedPostId) return getPostLikes(selectedPostId);
+      return Promise.resolve([]);
+    },
+    "좋아요한 사용자 정보를 불러오는데 실패했습니다.",
+    isLikedModalVisible,
+  );
+
+  const onOpenLikedAuthor = useCallback((postId: number) => {
     setSelectedPostId(postId);
-    setIsCommentsVisible(true);
+    setIsLikedModalVisible(true);
   }, []);
+
+  const onOpenComments = useCallback(
+    ({ postId, authorId }: { postId: number; authorId: string }) => {
+      setSelectedPostId(postId);
+      setSelectedAuthorId(authorId);
+
+      setIsCommentsVisible(true);
+    },
+    [],
+  );
 
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
     setSelectedPostId(null);
+    setSelectedAuthorId(null);
   }, []);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
@@ -75,7 +115,7 @@ export default function Home() {
             }}
             images={post.images}
             liked={post.isLikedByUser}
-            likedAuthorAvatar={post.likedAvatars ?? []}
+            likedAuthorAvatars={post.likedAvatars ?? []}
             contents={post.contents}
             createdAt={post.createdAt}
             commentsCount={post.totalComments ?? 0}
@@ -87,7 +127,13 @@ export default function Home() {
               content: post.commentData?.contents ?? "",
             }}
             postId={Number(post.id)}
-            onCommentsPress={() => onOpenComments(Number(post.id))}
+            onCommentsPress={() =>
+              onOpenComments({
+                postId: Number(post.id),
+                authorId: post.userData?.id ?? "",
+              })
+            }
+            onAuthorPress={onOpenLikedAuthor}
           />
         )}
         onEndReachedThreshold={0.5}
@@ -104,15 +150,70 @@ export default function Home() {
         showsHorizontalScrollIndicator={false}
       />
 
-      {isCommentsVisible && selectedPostId !== null && (
-        <View className="flex-1">
-          <CommentsSection
-            visible={isCommentsVisible}
-            onClose={onCloseComments}
-            postId={selectedPostId}
-          />
-        </View>
-      )}
+      {isCommentsVisible &&
+        selectedPostId !== null &&
+        selectedAuthorId !== null && (
+          <View className="flex-1">
+            <CommentsSection
+              visible={isCommentsVisible}
+              onClose={onCloseComments}
+              postId={selectedPostId}
+              authorId={selectedAuthorId}
+            />
+          </View>
+        )}
+
+      <View className="flex-1 ">
+        <MotionModal
+          visible={isLikedModalVisible}
+          onClose={() => setIsLikedModalVisible(false)}
+          maxHeight={deviceHeight}
+          initialHeight={deviceHeight * 0.6}
+        >
+          <View className="flex-1 ">
+            <FlatList
+              className="w-full px-4 py-2 "
+              data={likedAuthorData}
+              keyExtractor={(item, index) => `liked-author-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsLikedModalVisible(false);
+                    if (user.data?.id === item.author?.id)
+                      router.push("/mypage");
+                    else router.push(`/user/${item.author?.id}`);
+                  }}
+                  className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
+                >
+                  <Image
+                    source={
+                      item.author?.avatarUrl
+                        ? { uri: item.author?.avatarUrl }
+                        : imgs.AvaTarDefault
+                    }
+                    resizeMode="cover"
+                    className="size-10 rounded-full"
+                  />
+                  <Text
+                    className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.author?.username}
+                  </Text>
+
+                  <Icons.HeartIcon
+                    width={24}
+                    height={24}
+                    color={colors.secondary.red}
+                    fill={colors.secondary.red}
+                  />
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </MotionModal>
+      </View>
     </SafeAreaView>
   );
 }
