@@ -210,7 +210,7 @@ function Slide3({ isActive = false }: SlideProps) {
   }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
 
   const text1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text1Offset.value }],
+    transform: [{ translateY: text1Offset.value }, { rotate: "8.5deg" }],
     opacity: opacity1.value,
   }));
 
@@ -226,7 +226,7 @@ function Slide3({ isActive = false }: SlideProps) {
     >
       <Animated.View
         style={text1Style}
-        className="absolute top-[130px] right-[70px]"
+        className="absolute top-[130px] right-[80px]"
       >
         <Text className="font-pjalnan text-[110px] text-primary">콕!</Text>
       </Animated.View>
