@@ -37,9 +37,20 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/Pretendard-Regular.otf"]
+          "fonts": [
+            "./assets/fonts/Pretendard-Regular.otf"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "85f67272-5b0c-4bdc-9b49-4d03903e47ba"
+      }
+    },
+    "owner": "epilogue-1"
   }
 }
