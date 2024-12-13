@@ -130,16 +130,19 @@ export default function Setting() {
             <TouchableOpacity
               className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
               onPress={async () => {
-                setIsLoading(true);
+                try {
+                  setIsLoading(true);
 
-                await deleteUser(currentUser?.id ?? "");
+                  await deleteUser(currentUser?.id ?? "");
 
-                setIsDeleteModalVisible(false);
-                setIsLoading(false);
-
-                router.replace("/sign-in");
-
-                showToast("success", "탈퇴가 완료되었습니다!");
+                  router.replace("/sign-in");
+                  showToast("success", "탈퇴가 완료되었습니다!");
+                } catch (error) {
+                  showToast("error", "탈퇴에 실패했습니다.");
+                } finally {
+                  setIsDeleteModalVisible(false);
+                  setIsLoading(false);
+                }
               }}
               disabled={isLoading}
             >
