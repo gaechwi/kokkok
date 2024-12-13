@@ -41,7 +41,7 @@ export default function NotificationProvider({ children }: Props) {
     "로그인 정보 조회에 실패했습니다.",
   );
 
-  const { data: token } = useFetchData<PushToken>(
+  const { data: token } = useFetchData<PushToken | null>(
     ["pushToken", session?.user.id],
     () => getPushToken(session?.user.id || ""),
     "푸시 알림 설정 정보 로드에 실패했습니다.",
@@ -86,7 +86,7 @@ export default function NotificationProvider({ children }: Props) {
     }
 
     // 토큰 값이 달라진 경우
-    if (token?.pushToken !== expoPushToken) {
+    if (token.pushToken !== expoPushToken) {
       updatePushToken({ userId, pushToken: expoPushToken });
       queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
     }

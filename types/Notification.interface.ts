@@ -35,13 +35,13 @@ export interface NotificationResponse {
 
 export interface PushToken {
   userId: string;
-  pushToken: string;
+  pushToken: string | null;
   grantedNotifications: NotificationType[];
 }
 
 export interface PushTokenUpdateData {
   userId: string;
-  pushToken?: string;
+  pushToken?: string | null;
   grantedNotifications?: NotificationType[];
 }
 

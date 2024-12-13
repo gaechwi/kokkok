@@ -1338,9 +1338,14 @@ export async function createNotification(notification: Notification) {
 
   // 푸시 알림 생성
   try {
-    const { pushToken, grantedNotifications } = await getPushToken(notification.to);
+    const data = await getPushToken(notification.to);
     // 푸시 알림 수신 동의하지 않은 경우 또는 허용하지 않은 푸시알림인 경우 알림 X
-    if (!pushToken || !grantedNotifications.includes(notification.type)) return;
+    if (
+      !data ||
+      !data.pushToken ||
+      !data.grantedNotifications.includes(notification.type)
+    )
+      return;
 
     const message = formMessage(
       notification.type,
@@ -1348,7 +1353,7 @@ export async function createNotification(notification: Notification) {
       notification.data?.commentInfo?.content,
     );
     const pushMessage = {
-      to: pushToken,
+      to: data.pushToken,
       sound: "default",
       title: message.title,
       body: message.content,
@@ -1381,16 +1386,16 @@ async function sendPushNotification(message: PushMessage) {
 // ============================================
 
 // 푸시 알림 설정 불러오기
-export async function getPushToken(userId: string): Promise<PushToken> {
+export async function getPushToken(userId: string): Promise<PushToken | null> {
   const { data, error } = await supabase
     .from("pushToken")
     .select("*")
     .eq("userId", userId)
-    .single();
+    .limit(1);
 
   if (error) throw error;
   if (!data) throw new Error("푸시 알림 설정 정보를 가져올 수 없습니다.");
-  return data;
+  return data.length ? data[0] : null;
 }
 
 // 푸시 알림 설정 추가
@@ -1410,9 +1415,11 @@ export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
   const { error } = await supabase
     .from("pushToken")
     .update({
-      ...(pushTokenData.pushToken === undefined ? {}
+      ...(pushTokenData.pushToken === undefined
+        ? {}
         : { pushToken: pushTokenData.pushToken }),
-      ...(pushTokenData.grantedNotifications === undefined ? {}
+      ...(pushTokenData.grantedNotifications === undefined
+        ? {}
         : { grantedNotifications: pushTokenData.grantedNotifications }),
     })
     .eq("userId", pushTokenData.userId);
