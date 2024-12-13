@@ -86,17 +86,23 @@ export default function CommentsSection({
   );
 
   // 댓글 가져오기
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: ["comments", postId],
-      queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNext ? lastPage.nextPage : undefined,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      placeholderData: keepPreviousData,
-      initialPageParam: 0,
-    });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useInfiniteQuery({
+    queryKey: ["comments", postId],
+    queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? lastPage.nextPage : undefined,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: keepPreviousData,
+    initialPageParam: 0,
+  });
 
   // 댓글 더 불러오기
   const loadMore = useCallback(() => {
@@ -167,6 +173,7 @@ export default function CommentsSection({
         },
       }),
   });
+
   const onLikedAuthorPress = useCallback((commentId: number) => {
     setLikedAuthorId(commentId);
     setIsLikedModalVisible(true);
@@ -206,37 +213,7 @@ export default function CommentsSection({
           maintainVisibleContentPosition={{
             minIndexForVisible: 0,
           }}
-          ListHeaderComponent={
-            !data ? (
-              <View className="mt-4">
-                {[...Array(5)].map((_, index) => (
-                  <View
-                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                    key={`skeleton-${index}`}
-                    className="mb-8 animate-pulse gap-[13px]"
-                  >
-                    <View className="h-12 flex-1 flex-row items-center gap-2">
-                      <View className="size-12 rounded-full bg-gray-25" />
-
-                      <View className="h-12 flex-1 justify-center gap-[5px]">
-                        <View className="h-[16px] w-16 rounded-md bg-gray-25" />
-                        <View className="h-[13px] w-10 rounded-md bg-gray-25" />
-                      </View>
-
-                      <View className="size-[28px] rounded-full bg-gray-25" />
-                    </View>
-
-                    <View className="gap-[13px]">
-                      <View className="h-[18px] w-[80%] rounded-md bg-gray-25" />
-                      <View className="h-[14px] w-10 rounded-md bg-gray-25" />
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View className="h-4" />
-            )
-          }
+          ListHeaderComponent={<View className="h-4" />}
           data={data?.pages.flatMap((page) => page.comments) || []}
           keyExtractor={(item) => item.id.toString()}
           onEndReachedThreshold={0.5}
@@ -278,9 +255,39 @@ export default function CommentsSection({
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           ListEmptyComponent={
-            <View className="flex-1 items-center justify-center">
-              <Text className="title-3 text-gray-70">아직 댓글이 없어요.</Text>
-            </View>
+            isFetching ? (
+              <View>
+                {[...Array(5)].map((_, index) => (
+                  <View
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`skeleton-${index}`}
+                    className="mb-8 animate-pulse gap-[13px]"
+                  >
+                    <View className="h-12 flex-1 flex-row items-center gap-2">
+                      <View className="size-12 rounded-full bg-gray-25" />
+
+                      <View className="h-12 flex-1 justify-center gap-[5px]">
+                        <View className="h-[16px] w-16 rounded-md bg-gray-25" />
+                        <View className="h-[13px] w-10 rounded-md bg-gray-25" />
+                      </View>
+
+                      <View className="size-[28px] rounded-full bg-gray-25" />
+                    </View>
+
+                    <View className="gap-[13px]">
+                      <View className="h-[18px] w-[80%] rounded-md bg-gray-25" />
+                      <View className="h-[14px] w-10 rounded-md bg-gray-25" />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <Text className="title-3 text-gray-70">
+                  아직 댓글이 없어요.
+                </Text>
+              </View>
+            )
           }
         />
       </View>

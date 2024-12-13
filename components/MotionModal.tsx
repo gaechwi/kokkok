@@ -28,11 +28,8 @@ export default function MotionModal({
   initialHeight,
   closeThreshold = 0.1,
 }: CustomModalProps) {
-  const slideAnim = useMemo(() => new Animated.Value(0), []);
-  const heightAnim = useMemo(
-    () => new Animated.Value(initialHeight),
-    [initialHeight],
-  );
+  const slideAnim = useRef(new Animated.Value(0));
+  const heightAnim = useRef(new Animated.Value(initialHeight));
   const heightRef = useRef(initialHeight);
   const maxHeightRef = useRef(maxHeight);
 
@@ -42,7 +39,7 @@ export default function MotionModal({
   );
 
   const handleClose = useCallback(() => {
-    Animated.timing(heightAnim, {
+    Animated.timing(heightAnim.current, {
       toValue: 0,
       duration: 300,
       useNativeDriver: false,
@@ -50,10 +47,10 @@ export default function MotionModal({
       onClose();
       setTimeout(() => {
         heightRef.current = initialHeight;
-        heightAnim.setValue(initialHeight);
+        heightAnim.current.setValue(initialHeight);
       }, 100);
     });
-  }, [onClose, heightAnim, initialHeight]);
+  }, [onClose, initialHeight]);
 
   const panResponder = useMemo(
     () =>
@@ -61,7 +58,7 @@ export default function MotionModal({
         onStartShouldSetPanResponder: () => true,
         onPanResponderMove: (_, gestureState) => {
           const newHeight = clampHeight(heightRef.current - gestureState.dy);
-          heightAnim.setValue(newHeight);
+          heightAnim.current.setValue(newHeight);
         },
         onPanResponderRelease: (_, gestureState) => {
           const finalHeight = heightRef.current - gestureState.dy;
@@ -71,21 +68,21 @@ export default function MotionModal({
             handleClose();
           } else if (finalHeight > maxHeightRef.current) {
             heightRef.current = maxHeightRef.current;
-            Animated.spring(heightAnim, {
+            Animated.spring(heightAnim.current, {
               toValue: maxHeightRef.current,
               useNativeDriver: false,
             }).start();
           } else {
             const clampedHeight = clampHeight(finalHeight);
             heightRef.current = clampedHeight;
-            Animated.spring(heightAnim, {
+            Animated.spring(heightAnim.current, {
               toValue: clampedHeight,
               useNativeDriver: false,
             }).start();
           }
         },
       }),
-    [heightAnim, closeThreshold, clampHeight, handleClose],
+    [closeThreshold, clampHeight, handleClose],
   );
 
   // 키보드 이벤트 처리
@@ -95,7 +92,7 @@ export default function MotionModal({
       const newHeight = maxHeightRef.current - keyboardHeight;
       maxHeightRef.current = newHeight;
       heightRef.current = clampHeight(newHeight);
-      Animated.timing(heightAnim, {
+      Animated.timing(heightAnim.current, {
         toValue: heightRef.current,
         duration: 300,
         useNativeDriver: false,
@@ -105,7 +102,7 @@ export default function MotionModal({
     const handleKeyboardHide = () => {
       maxHeightRef.current = maxHeight;
       heightRef.current = clampHeight(maxHeightRef.current);
-      Animated.timing(heightAnim, {
+      Animated.timing(heightAnim.current, {
         toValue: heightRef.current,
         duration: 300,
         useNativeDriver: false,
@@ -130,17 +127,17 @@ export default function MotionModal({
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [heightAnim, clampHeight, maxHeight]);
+  }, [clampHeight, maxHeight]);
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(slideAnim, {
+      Animated.timing(slideAnim.current, {
         toValue: 1,
         duration: 400,
         useNativeDriver: false,
       }).start();
     }
-  }, [visible, slideAnim]);
+  }, [visible]);
 
   return (
     <Modal
@@ -167,13 +164,13 @@ export default function MotionModal({
               style={{
                 transform: [
                   {
-                    translateY: slideAnim.interpolate({
+                    translateY: slideAnim.current.interpolate({
                       inputRange: [0, 1],
                       outputRange: [maxHeightRef.current, 0],
                     }),
                   },
                 ],
-                height: heightAnim,
+                height: heightAnim.current,
               }}
             >
               <SafeAreaView
