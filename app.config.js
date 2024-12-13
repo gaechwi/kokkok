@@ -29,6 +29,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      googleServicesFile: "./google-services.json",
       package: "com.epilogue.kokkok",
     },
     web: {
