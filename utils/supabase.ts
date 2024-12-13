@@ -24,6 +24,7 @@ import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
 import { formatDate } from "./formatDate";
 
+const expoPushToken = Constants.expoConfig?.extra?.EXPO_PUSH_TOKEN;
 const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
 const supabaseAnonKey = Constants.expoConfig?.extra?.SUPABASE_ANON_KEY;
 
@@ -1335,9 +1336,12 @@ export async function createNotification(notification: Notification) {
     .insert({ ...notification, from: notification.from.id });
   if (error) throw error;
 
+  // 푸시 알림 생성
   try {
-    // 푸시 알림 생성
-    const { pushToken } = await getPushToken(notification.to);
+    const { pushToken, grantedNotifications } = await getPushToken(notification.to);
+    // 푸시 알림 수신 동의하지 않은 경우 또는 허용하지 않은 푸시알림인 경우 알림 X
+    if (!pushToken || !grantedNotifications.includes(notification.type)) return;
+
     const message = formMessage(
       notification.type,
       notification.from.username,
@@ -1361,6 +1365,7 @@ async function sendPushNotification(message: PushMessage) {
   await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${expoPushToken}`,
       Accept: "application/json",
       "Accept-encoding": "gzip, deflate",
       "Content-Type": "application/json",
