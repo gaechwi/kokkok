@@ -12,10 +12,8 @@ export type NotificationType =
 
 export interface NotificationData {
   postId: number;
-  // commentInfo: comment, commentLike 필수
   commentInfo?: {
     id: number;
-    // content: comment 필수
     content?: string;
   };
 }
@@ -33,4 +31,16 @@ export interface NotificationResponse {
   type: NotificationType;
   data: NotificationData | null;
   createdAt: string;
+}
+
+export interface PushToken {
+  userId: string;
+  pushToken: string;
+  grantedNotifications: NotificationType[];
+}
+
+export interface PushTokenUpdateData {
+  userId: string;
+  pushToken?: string;
+  grantedNotifications?: NotificationType[];
 }

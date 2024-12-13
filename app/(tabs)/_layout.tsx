@@ -4,6 +4,7 @@ import { Platform, Text, View } from "react-native";
 
 import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
 import useSubscribeNotification from "@/hooks/useSubscribeNotification";
+import NotificationProvider from "@/providers/notificationProvider";
 import colors from "@constants/colors";
 import icons from "@constants/icons";
 
@@ -53,7 +54,7 @@ export default function TabsLayout() {
   useSubscribeNotification();
 
   return (
-    <>
+    <NotificationProvider>
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
@@ -124,6 +125,6 @@ export default function TabsLayout() {
       </Tabs>
 
       <StatusBar style="auto" />
-    </>
+    </NotificationProvider>
   );
 }

@@ -12,7 +12,11 @@ import {
   type RequestResponse,
   type StatusInfo,
 } from "@/types/Friend.interface";
-import type { NotificationResponse } from "@/types/Notification.interface";
+import type {
+  NotificationResponse,
+  PushToken,
+  PushTokenUpdateData,
+} from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
@@ -1326,6 +1330,55 @@ export async function getLatestStabForFriend(
 export async function createNotification(notification: Notification) {
   const { error } = await supabase.from("notification").insert(notification);
   if (error) throw error;
+}
+
+// ============================================
+//
+//                 push token
+//
+// ============================================
+
+// 푸시 알림 설정 불러오기
+export async function getPushToken(userId: string): Promise<PushToken> {
+  const { data, error } = await supabase
+    .from("pushToken")
+    .select("*")
+    .eq("userId", userId)
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("푸시 알림 설정 정보를 가져올 수 없습니다.");
+  return data;
+}
+
+// 푸시 알림 설정 추가
+export async function createPushToken(pushTokenData: PushToken) {
+  const { error } = await supabase.from("pushToken").insert(pushTokenData);
+
+  if (error) {
+    console.error("푸시 알림 정보 저장 실패:", error);
+    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
+  }
+}
+
+// 푸시 알림 설정 업데이트
+export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
+  const { error } = await supabase
+    .from("pushToken")
+    .update({
+      ...(pushTokenData.pushToken
+        ? { pushToken: pushTokenData.pushToken }
+        : {}),
+      ...(pushTokenData.grantedNotifications
+        ? { grantedNotifications: pushTokenData.grantedNotifications }
+        : {}),
+    })
+    .eq("userId", pushTokenData.userId);
+
+  if (error) {
+    console.error("푸시 알림 정보 저장 실패:", error);
+    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
+  }
 }
 
 // ============================================

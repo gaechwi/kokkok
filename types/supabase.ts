@@ -264,7 +264,6 @@ export type Database = {
       pushToken: {
         Row: {
           createdAt: string;
-          deviceId: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id: number;
           pushToken: string;
@@ -272,7 +271,6 @@ export type Database = {
         };
         Insert: {
           createdAt?: string;
-          deviceId: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
           pushToken: string;
@@ -280,7 +278,6 @@ export type Database = {
         };
         Update: {
           createdAt?: string;
-          deviceId?: string;
           grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
           pushToken?: string;
