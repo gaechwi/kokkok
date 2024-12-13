@@ -1339,13 +1339,9 @@ export async function createNotification(notification: Notification) {
   // 푸시 알림 생성
   try {
     const data = await getPushToken(notification.to);
-    // 푸시 알림 수신 동의하지 않은 경우 또는 허용하지 않은 푸시알림인 경우 알림 X
-    if (
-      !data ||
-      !data.pushToken ||
-      !data.grantedNotifications.includes(notification.type)
-    )
-      return;
+    // 푸시 알림 수신 동의하지 않은 경우
+    if (!data || !data.pushToken) return;
+    if (!data.grantedNotifications.includes(notification.type)) return;
 
     const message = formMessage(
       notification.type,

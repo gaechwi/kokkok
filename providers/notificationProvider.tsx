@@ -41,12 +41,13 @@ export default function NotificationProvider({ children }: Props) {
     "로그인 정보 조회에 실패했습니다.",
   );
 
-  const { data: token } = useFetchData<PushToken | null>(
-    ["pushToken", session?.user.id],
-    () => getPushToken(session?.user.id || ""),
-    "푸시 알림 설정 정보 로드에 실패했습니다.",
-    !!session,
-  );
+  const { data: token, isPending: isTokenPending } =
+    useFetchData<PushToken | null>(
+      ["pushToken", session?.user.id],
+      () => getPushToken(session?.user.id || ""),
+      "푸시 알림 설정 정보 로드에 실패했습니다.",
+      !!session,
+    );
 
   useEffect(() => {
     registerForPushNotificationsAsync()
@@ -54,14 +55,14 @@ export default function NotificationProvider({ children }: Props) {
       .catch((error) => setExpoPushToken(`${error}`));
 
     // 푸시 알림 관련 포스트 페이지로 바로 이동
-    // FIXME: 왠지 적용되지 않고 index.tsx로 감
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const { data } = response.notification.request.content;
-
         if (!data) {
-          router.navigate("/home");
+          // 찌르기나 친구 요청 수락 알림
+          router.navigate("/friend");
         } else {
+          // 게시글 댓글, 좋아요, 멘션, 댓글 좋아요 알림
           router.navigate(`/post/${data.postId}`);
         }
       },
@@ -74,8 +75,12 @@ export default function NotificationProvider({ children }: Props) {
     if (!session || !expoPushToken) return;
     const userId = session.user.id;
 
-    // 새로 토큰 등록하는 경우
-    if (!token) {
+    if (
+      !isTokenPending &&
+      !token &&
+      expoPushToken.startsWith("ExponentPushToken")
+    ) {
+      // 새로 토큰 등록하는 경우: 저장된 token이 없고, 새 토큰이 유효함
       createPushToken({
         userId,
         pushToken: expoPushToken,
@@ -85,12 +90,13 @@ export default function NotificationProvider({ children }: Props) {
       return;
     }
 
-    // 토큰 값이 달라진 경우
-    if (token.pushToken !== expoPushToken) {
+    // 토큰 값이 달라진 경우: 토큰은 있지만, 새로 얻은 것과 다름
+    if (token && token.pushToken !== expoPushToken) {
       updatePushToken({ userId, pushToken: expoPushToken });
       queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
+      return;
     }
-  }, [session, token, expoPushToken, queryClient.invalidateQueries]);
+  }, [session, token, isTokenPending, expoPushToken, queryClient]);
 
   return children;
 }
