@@ -13,6 +13,7 @@ import { useOnlineManager } from "@/hooks/useOnlineManager";
 import NotificationProvider from "@/providers/notificationProvider";
 import { supabase } from "@/utils/supabase";
 import { useFonts } from "expo-font";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -89,6 +90,8 @@ export default function RootLayout() {
           <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
           <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
         </Stack>
+
+        <StatusBar style="dark" />
         <Toast config={ToastConfig} />
       </NotificationProvider>
     </QueryClientProvider>
