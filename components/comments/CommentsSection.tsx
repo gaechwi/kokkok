@@ -236,7 +236,11 @@ export default function CommentsSection({
           )}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator size="large" className="py-4" />
+              <ActivityIndicator
+                size="large"
+                className="py-4"
+                color={colors.primary}
+              />
             ) : null
           }
           showsVerticalScrollIndicator={false}
