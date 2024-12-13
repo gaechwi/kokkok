@@ -1,5 +1,5 @@
 import { HeaderWithUsername } from "@/components/Header";
-import { OneButtonModal } from "@/components/Modal";
+import { TwoButtonModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
 import CommentsSection from "@/components/comments/CommentsSection";
@@ -168,15 +168,21 @@ export default function PostDetail() {
       )}
 
       {isNotFoundModalVisible && (
-        <OneButtonModal
+        <TwoButtonModal
           isVisible={isNotFoundModalVisible}
           onClose={() => {
             setIsNotFoundModalVisible(false);
           }}
           emoji="sad"
-          contents={"이 게시글은 삭제 되었어요."}
-          buttonText="홈으로"
-          onPress={() => router.push("/home")}
+          contents={"게시글이 삭제되었어요."}
+          leftButtonText="뒤로가기"
+          rightButtonText="홈으로"
+          onLeftButtonPress={() => {
+            router.back();
+          }}
+          onRightButtonPress={() => {
+            router.replace("/home");
+          }}
         />
       )}
     </>

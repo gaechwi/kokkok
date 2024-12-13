@@ -144,8 +144,73 @@ export function OneButtonModal({
           }}
           className="mt-5 h-[52px] w-full grow flex-row items-center justify-center rounded-[8px] bg-primary"
         >
-          <Text className="title-3 text-center text-white">{buttonText}</Text>
+          <Text className="text-center font-pbold text-[17px] text-white leading-[150%]">
+            {buttonText}
+          </Text>
         </TouchableOpacity>
+      </View>
+    </CustomModal>
+  );
+}
+
+export function TwoButtonModal({
+  isVisible,
+  onClose,
+  emoji,
+  contents,
+  leftButtonText,
+  rightButtonText,
+  onLeftButtonPress,
+  onRightButtonPress,
+}: {
+  isVisible: boolean;
+  onClose: () => void;
+  emoji?: "sad" | "happy";
+  contents: string;
+  leftButtonText: string;
+  rightButtonText: string;
+  onLeftButtonPress: () => void;
+  onRightButtonPress: () => void;
+}) {
+  return (
+    <CustomModal visible={isVisible} onClose={onClose} position="middle">
+      <View className="items-center px-[55px] py-6">
+        {!!emoji &&
+          (emoji === "sad" ? (
+            <Icons.FaceNotDoneIcon width={40} height={40} />
+          ) : (
+            <Icons.FaceDoneIcon width={40} height={40} />
+          ))}
+
+        <Text className="title-3 mt-4 text-center text-gray-90">
+          {contents}
+        </Text>
+
+        <View className="mt-5 h-[52px] w-full flex-row items-center gap-5">
+          <TouchableOpacity
+            onPress={() => {
+              onLeftButtonPress();
+              onClose();
+            }}
+            className="h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white"
+          >
+            <Text className="font-pbold text-[17px] text-primary leading-[150%]">
+              {leftButtonText}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              onRightButtonPress();
+              onClose();
+            }}
+            className="h-full flex-1 items-center justify-center rounded-[8px] bg-primary"
+          >
+            <Text className="font-pbold text-[17px] text-white leading-[150%]">
+              {rightButtonText}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </CustomModal>
   );
