@@ -185,14 +185,17 @@ export default function CommentsSection({
     setIsLikedModalVisible(true);
   }, []);
 
+  const onCloseComments = useCallback(() => {
+    onClose();
+    setIsToast(false);
+    queryClient.removeQueries({ queryKey: ["comments", postId] });
+    queryClient.removeQueries({ queryKey: ["replies"] });
+  }, [onClose, postId, queryClient]);
+
   return (
     <MotionModal
       visible={visible}
-      onClose={() => {
-        onClose();
-        queryClient.removeQueries({ queryKey: ["comments", postId] });
-        setIsToast(false);
-      }}
+      onClose={onCloseComments}
       maxHeight={deviceHeight}
       initialHeight={deviceHeight * 0.8}
     >
