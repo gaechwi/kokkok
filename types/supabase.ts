@@ -500,7 +500,13 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like" | "commentLike" | "mention";
+      notificationtype:
+        | "poke"
+        | "comment"
+        | "like"
+        | "commentLike"
+        | "mention"
+        | "friend";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {

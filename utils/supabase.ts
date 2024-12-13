@@ -1281,6 +1281,7 @@ export async function getNotifications(
         `,
     )
     .eq("to", userId)
+    .neq("type", "friend")
     .order("createdAt", { ascending: false })
     .limit(30);
 
