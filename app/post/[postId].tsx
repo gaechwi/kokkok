@@ -1,4 +1,5 @@
 import { HeaderWithUsername } from "@/components/Header";
+import { OneButtonModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
 import CommentsSection from "@/components/comments/CommentsSection";
@@ -19,7 +20,10 @@ export default function PostDetail() {
   const { postId } = useLocalSearchParams();
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
+  const [isNotFoundModalVisible, setIsNotFoundModalVisible] = useState(false);
+
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+
   const router = useRouter();
 
   const { data: user } = useFetchData(
@@ -28,7 +32,11 @@ export default function PostDetail() {
     "현재 사용자를 불러올 수 없습니다.",
   );
 
-  const { data: post } = useFetchData(
+  const {
+    data: post,
+    isPending: isPostPending,
+    error: postError,
+  } = useFetchData(
     ["post", postId],
     () => getPost(Number(postId)),
     "포스트를 불러오는데 실패했습니다.",
@@ -45,7 +53,7 @@ export default function PostDetail() {
   );
 
   useFocusEffect(() => {
-    if (!post) router.back();
+    if (postError || (!isPostPending && !post)) setIsNotFoundModalVisible(true);
   });
 
   const onOpenLikedAuthor = useCallback((postId: number) => {
@@ -64,33 +72,35 @@ export default function PostDetail() {
           name={post?.userData.username ?? ""}
           type="POST_PAGE"
         />
-        <PostItem
-          author={{
-            id: post?.userData?.id || "",
-            name: post?.userData?.username || "",
-            avatar: post?.userData?.avatarUrl || "",
-          }}
-          images={post?.images || []}
-          contents={post?.contents || ""}
-          liked={post?.isLikedByUser || false}
-          likedAuthorAvatars={post?.likedAvatars || []}
-          createdAt={post?.createdAt || ""}
-          commentsCount={post?.totalComments || 0}
-          comment={
-            post?.commentData
-              ? {
-                  author: {
-                    name: post.commentData.author.username,
-                    avatar: post.commentData.author.avatarUrl || "",
-                  },
-                  content: post.commentData.contents,
-                }
-              : null
-          }
-          postId={Number(postId)}
-          onCommentsPress={() => setIsCommentsVisible(true)}
-          onAuthorPress={onOpenLikedAuthor}
-        />
+        {post && (
+          <PostItem
+            author={{
+              id: post?.userData?.id || "",
+              name: post?.userData?.username || "",
+              avatar: post?.userData?.avatarUrl || "",
+            }}
+            images={post?.images || []}
+            contents={post?.contents || ""}
+            liked={post?.isLikedByUser || false}
+            likedAuthorAvatars={post?.likedAvatars || []}
+            createdAt={post?.createdAt || ""}
+            commentsCount={post?.totalComments || 0}
+            comment={
+              post?.commentData
+                ? {
+                    author: {
+                      name: post.commentData.author.username,
+                      avatar: post.commentData.author.avatarUrl || "",
+                    },
+                    content: post.commentData.contents,
+                  }
+                : null
+            }
+            postId={Number(postId)}
+            onCommentsPress={() => setIsCommentsVisible(true)}
+            onAuthorPress={onOpenLikedAuthor}
+          />
+        )}
       </SafeAreaView>
 
       {isCommentsVisible && (
@@ -99,6 +109,7 @@ export default function PostDetail() {
             visible={isCommentsVisible}
             onClose={onCloseComments}
             postId={Number(postId)}
+            authorId={post?.userData.id || ""}
           />
         </View>
       )}
@@ -154,6 +165,19 @@ export default function PostDetail() {
             </View>
           </MotionModal>
         </View>
+      )}
+
+      {isNotFoundModalVisible && (
+        <OneButtonModal
+          isVisible={isNotFoundModalVisible}
+          onClose={() => {
+            setIsNotFoundModalVisible(false);
+          }}
+          emoji="sad"
+          contents="게시글이 더 이상 존재하지 않아요."
+          buttonText="홈으로"
+          onPress={() => router.push("/home")}
+        />
       )}
     </>
   );
