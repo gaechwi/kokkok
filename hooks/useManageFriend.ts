@@ -1,6 +1,7 @@
 import { showToast } from "@/components/ToastConfig";
 import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 import type { UserProfile } from "@/types/User.interface";
+import { shorten_comment } from "@/utils/formMessage";
 import {
   acceptFriendRequest,
   checkFriendRequest,
@@ -187,7 +188,10 @@ const useManageFriend = () => {
         queryClient.invalidateQueries({
           queryKey: ["poke", user.id, friend.id],
         });
-        showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
+        showToast(
+          "success",
+          `👈 ${shorten_comment(friend.username, 10)}님을 콕! 찔렀어요`,
+        );
       },
       onError: (error) => {
         console.error("콕 찌르기 실패:", error);

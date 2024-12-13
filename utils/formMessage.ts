@@ -4,8 +4,11 @@ import {
 } from "@/types/Notification.interface";
 
 const COMMENT_MAX_LENGTH = 18;
-const shorten_comment = (comment: string) =>
-  `"${comment.length > COMMENT_MAX_LENGTH ? comment.slice(0, COMMENT_MAX_LENGTH).concat("...") : comment}"`;
+export const shorten_comment = (
+  comment: string,
+  maxLength = COMMENT_MAX_LENGTH,
+) =>
+  `"${comment.length > maxLength ? comment.slice(0, maxLength).concat("...") : comment}"`;
 
 export function formMessage(
   type: NotificationType,
