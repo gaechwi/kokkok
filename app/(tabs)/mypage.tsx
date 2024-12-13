@@ -4,14 +4,12 @@ import PostGrid from "@/components/PostGrid";
 import ProfileSection from "@/components/ProfileSection";
 import useFetchData from "@/hooks/useFetchData";
 import { getCurrentUser, getMyPosts } from "@/utils/supabase";
-import { useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MyPage() {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -20,10 +18,6 @@ export default function MyPage() {
     getCurrentUser,
     "현재 사용자를 불러올 수 없습니다.",
   );
-
-  useFocusEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-  });
 
   const {
     data: posts,
