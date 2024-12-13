@@ -893,6 +893,12 @@ export async function deleteComment(commentId: number) {
 
     await supabase.from("comment").delete().eq("id", commentId);
 
+    await supabase
+      .from("notification")
+      .delete()
+      .contains("data", { commentInfo: { id: commentId } })
+      .in("type", ["commentLike"]);
+
     return { message: "댓글이 삭제되었습니다." };
   } catch (error) {
     const errorMessage =

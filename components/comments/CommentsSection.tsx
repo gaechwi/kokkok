@@ -5,6 +5,7 @@ import useFetchData from "@/hooks/useFetchData";
 import {
   createComment,
   createNotification,
+  deleteComment,
   getCommentLikes,
   getComments,
   getCurrentUser,
@@ -31,6 +32,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { DeleteModal } from "../Modal";
 import MotionModal from "../MotionModal";
 import { ToastConfig, showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
@@ -59,10 +61,15 @@ export default function CommentsSection({
     parentId: number;
     replyCommentId: number;
   } | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedCommentId, setSelectedCommentId] = useState<number | null>(
+    null,
+  );
+
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
+  const queryClient = useQueryClient();
 
   const router = useRouter();
 
@@ -171,10 +178,27 @@ export default function CommentsSection({
         },
       }),
   });
+
   const onLikedAuthorPress = useCallback((commentId: number) => {
     setLikedAuthorId(commentId);
     setIsLikedModalVisible(true);
   }, []);
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async () => {
+      if (selectedCommentId) await deleteComment(selectedCommentId);
+    },
+    onSuccess: () => {
+      showToast("success", "댓글이 삭제되었어요.");
+
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
+    },
+    onError: () => {
+      showToast("fail", "댓글 삭제에 실패했어요.");
+    },
+  });
 
   return (
     <MotionModal
@@ -238,6 +262,10 @@ export default function CommentsSection({
               onReply={handleReply}
               onCommentsClose={onClose}
               onLikedAuthorPress={onLikedAuthorPress}
+              onDeletedPress={(commentId) => {
+                setSelectedCommentId(commentId);
+                setIsDeleteModalVisible(true);
+              }}
             />
           )}
           ListFooterComponent={
@@ -304,6 +332,16 @@ export default function CommentsSection({
           />
         </View>
       </MotionModal>
+
+      {/* 삭제 모달 */}
+      <DeleteModal
+        isVisible={isDeleteModalVisible}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onDelete={() => {
+          deleteCommentMutation.mutate();
+          setIsDeleteModalVisible(false);
+        }}
+      />
 
       {/* comment input */}
       <>
