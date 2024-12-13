@@ -5,7 +5,12 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { alertToggleAtom } from "@/contexts/alert";
 import useFetchData from "@/hooks/useFetchData";
-import { deleteUser, getCurrentUser, supabase } from "@/utils/supabase";
+import {
+  deleteUser,
+  getCurrentUser,
+  supabase,
+  updatePushToken,
+} from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
 import { useState } from "react";
@@ -171,13 +176,18 @@ export default function Setting() {
             <TouchableOpacity
               className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
               onPress={async () => {
-                setIsLoading(true);
+                if (currentUser) {
+                  setIsLoading(true);
 
-                await supabase.auth.signOut();
+                  await updatePushToken({
+                    userId: currentUser.id,
+                    pushToken: null,
+                  });
+                  await supabase.auth.signOut();
 
+                  setIsLoading(false);
+                }
                 setIsSignOutModalVisible(false);
-                setIsLoading(false);
-
                 router.replace("/sign-in");
 
                 showToast("success", "로그아웃이 완료되었습니다!");

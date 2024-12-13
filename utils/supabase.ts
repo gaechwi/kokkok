@@ -1410,12 +1410,10 @@ export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
   const { error } = await supabase
     .from("pushToken")
     .update({
-      ...(pushTokenData.pushToken
-        ? { pushToken: pushTokenData.pushToken }
-        : {}),
-      ...(pushTokenData.grantedNotifications
-        ? { grantedNotifications: pushTokenData.grantedNotifications }
-        : {}),
+      ...(pushTokenData.pushToken === undefined ? {}
+        : { pushToken: pushTokenData.pushToken }),
+      ...(pushTokenData.grantedNotifications === undefined ? {}
+        : { grantedNotifications: pushTokenData.grantedNotifications }),
     })
     .eq("userId", pushTokenData.userId);
 
