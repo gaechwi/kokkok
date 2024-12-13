@@ -1348,6 +1348,7 @@ export async function createNotification(notification: Notification) {
       sound: "default",
       title: message.title,
       body: message.content,
+      data: notification.data,
     };
     sendPushNotification(pushMessage);
   } catch (error) {

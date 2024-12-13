@@ -1,5 +1,8 @@
 import useFetchData from "@/hooks/useFetchData";
-import type { PushToken } from "@/types/Notification.interface";
+import {
+  NOTIFICATION_TYPE,
+  type PushToken,
+} from "@/types/Notification.interface";
 import {
   createPushToken,
   getCurrentSession,
@@ -11,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
@@ -48,6 +52,22 @@ export default function NotificationProvider({ children }: Props) {
     registerForPushNotificationsAsync()
       .then((token) => setExpoPushToken(token ?? ""))
       .catch((error) => setExpoPushToken(`${error}`));
+
+    // 푸시 알림 관련 포스트 페이지로 바로 이동
+    // FIXME: 왠지 적용되지 않고 index.tsx로 감
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const { data } = response.notification.request.content;
+
+        if (!data) {
+          router.navigate("/home");
+        } else {
+          router.navigate(`/post/${data.postId}`);
+        }
+      },
+    );
+
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {
@@ -59,13 +79,7 @@ export default function NotificationProvider({ children }: Props) {
       createPushToken({
         userId,
         pushToken: expoPushToken,
-        grantedNotifications: [
-          "comment",
-          "commentLike",
-          "like",
-          "poke",
-          "mention",
-        ],
+        grantedNotifications: Object.values(NOTIFICATION_TYPE),
       });
       queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
       return;
