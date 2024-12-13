@@ -172,6 +172,7 @@ export default function PostDetail() {
           isVisible={isNotFoundModalVisible}
           onClose={() => {
             setIsNotFoundModalVisible(false);
+            router.back();
           }}
           emoji="sad"
           contents={"게시글이 삭제되었어요."}
