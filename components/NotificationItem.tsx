@@ -1,18 +1,10 @@
 import { Image, Text, TouchableWithoutFeedback, View } from "react-native";
 
 import images from "@/constants/images";
-import {
-  NOTIFICATION_TYPE,
-  type NotificationResponse,
-} from "@/types/Notification.interface";
+import type { NotificationResponse } from "@/types/Notification.interface";
+import { formMessage } from "@/utils/formMessage";
 import { diffDate } from "@/utils/formatDate";
 import { router } from "expo-router";
-
-const COMMENT_MAX_LENGTH = 18;
-const shorten_comment = (comment: string) =>
-  `"${comment.length > COMMENT_MAX_LENGTH ? comment.slice(0, COMMENT_MAX_LENGTH).concat("...") : comment}"`;
-
-/* Components */
 
 export function NotificationItem({
   from,
@@ -20,32 +12,8 @@ export function NotificationItem({
   data,
   createdAt,
 }: NotificationResponse) {
-  const NOTIFICATION_CONFIG = {
-    [NOTIFICATION_TYPE.POKE]: {
-      title: "👈 콕!",
-      content: `${from.username}님이 콕 찌르셨어요.`,
-    },
-    [NOTIFICATION_TYPE.COMMENT]: {
-      title: `${from.username}님의 댓글`,
-      content: shorten_comment(data?.commentInfo?.content || ""),
-    },
-    [NOTIFICATION_TYPE.MENTION]: {
-      title: `${from.username}님의 멘션`,
-      content: shorten_comment(data?.commentInfo?.content || ""),
-    },
-    [NOTIFICATION_TYPE.COMMENT_LIKE]: {
-      title: [`${from.username}님이`, "댓글에 좋아요를 눌렀어요❤️"],
-    },
-    [NOTIFICATION_TYPE.LIKE]: {
-      title: [`${from.username}님이`, "게시글에 좋아요를 눌렀어요❤️"],
-    },
-    [NOTIFICATION_TYPE.MENTION]: {
-      title: `${from.username}님이 회원님을 언급했어요`,
-      content: shorten_comment(data?.commentInfo?.content || ""),
-    },
-  };
-
   const diff = diffDate(new Date(createdAt));
+  const message = formMessage(type, from.username, data?.commentInfo?.content);
 
   return (
     <TouchableWithoutFeedback
@@ -61,24 +29,17 @@ export function NotificationItem({
           />
 
           <View className="gap-[4px] w-[198px]">
+            <Text className="title-4 text-gray-90" numberOfLines={1}>
+              {message.title}
+            </Text>
             {type === "like" || type === "commentLike" ? (
-              <>
-                <Text className="title-4 text-gray-90" numberOfLines={1}>
-                  {NOTIFICATION_CONFIG[type].title[0]}
-                </Text>
-                <Text className="title-4 text-gray-90" numberOfLines={1}>
-                  {NOTIFICATION_CONFIG[type].title[1]}
-                </Text>
-              </>
+              <Text className="title-4 text-gray-90" numberOfLines={1}>
+                {message.content}
+              </Text>
             ) : (
-              <>
-                <Text className="title-4 text-gray-90" numberOfLines={1}>
-                  {NOTIFICATION_CONFIG[type].title}
-                </Text>
-                <Text className="body-5 text-gray-45" numberOfLines={1}>
-                  {NOTIFICATION_CONFIG[type].content}
-                </Text>
-              </>
+              <Text className="body-5 text-gray-45" numberOfLines={1}>
+                {message.content}
+              </Text>
             )}
           </View>
         </View>
