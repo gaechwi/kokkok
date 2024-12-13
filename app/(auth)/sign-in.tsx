@@ -95,6 +95,9 @@ const SignIn = () => {
           });
 
           if (insertError) throw insertError;
+
+          router.replace("/onboarding");
+          return;
         }
       }
 
