@@ -174,7 +174,7 @@ export function TwoButtonModal({
 }) {
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
-      <View className="items-center px-[55px] py-6">
+      <View className="items-center px-7 py-6">
         {!!emoji &&
           (emoji === "sad" ? (
             <Icons.FaceNotDoneIcon width={40} height={40} />
@@ -190,7 +190,6 @@ export function TwoButtonModal({
           <TouchableOpacity
             onPress={() => {
               onLeftButtonPress();
-              onClose();
             }}
             className="h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white"
           >
@@ -202,7 +201,6 @@ export function TwoButtonModal({
           <TouchableOpacity
             onPress={() => {
               onRightButtonPress();
-              onClose();
             }}
             className="h-full flex-1 items-center justify-center rounded-[8px] bg-primary"
           >

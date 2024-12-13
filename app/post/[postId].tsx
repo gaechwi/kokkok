@@ -179,9 +179,11 @@ export default function PostDetail() {
           leftButtonText="뒤로가기"
           rightButtonText="홈으로"
           onLeftButtonPress={() => {
+            setIsNotFoundModalVisible(false);
             router.back();
           }}
           onRightButtonPress={() => {
+            setIsNotFoundModalVisible(false);
             router.replace("/home");
           }}
         />
