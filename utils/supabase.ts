@@ -386,13 +386,14 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
 // 게시글 조회
 export const getPosts = async ({ page = 0, limit = 10 }) => {
   try {
-    const { data, error, count } = await supabase.rpc(
-      "get_posts_with_details",
-      {
-        startindex: page * limit,
-        endindex: (page + 1) * limit - 1,
-      },
-    );
+    const { count, error: countError } = await supabase
+      .from("post")
+      .select("*", { count: "exact", head: true });
+
+    const { data, error } = await supabase.rpc("get_posts_with_details", {
+      startindex: page * limit,
+      endindex: (page + 1) * limit - 1,
+    });
 
     if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 

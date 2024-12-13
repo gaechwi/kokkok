@@ -14,11 +14,11 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  SafeAreaView,
   Text,
   TouchableOpacity,
 } from "react-native";
 import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import PostItem from "../../components/PostItem";
 
 const { height: deviceHeight } = Dimensions.get("window");
@@ -101,7 +101,10 @@ export default function Home() {
   }, [refetch]);
 
   return (
-    <SafeAreaView className="flex-1 items-center justify-center bg-white">
+    <SafeAreaView
+      edges={[]}
+      className="flex-1 items-center justify-center bg-white"
+    >
       <FlatList
         data={data?.pages.flatMap((page) => page.posts) ?? []}
         keyExtractor={(item) => item.id.toString()}
@@ -143,11 +146,14 @@ export default function Home() {
         }
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator size="large" className="py-4" />
+            <ActivityIndicator
+              size="large"
+              className="py-4"
+              color={colors.primary}
+            />
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
       />
 
       {isCommentsVisible &&

@@ -355,7 +355,7 @@ export default function CommentItem({
               )}
               ListFooterComponent={() =>
                 isReplyFetchingNextPage ? (
-                  <ActivityIndicator size="small" />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 ) : null
               }
             />
