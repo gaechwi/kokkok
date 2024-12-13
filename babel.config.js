@@ -21,16 +21,6 @@ module.exports = function (api) {
           },
         },
       ],
-      [
-        "module:react-native-dotenv",
-        {
-          moduleName: "@env",
-          path: ".env",
-          allowlist: ["SUPABASE_URL", "SUPABASE_ANON_KEY"],
-          safe: true,
-          allowUndefined: false,
-        },
-      ],
     ],
   };
 };
