@@ -35,7 +35,7 @@ interface UnfriendProps {
 }
 
 interface PokeProps {
-  userId?: string;
+  user: UserProfile;
   friend: UserProfile;
 }
 
@@ -170,22 +170,22 @@ const useManageFriend = () => {
   // 친구 콕 찌르기
   const usePoke = () => {
     const { mutate } = useMutation<PokeProps, Error, PokeProps>({
-      mutationFn: async ({ userId, friend }) => {
-        if (!userId) throw new Error("계정 정보가 없습니다.");
+      mutationFn: async ({ user, friend }) => {
+        if (!user) throw new Error("계정 정보가 없습니다.");
 
         await createNotification({
-          from: userId,
+          from: user,
           to: friend.id,
           type: NOTIFICATION_TYPE.POKE,
         });
 
-        return { userId, friend };
+        return { user, friend };
       },
-      onSuccess: ({ userId, friend }) => {
-        if (!userId) return;
+      onSuccess: ({ user, friend }) => {
+        if (!user) return;
 
         queryClient.invalidateQueries({
-          queryKey: ["poke", userId, friend.id],
+          queryKey: ["poke", user.id, friend.id],
         });
         showToast("success", `👈 ${friend.username}님을 콕! 찔렀어요`);
       },

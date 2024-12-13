@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useEffect } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
@@ -9,10 +8,9 @@ import { POKE_TIME } from "@/constants/time";
 import useFetchData from "@/hooks/useFetchData";
 import useManageFriend from "@/hooks/useManageFriend";
 import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
-import type { UserProfile } from "@/types/User.interface";
+import type { User, UserProfile } from "@/types/User.interface";
 import { formatTime } from "@/utils/formatTime";
-import { getCurrentSession, getLatestStabForFriend } from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getCurrentUser, getLatestStabForFriend } from "@/utils/supabase";
 
 /* Interfaces */
 
@@ -57,15 +55,12 @@ const FriendProfile = ({
 /* Components */
 
 export function FriendItem({ friend }: FriendItemProps) {
-  const queryClient = useQueryClient();
-
   // 로그인한 유저 정보 조회
-  const { data: session } = useFetchData<Session>(
+  const { data: user } = useFetchData<User>(
     ["currentUser"],
-    getCurrentSession,
+    getCurrentUser,
     "로그인 정보 조회에 실패했습니다.",
   );
-  const user = session?.user;
 
   const { data: lastPokeCreatedAt } = useFetchData<string>(
     ["poke", user?.id, friend.id],
@@ -75,7 +70,7 @@ export function FriendItem({ friend }: FriendItemProps) {
   );
 
   const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();
-  const isPokeDisable = !!friend.status || !!timeLeft;
+  const isPokeDisable = !user || !!friend.status || !!timeLeft;
 
   const { usePoke } = useManageFriend();
   const { mutate: handlePoke } = usePoke();
@@ -93,7 +88,7 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => handlePoke({ userId: user?.id, friend })}
+        onPress={() => user && handlePoke({ user: user, friend })}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
@@ -121,8 +116,6 @@ export function FriendRequest({
   fromUser,
   isLoading,
 }: FriendRequestProps) {
-  const queryClient = useQueryClient();
-
   const { useAcceptRequest, useRefuseRequest } = useManageFriend();
   const { mutate: handleAccept, isPending: isAcceptPending } =
     useAcceptRequest();

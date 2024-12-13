@@ -14,12 +14,14 @@ import {
 } from "@/types/Friend.interface";
 import type {
   NotificationResponse,
+  PushMessage,
   PushToken,
   PushTokenUpdateData,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
+import { formMessage } from "./formMessage";
 import { formatDate } from "./formatDate";
 
 const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
@@ -1328,8 +1330,42 @@ export async function getLatestStabForFriend(
 
 // 알림 생성
 export async function createNotification(notification: Notification) {
-  const { error } = await supabase.from("notification").insert(notification);
+  const { error } = await supabase
+    .from("notification")
+    .insert({ ...notification, from: notification.from.id });
   if (error) throw error;
+
+  try {
+    // 푸시 알림 생성
+    const { pushToken } = await getPushToken(notification.to);
+    const message = formMessage(
+      notification.type,
+      notification.from.username,
+      notification.data?.commentInfo?.content,
+    );
+    const pushMessage = {
+      to: pushToken,
+      sound: "default",
+      title: message.title,
+      body: message.content,
+    };
+    sendPushNotification(pushMessage);
+  } catch (error) {
+    console.error("푸시 알림 생성에 실패했습니다.", error);
+  }
+}
+
+// 푸시 알림 보내기
+async function sendPushNotification(message: PushMessage) {
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
 }
 
 // ============================================
@@ -1353,7 +1389,9 @@ export async function getPushToken(userId: string): Promise<PushToken> {
 
 // 푸시 알림 설정 추가
 export async function createPushToken(pushTokenData: PushToken) {
-  const { error } = await supabase.from("pushToken").insert(pushTokenData);
+  const { error } = await supabase
+    .from("pushToken")
+    .upsert(pushTokenData, { onConflict: "userId" });
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);

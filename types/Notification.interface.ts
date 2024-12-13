@@ -19,7 +19,7 @@ export interface NotificationData {
 }
 
 export interface Notification {
-  from: string;
+  from: UserProfile;
   to: string;
   type: NotificationType;
   data?: NotificationData;
@@ -43,4 +43,11 @@ export interface PushTokenUpdateData {
   userId: string;
   pushToken?: string;
   grantedNotifications?: NotificationType[];
+}
+
+export interface PushMessage {
+  to: string;
+  sound: string;
+  title: string;
+  body: string;
 }
