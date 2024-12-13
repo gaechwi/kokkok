@@ -1,13 +1,20 @@
 import { HeaderWithUsername } from "@/components/Header";
-import { TwoButtonModal } from "@/components/Modal";
+import { DeleteModal, TwoButtonModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
+import { showToast } from "@/components/ToastConfig";
 import CommentsSection from "@/components/comments/CommentsSection";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import { getCurrentUser, getPost, getPostLikes } from "@/utils/supabase";
+import {
+  deletePost,
+  getCurrentUser,
+  getPost,
+  getPostLikes,
+} from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, Image, Text, TouchableOpacity } from "react-native";
@@ -21,10 +28,10 @@ export default function PostDetail() {
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [isNotFoundModalVisible, setIsNotFoundModalVisible] = useState(false);
-
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: user } = useFetchData(
     ["currentUser"],
@@ -43,9 +50,9 @@ export default function PostDetail() {
   );
 
   const { data: likedAuthorData } = useFetchData(
-    ["likedAuthorAvatar", selectedPostId],
+    ["likedAuthorAvatar", postId],
     () => {
-      if (selectedPostId) return getPostLikes(selectedPostId);
+      if (postId) return getPostLikes(Number(postId));
       return Promise.resolve([]);
     },
     "좋아요한 사용자 정보를 불러오는데 실패했습니다.",
@@ -56,14 +63,29 @@ export default function PostDetail() {
     if (postError || (!isPostPending && !post)) setIsNotFoundModalVisible(true);
   });
 
-  const onOpenLikedAuthor = useCallback((postId: number) => {
-    setSelectedPostId(postId);
+  const onOpenLikedAuthor = useCallback(() => {
     setIsLikedModalVisible(true);
   }, []);
 
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
   }, []);
+
+  const deletePostMutation = useMutation({
+    mutationFn: async () => {
+      await deletePost(Number(postId));
+    },
+    onSuccess: () => {
+      showToast("success", "게시글이 삭제되었어요.");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["notification"] });
+      router.back();
+    },
+    onError: () => {
+      showToast("fail", "게시글 삭제에 실패했어요.");
+    },
+  });
 
   return (
     <>
@@ -99,6 +121,9 @@ export default function PostDetail() {
             postId={Number(postId)}
             onCommentsPress={() => setIsCommentsVisible(true)}
             onAuthorPress={onOpenLikedAuthor}
+            onDeletePress={() => {
+              setIsDeleteModalVisible(true);
+            }}
           />
         )}
       </SafeAreaView>
@@ -164,6 +189,19 @@ export default function PostDetail() {
               />
             </View>
           </MotionModal>
+        </View>
+      )}
+
+      {isDeleteModalVisible && (
+        <View className="flex-1">
+          <DeleteModal
+            isVisible={isDeleteModalVisible}
+            onClose={() => setIsDeleteModalVisible(false)}
+            onDelete={() => {
+              deletePostMutation.mutate();
+              setIsDeleteModalVisible(false);
+            }}
+          />
         </View>
       )}
 

@@ -6,7 +6,6 @@ import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
-  deletePost,
   getCurrentUser,
   toggleLikePost,
 } from "@/utils/supabase";
@@ -15,8 +14,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import Carousel from "./Carousel";
-import CustomModal, { DeleteModal } from "./Modal";
-import { showToast } from "./ToastConfig";
+import CustomModal from "./Modal";
 interface PostItemProps {
   author: {
     id: string;
@@ -39,6 +37,7 @@ interface PostItemProps {
   postId: number;
   onCommentsPress: (num: number) => void;
   onAuthorPress: (id: number) => void;
+  onDeletePress: () => void;
 }
 
 export default function PostItem({
@@ -53,12 +52,12 @@ export default function PostItem({
   postId,
   onCommentsPress,
   onAuthorPress,
+  onDeletePress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -69,8 +68,6 @@ export default function PostItem({
   );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
-
-  const toggleDeleteModal = () => setIsDeleteModalVisible((prev) => !prev);
 
   const toggleLike = useMutation({
     mutationFn: () => toggleLikePost(postId),
@@ -87,17 +84,6 @@ export default function PostItem({
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-  });
-
-  const deletePostMutation = useMutation({
-    mutationFn: () => deletePost(postId),
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
     },
   });
 
@@ -162,7 +148,7 @@ export default function PostItem({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      setIsDeleteModalVisible(true);
+                      onDeletePress();
                       setIsModalVisible(false);
                     }}
                     className="h-[82px] w-full items-center justify-center"
@@ -171,15 +157,6 @@ export default function PostItem({
                   </TouchableOpacity>
                 </View>
               </CustomModal>
-
-              <DeleteModal
-                isVisible={isDeleteModalVisible}
-                onClose={toggleDeleteModal}
-                onDelete={() => {
-                  deletePostMutation.mutate();
-                  setIsDeleteModalVisible(false);
-                }}
-              />
             </TouchableOpacity>
           )}
         </View>

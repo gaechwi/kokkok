@@ -125,7 +125,7 @@ export function OneButtonModal({
 }) {
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
-      <View className="items-center px-[55px] py-6">
+      <View className="items-center px-7 py-6">
         {!!emoji &&
           (emoji === "sad" ? (
             <Icons.FaceNotDoneIcon width={40} height={40} />
