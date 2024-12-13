@@ -19,6 +19,7 @@ import {
   supabase,
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
+import { useFocusEffect } from "expo-router";
 
 interface FriendLayoutProps {
   friends: UserProfile[];
@@ -99,6 +100,13 @@ export default function Friend() {
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
   }, 500);
+
+  // 친구창에 focus 들어올 때마다 친구목록 새로고침 (검색중일 때 제외)
+  useFocusEffect(() => {
+    if (!keyword) {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+    }
+  });
 
   // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {

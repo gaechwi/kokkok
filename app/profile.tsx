@@ -4,6 +4,7 @@ import useFetchData from "@/hooks/useFetchData";
 import { getCurrentUser, updateMyProfile } from "@/utils/supabase";
 import images from "@constants/images";
 import * as ImagePicker from "expo-image-picker";
+import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -63,8 +64,26 @@ const Profile = () => {
   };
 
   const handleAvatarPress = async () => {
+    // 권한 요청
+    const { status, accessPrivileges } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted" && accessPrivileges !== "limited") {
+      Alert.alert(
+        "사진 접근 권한 필요",
+        "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          {
+            text: "설정으로 이동",
+            onPress: () => Linking.openURL("app-settings:"),
+          },
+        ],
+      );
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,

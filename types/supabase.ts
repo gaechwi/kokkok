@@ -369,6 +369,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_friend_request: {
+        Args: {
+          request_id: number | null;
+          from_user_id: string;
+          to_user_id: string;
+        };
+        Returns: undefined;
+      };
       decrement_comment_likes: {
         Args: {
           p_comment_id: number;
@@ -472,6 +480,11 @@ export type Database = {
           createdAt: string;
           parentsCommentId: number;
           replyCommentId: number;
+          replyTo: {
+            id: string;
+            username: string;
+            avatarUrl: string | null;
+          };
           userData: {
             id: string;
             username: string;
@@ -490,7 +503,7 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like" | "commentLike";
+      notificationtype: "poke" | "comment" | "like" | "commentLike" | "mention";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {
