@@ -174,7 +174,7 @@ export default function PostDetail() {
             setIsNotFoundModalVisible(false);
           }}
           emoji="sad"
-          contents="게시글이 더 이상 존재하지 않아요."
+          contents={"이 게시글은 삭제 되었어요."}
           buttonText="홈으로"
           onPress={() => router.push("/home")}
         />
