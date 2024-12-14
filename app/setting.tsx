@@ -21,6 +21,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Setting() {
   const router = useRouter();
@@ -39,13 +40,12 @@ export default function Setting() {
   );
 
   // 푸시알림 설정 정보 조회
-  const { data: token, isPending: isTokenPending } =
-    useFetchData<PushToken | null>(
-      ["pushToken", session?.user.id],
-      () => getPushToken(session?.user.id || ""),
-      "푸시 알림 설정 정보 로드에 실패했습니다.",
-      !!session,
-    );
+  const { data: token } = useFetchData<PushToken | null>(
+    ["pushToken", session?.user.id],
+    () => getPushToken(session?.user.id || ""),
+    "푸시 알림 설정 정보 로드에 실패했습니다.",
+    !!session,
+  );
 
   const granted = token?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
@@ -121,14 +121,14 @@ export default function Setting() {
   });
 
   return (
-    <>
-      <View className="flex-1 bg-gray-5 gap-2">
+    <SafeAreaView edges={[]} className="flex-1 bg-white">
+      <View className="gap-2 bg-gray-5 pb-2">
+        {/* 알림 설정 */}
         <View className="bg-white px-6 py-[22px] gap-5">
           <View className="flex-row items-center justify-between ">
             <Text className="heading-2 text-gray-80">알림 설정</Text>
             <CustomSwitch value={allSwitch} onPress={handleAllSwitchPress} />
           </View>
-
           {/* 개별 스위치 리스트 */}
           <View className="gap-5 px-2">
             {Object.keys(SWITCH_CONFIG).map((type) => (
@@ -148,6 +148,7 @@ export default function Setting() {
           </View>
         </View>
 
+        {/* 계정 설정 */}
         <View className="bg-white px-6 py-[22px]">
           <Text className="heading-2 text-gray-80">계정 설정</Text>
           <View className="mt-5 gap-5 px-2">
@@ -181,10 +182,12 @@ export default function Setting() {
           </View>
         </View>
 
+        {/* 문의하기 */}
         <View className="bg-white px-6 py-[22px]">
           <Text className="heading-2 text-gray-80">문의하기</Text>
         </View>
 
+        {/* 깃허브 놀러가기 */}
         <View className="bg-white px-6 py-[22px]">
           <TouchableOpacity
             onPress={() =>
@@ -196,99 +199,101 @@ export default function Setting() {
             </Text>
           </TouchableOpacity>
         </View>
-
-        <View className="bg-white flex-grow" />
       </View>
 
-      <CustomModal
-        visible={isDeleteModalVisible}
-        onClose={() => setIsDeleteModalVisible(false)}
-        position="middle"
-      >
-        <View className="w-full items-center p-[24px]">
-          <Icons.FaceNotDoneIcon width={40} height={40} />
-          <Text className="title-3 mt-4 text-center">
-            탈퇴하면 되돌릴 수 없어요{"\n"}
-            그래도 탈퇴하시겠어요?
-          </Text>
-          <View className="mt-5 flex-row justify-between gap-5">
-            <TouchableOpacity
-              className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
-              onPress={() => {
-                setIsDeleteModalVisible(false);
-              }}
-              disabled={isLoading}
-            >
-              <Text className="title-2 text-white">취소</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
-              onPress={async () => {
-                setIsLoading(true);
-
-                await deleteUser(session?.user.id ?? "");
-
-                setIsDeleteModalVisible(false);
-                setIsLoading(false);
-
-                router.replace("/sign-in");
-
-                showToast("success", "탈퇴가 완료되었습니다!");
-              }}
-              disabled={isLoading}
-            >
-              <Text className="title-2 text-white">탈퇴</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </CustomModal>
-
-      <CustomModal
-        visible={isSignOutModalVisible}
-        onClose={() => setIsSignOutModalVisible(false)}
-        position="middle"
-      >
-        <View className="h-[180px] w-full items-center p-[24px]">
-          <Text className="title-3 text-center">
-            이 계정에서{"\n"}
-            로그아웃 하시겠어요?
-          </Text>
-          <View className="mt-[28px] flex-row justify-between gap-5">
-            <TouchableOpacity
-              className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
-              onPress={() => {
-                setIsSignOutModalVisible(false);
-              }}
-              disabled={isLoading}
-            >
-              <Text className="title-2 text-white">취소</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
-              onPress={async () => {
-                if (session) {
+      <View className="flex-1">
+        <CustomModal
+          visible={isDeleteModalVisible}
+          onClose={() => setIsDeleteModalVisible(false)}
+          position="middle"
+        >
+          <View className="w-full items-center p-[24px]">
+            <Icons.FaceNotDoneIcon width={40} height={40} />
+            <Text className="title-3 mt-4 text-center">
+              탈퇴하면 되돌릴 수 없어요{"\n"}
+              그래도 탈퇴하시겠어요?
+            </Text>
+            <View className="mt-5 flex-row justify-between gap-5">
+              <TouchableOpacity
+                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
+                onPress={() => {
+                  setIsDeleteModalVisible(false);
+                }}
+                disabled={isLoading}
+              >
+                <Text className="title-2 text-white">취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
+                onPress={async () => {
                   setIsLoading(true);
 
-                  await updatePushToken({
-                    userId: session.user.id,
-                    pushToken: null,
-                  });
-                  await supabase.auth.signOut();
+                  await deleteUser(session?.user.id ?? "");
 
+                  setIsDeleteModalVisible(false);
                   setIsLoading(false);
-                }
-                setIsSignOutModalVisible(false);
-                router.replace("/sign-in");
 
-                showToast("success", "로그아웃이 완료되었습니다!");
-              }}
-              disabled={isLoading}
-            >
-              <Text className="title-2 text-white">로그아웃</Text>
-            </TouchableOpacity>
+                  router.replace("/sign-in");
+
+                  showToast("success", "탈퇴가 완료되었습니다!");
+                }}
+                disabled={isLoading}
+              >
+                <Text className="title-2 text-white">탈퇴</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </CustomModal>
-    </>
+        </CustomModal>
+      </View>
+
+      <View className="flex-1 ">
+        <CustomModal
+          visible={isSignOutModalVisible}
+          onClose={() => setIsSignOutModalVisible(false)}
+          position="middle"
+        >
+          <View className="h-[180px] w-full items-center p-[24px]">
+            <Text className="title-3 text-center">
+              이 계정에서{"\n"}
+              로그아웃 하시겠어요?
+            </Text>
+            <View className="mt-[28px] flex-row justify-between gap-5">
+              <TouchableOpacity
+                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
+                onPress={() => {
+                  setIsSignOutModalVisible(false);
+                }}
+                disabled={isLoading}
+              >
+                <Text className="title-2 text-white">취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
+                onPress={async () => {
+                  if (session) {
+                    setIsLoading(true);
+
+                    await updatePushToken({
+                      userId: session.user.id,
+                      pushToken: null,
+                    });
+                    await supabase.auth.signOut();
+
+                    setIsLoading(false);
+                  }
+                  setIsSignOutModalVisible(false);
+                  router.replace("/sign-in");
+
+                  showToast("success", "로그아웃이 완료되었습니다!");
+                }}
+                disabled={isLoading}
+              >
+                <Text className="title-2 text-white">로그아웃</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </CustomModal>
+      </View>
+    </SafeAreaView>
   );
 }

@@ -22,8 +22,8 @@ export default function CustomSwitch({
   duration = 400,
   trackColors = { on: colors.primary, off: colors.gray[25] },
 }: ToggleProps) {
-  const height = useSharedValue(100);
-  const width = useSharedValue(100);
+  const height = useSharedValue(0);
+  const width = useSharedValue(0);
 
   const trackAnimatedStyle = useAnimatedStyle(() => {
     const color = interpolateColor(
