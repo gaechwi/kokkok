@@ -31,10 +31,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
 import { DeleteModal } from "../Modal";
 import MotionModal from "../MotionModal";
-import { ToastConfig, showToast } from "../ToastConfig";
+import { showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -68,7 +67,6 @@ export default function CommentsSection({
 
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
-  const [isToast, setIsToast] = useState(false);
 
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
@@ -207,9 +205,9 @@ export default function CommentsSection({
       showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
+
   const onCloseComments = useCallback(() => {
     onClose();
-    setIsToast(false);
     queryClient.removeQueries({ queryKey: ["comments", postId] });
     queryClient.removeQueries({ queryKey: ["replies"] });
   }, [onClose, postId, queryClient]);
@@ -222,7 +220,7 @@ export default function CommentsSection({
       initialHeight={deviceHeight * 0.8}
     >
       <View className="flex-1">
-        <View className="relative z-10 w-full pb-2.5">
+        <View className="relative w-full pb-2.5">
           <LinearGradient
             colors={["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 0)"]}
             start={[0, 0]}
@@ -449,16 +447,13 @@ export default function CommentsSection({
                 : "댓글을 입력해주세요."
             }
             onSubmit={() => {
-              if (comment.trim() && !writeCommentMutation.isPending) {
-                setIsToast(true);
+              if (comment.trim() && !writeCommentMutation.isPending)
                 writeCommentMutation.mutate();
-              }
             }}
             isPending={writeCommentMutation.isPending}
           />
         </View>
       </>
-      {isToast && <Toast config={ToastConfig} />}
     </MotionModal>
   );
 }
