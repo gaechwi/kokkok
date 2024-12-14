@@ -9,19 +9,21 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-interface ToggleProps {
+interface SwitchProps {
   value: SharedValue<boolean>;
-  onPress?: () => void;
+  isInit: SharedValue<boolean>;
+  onPress: () => void;
   duration?: number;
   trackColors?: { on: string; off: string };
 }
 
 export default function CustomSwitch({
   value,
+  isInit,
   onPress,
   duration = 400,
   trackColors = { on: colors.primary, off: colors.gray[25] },
-}: ToggleProps) {
+}: SwitchProps) {
   const height = useSharedValue(0);
   const width = useSharedValue(0);
 
@@ -31,7 +33,9 @@ export default function CustomSwitch({
       [0, 1],
       [trackColors.off, trackColors.on],
     );
-    const colorValue = withTiming(color, { duration });
+    const colorValue = withTiming(color, {
+      duration: isInit.value ? 0 : duration,
+    });
 
     return {
       backgroundColor: colorValue,
@@ -45,7 +49,9 @@ export default function CustomSwitch({
       [0, 1],
       [0, width.value - height.value],
     );
-    const translateValue = withTiming(moveValue, { duration });
+    const translateValue = withTiming(moveValue, {
+      duration: isInit.value ? 0 : duration,
+    });
 
     return {
       transform: [{ translateX: translateValue }],

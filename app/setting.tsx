@@ -1,4 +1,5 @@
 import CustomSwitch from "@/components/CustomSwitch";
+import LoadingScreen from "@/components/LoadingScreen";
 import CustomModal from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
@@ -25,7 +26,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Setting() {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
@@ -40,113 +40,25 @@ export default function Setting() {
   );
 
   // 푸시알림 설정 정보 조회
-  const { data: token } = useFetchData<PushToken | null>(
-    ["pushToken", session?.user.id],
-    () => getPushToken(session?.user.id || ""),
-    "푸시 알림 설정 정보 로드에 실패했습니다.",
-    !!session,
-  );
-
-  const granted = token?.grantedNotifications || [];
-  const allSwitch = useSharedValue(!!granted.length);
-  const SWITCH_CONFIG = {
-    like: {
-      title: "좋아요 알림",
-      value: useSharedValue(granted.includes("like")),
-    },
-    comment: {
-      title: "댓글 알림",
-      value: useSharedValue(granted.includes("comment")),
-    },
-    mention: {
-      title: "언급 알림",
-      value: useSharedValue(granted.includes("mention")),
-    },
-    poke: {
-      title: "콕찌르기 알림",
-      value: useSharedValue(granted.includes("poke")),
-    },
-    friend: {
-      title: "친구요청 알림",
-      value: useSharedValue(granted.includes("friend")),
-    },
-  };
-  type SwitchType = keyof typeof SWITCH_CONFIG;
-
-  // 최상단 스위치 클릭 핸들러
-  const handleAllSwitchPress = () => {
-    for (const { value } of Object.values(SWITCH_CONFIG)) {
-      value.value = !allSwitch.value;
-    }
-    allSwitch.value = !allSwitch.value;
-  };
-
-  // 개별 스위치 클릭 핸들러
-  const handleSwitchPress = (type: SwitchType) => {
-    if (!SWITCH_CONFIG[type].value.value) {
-      // 이전값이 false -> 이제 true: 하나라도 true면 allSwitch는 true
-      if (!allSwitch.value) allSwitch.value = true;
-    } else if (
-      // 이전값이 true -> 이제 false: 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
-      Object.entries(SWITCH_CONFIG).every(
-        ([key, { value }]) => key === type || !value.value,
-      )
-    ) {
-      if (allSwitch.value) allSwitch.value = false;
-    }
-
-    SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
-  };
-
-  // 알림 설정 변경 사항 업데이트
-  const updateGrantedNotifications = useCallback(
-    async (userId: string, grantedNotifications: NotificationType[]) => {
-      await updatePushToken({ userId, grantedNotifications });
-      queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
-    },
-    [queryClient.invalidateQueries],
-  );
-
-  useFocusEffect(() => {
-    return () => {
-      if (!session) return;
-
-      const newGranted = Object.entries(SWITCH_CONFIG)
-        .filter(([, { value }]) => value.value)
-        .map(([key]) => key as NotificationType);
-
-      if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort()))
-        updateGrantedNotifications(session.user.id, newGranted);
-    };
-  });
+  const { data: token, isPending: isTokenPending } =
+    useFetchData<PushToken | null>(
+      ["pushToken", session?.user.id],
+      () => getPushToken(session?.user.id || ""),
+      "푸시 알림 설정 정보 로드에 실패했습니다.",
+      !!session,
+    );
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="gap-2 bg-gray-5 pb-2">
         {/* 알림 설정 */}
-        <View className="bg-white px-6 py-[22px] gap-5">
-          <View className="flex-row items-center justify-between ">
-            <Text className="heading-2 text-gray-80">알림 설정</Text>
-            <CustomSwitch value={allSwitch} onPress={handleAllSwitchPress} />
+        {!session || isTokenPending ? (
+          <View className="h-[324px] items-center justify-center">
+            <LoadingScreen />
           </View>
-          {/* 개별 스위치 리스트 */}
-          <View className="gap-5 px-2">
-            {Object.keys(SWITCH_CONFIG).map((type) => (
-              <View
-                key={type}
-                className="flex-row items-center justify-between"
-              >
-                <Text className="font-pmedium text-gray-80 text-xl">
-                  {SWITCH_CONFIG[type as SwitchType].title}
-                </Text>
-                <CustomSwitch
-                  value={SWITCH_CONFIG[type as SwitchType].value}
-                  onPress={() => handleSwitchPress(type as SwitchType)}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
+        ) : (
+          <NotificationSetting userId={session.user.id} token={token} />
+        )}
 
         {/* 계정 설정 */}
         <View className="bg-white px-6 py-[22px]">
@@ -298,5 +210,135 @@ export default function Setting() {
         </CustomModal>
       </View>
     </SafeAreaView>
+  );
+}
+
+function NotificationSetting({
+  userId,
+  token,
+}: { userId: string; token?: PushToken | null }) {
+  const queryClient = useQueryClient();
+
+  const granted = token?.grantedNotifications || [];
+  const allSwitch = useSharedValue(!!granted.length);
+  const isAllSwitchInit = useSharedValue(true);
+  const SWITCH_CONFIG = {
+    like: {
+      title: "좋아요 알림",
+      value: useSharedValue(granted.includes("like")),
+      isInit: useSharedValue(true),
+    },
+    comment: {
+      title: "댓글 알림",
+      value: useSharedValue(granted.includes("comment")),
+      isInit: useSharedValue(true),
+    },
+    mention: {
+      title: "언급 알림",
+      value: useSharedValue(granted.includes("mention")),
+      isInit: useSharedValue(true),
+    },
+    poke: {
+      title: "콕찌르기 알림",
+      value: useSharedValue(granted.includes("poke")),
+      isInit: useSharedValue(true),
+    },
+    friend: {
+      title: "친구요청 알림",
+      value: useSharedValue(granted.includes("friend")),
+      isInit: useSharedValue(true),
+    },
+  };
+  type SwitchType = keyof typeof SWITCH_CONFIG;
+
+  // 최상단 스위치 클릭 핸들러
+  const handleAllSwitchPress = () => {
+    for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
+      value.value = !allSwitch.value;
+      isInit.value = false;
+    }
+    allSwitch.value = !allSwitch.value;
+    isAllSwitchInit.value = false;
+  };
+
+  // 개별 스위치 클릭 핸들러
+  const handleSwitchPress = (type: SwitchType) => {
+    if (!SWITCH_CONFIG[type].value.value) {
+      // 이전값이 false -> 이제 true: 하나라도 true면 allSwitch는 true
+      if (!allSwitch.value) {
+        allSwitch.value = true;
+        isAllSwitchInit.value = false;
+        // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
+        if (
+          !token?.pushToken ||
+          !token.pushToken.startsWith("ExponentPushToken")
+        ) {
+        }
+      }
+    } else if (
+      // 이전값이 true -> 이제 false: 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
+      Object.entries(SWITCH_CONFIG).every(
+        ([key, { value }]) => key === type || !value.value,
+      ) &&
+      allSwitch.value
+    ) {
+      allSwitch.value = false;
+      isAllSwitchInit.value = false;
+    }
+
+    SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
+    SWITCH_CONFIG[type].isInit.value = false;
+  };
+
+  // 알림 설정 변경 사항 업데이트
+  const updateGrantedNotifications = useCallback(
+    async (userId: string, grantedNotifications: NotificationType[]) => {
+      await updatePushToken({ userId, grantedNotifications });
+      queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
+    },
+    [queryClient.invalidateQueries],
+  );
+
+  // 설정화면에서 떠날 때 알림 설정 변경사항 저장
+  useFocusEffect(() => {
+    return () => {
+      if (!userId) return;
+      const granted = token?.grantedNotifications || [];
+
+      const newGranted = Object.entries(SWITCH_CONFIG)
+        .filter(([, { value }]) => value.value)
+        .map(([key]) => key as NotificationType);
+
+      if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort()))
+        updateGrantedNotifications(userId, newGranted);
+    };
+  });
+
+  return (
+    <View className="bg-white px-6 py-[22px] gap-5">
+      <View className="flex-row items-center justify-between ">
+        <Text className="heading-2 text-gray-80">알림 설정</Text>
+        <CustomSwitch
+          value={allSwitch}
+          isInit={isAllSwitchInit}
+          onPress={handleAllSwitchPress}
+        />
+      </View>
+      {/* 개별 스위치 리스트 */}
+      <View className="gap-5 px-2">
+        {Object.keys(SWITCH_CONFIG).map((type) => (
+          <View key={type} className="flex-row items-center justify-between">
+            <Text className="font-pmedium text-gray-80 text-xl">
+              {SWITCH_CONFIG[type as SwitchType].title}
+            </Text>
+            <CustomSwitch
+              value={SWITCH_CONFIG[type as SwitchType].value}
+              isInit={SWITCH_CONFIG[type as SwitchType].isInit}
+              onPress={() => handleSwitchPress(type as SwitchType)}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
