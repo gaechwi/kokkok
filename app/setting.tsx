@@ -248,7 +248,7 @@ function NotificationSetting({
       value: useSharedValue(granted.includes("friend")),
       isInit: useSharedValue(true),
     },
-  };
+  } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
   // 최상단 스위치 클릭 핸들러
@@ -290,27 +290,22 @@ function NotificationSetting({
     SWITCH_CONFIG[type].isInit.value = false;
   };
 
-  // 알림 설정 변경 사항 업데이트
-  const updateGrantedNotifications = useCallback(
-    async (userId: string, grantedNotifications: NotificationType[]) => {
-      await updatePushToken({ userId, grantedNotifications });
+  // 알림 설정 변경이 있다면 사항 업데이트
+  const updateGrantedNotifications = useCallback(async () => {
+    const newGranted = Object.entries(SWITCH_CONFIG)
+      .filter(([, { value }]) => value.value)
+      .map(([key]) => key as NotificationType);
+
+    if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort())) {
+      await updatePushToken({ userId, grantedNotifications: newGranted });
       queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
-    },
-    [queryClient.invalidateQueries],
-  );
+    }
+  }, [queryClient, SWITCH_CONFIG, userId, granted]);
 
   // 설정화면에서 떠날 때 알림 설정 변경사항 저장
   useFocusEffect(() => {
     return () => {
-      if (!userId) return;
-      const granted = token?.grantedNotifications || [];
-
-      const newGranted = Object.entries(SWITCH_CONFIG)
-        .filter(([, { value }]) => value.value)
-        .map(([key]) => key as NotificationType);
-
-      if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort()))
-        updateGrantedNotifications(userId, newGranted);
+      updateGrantedNotifications();
     };
   });
 

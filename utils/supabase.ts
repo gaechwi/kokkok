@@ -1381,7 +1381,6 @@ export async function createPushToken(pushTokenData: PushToken) {
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
-    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
   }
 }
 
