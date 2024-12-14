@@ -1,80 +1,83 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
-import { useRouter } from "expo-router";
-
-import images from "@constants/images";
-import { useAtom } from "jotai";
-import { signUpFormAtom } from "@contexts/auth";
-import { useState } from "react";
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
 import { sendUpOTP, supabase } from "@/utils/supabase";
+import images from "@constants/images";
+import { signUpFormAtom } from "@contexts/auth";
+import { useRouter } from "expo-router";
+import { useAtom } from "jotai";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   const handleContinue = async () => {
-    const { data: userData, error: userError } = await supabase
-      .from("user")
-      .select("isOAuth, email")
-      .eq("email", signUpForm.email)
-      .single();
+    if (isLoading) return;
 
-    if (
-      !signUpForm.email ||
-      !signUpForm.username ||
-      !signUpForm.password ||
-      !passwordConfirm
-    ) {
-      Alert.alert("빈칸을 채워주세요.");
-      return;
-    }
-
-    if (signUpForm.username.length < 3) {
-      Alert.alert("닉네임은 3자 이상이어야 합니다.");
-      return;
-    }
-
-    if (signUpForm.password !== passwordConfirm) {
-      Alert.alert("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
-    if (signUpForm.password.length < 8 || passwordConfirm.length < 8) {
-      Alert.alert("비밀번호는 8자 이상이어야 합니다.");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(signUpForm.email)) {
-      Alert.alert("알림", "올바른 이메일 형식이 아닙니다.");
-      return;
-    }
-
-    if (userData?.isOAuth) {
-      Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
-      return;
-    }
-
-    if (userData?.email) {
-      Alert.alert("알림", "이미 가입된 이메일입니다.");
-      return;
-    }
-
+    setIsLoading(true);
     try {
+      const { data: userData, error: userError } = await supabase
+        .from("user")
+        .select("isOAuth, email")
+        .eq("email", signUpForm.email)
+        .single();
+
+      if (
+        !signUpForm.email ||
+        !signUpForm.username ||
+        !signUpForm.password ||
+        !passwordConfirm
+      ) {
+        Alert.alert("빈칸을 채워주세요.");
+        return;
+      }
+
+      if (signUpForm.username.length < 3) {
+        Alert.alert("닉네임은 3자 이상이어야 합니다.");
+        return;
+      }
+
+      if (signUpForm.password !== passwordConfirm) {
+        Alert.alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+
+      if (signUpForm.password.length < 8 || passwordConfirm.length < 8) {
+        Alert.alert("비밀번호는 8자 이상이어야 합니다.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(signUpForm.email)) {
+        Alert.alert("알림", "올바른 이메일 형식이 아닙니다.");
+        return;
+      }
+
+      if (userData?.isOAuth) {
+        Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
+        return;
+      }
+
+      if (userData?.email) {
+        Alert.alert("알림", "이미 가입된 이메일입니다.");
+        return;
+      }
+
       await sendUpOTP(signUpForm.email);
       setIsModalVisible(true);
     } catch (error) {
@@ -82,7 +85,8 @@ const Step1 = () => {
         "알림",
         error instanceof Error ? error.message : "이메일 전송에 실패했습니다.",
       );
-      return;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -152,10 +156,19 @@ const Step1 = () => {
             </View>
 
             <TouchableOpacity
-              className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+              className={`mt-10 h-[62px] w-full items-center justify-center rounded-[10px] ${
+                isLoading ? "bg-gray-40" : "bg-primary"
+              }`}
               onPress={handleContinue}
+              disabled={isLoading}
             >
-              <Text className="heading-2 text-white">다음</Text>
+              {isLoading ? (
+                <Text className="heading-2 text-white">
+                  인증 메일 전송 중...
+                </Text>
+              ) : (
+                <Text className="heading-2 text-white">다음</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
