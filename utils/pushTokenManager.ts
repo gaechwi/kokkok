@@ -1,14 +1,60 @@
+import { NOTIFICATION_TYPE } from "@/types/Notification.interface";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import * as Supabase from "./supabase";
 
-function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage);
-  throw new Error(errorMessage);
+export const isTokenValid = (token?: string | null) =>
+  !!token?.startsWith("ExponentPushToken");
+
+// 기존에 토큰이 없던 유저에게 새로운 토큰을 받아서 추가
+export function addPushToken(userId: string, handleUpdate: () => void) {
+  registerForPushNotificationsAsync()
+    .then(async (token) => {
+      await Supabase.createPushToken({
+        userId,
+        pushToken: token || null,
+        grantedNotifications: Object.values(NOTIFICATION_TYPE),
+      });
+      handleUpdate();
+    })
+    .catch(async (error) => {
+      await Supabase.createPushToken({
+        userId,
+        pushToken: error,
+        grantedNotifications: [],
+      });
+      handleUpdate();
+    });
 }
 
-export async function registerForPushNotificationsAsync() {
+// 기존 설정 값이 있는 유저의 경우 토큰 값만 변경
+export function updatePushToken(
+  userId: string,
+  existingToken: string | null,
+  handleUpdate: () => void,
+) {
+  registerForPushNotificationsAsync()
+    .then(async (token) => {
+      if (token !== existingToken) {
+        await Supabase.updatePushToken({
+          userId,
+          pushToken: token || null,
+        });
+        handleUpdate();
+      }
+    })
+    .catch(async (error) => {
+      await Supabase.updatePushToken({
+        userId,
+        pushToken: error,
+      });
+      handleUpdate();
+    });
+}
+
+async function registerForPushNotificationsAsync() {
   // 안드로이드 알림 설정
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
@@ -51,4 +97,9 @@ export async function registerForPushNotificationsAsync() {
   } else {
     handleRegistrationError("Must use physical device for push notifications");
   }
+}
+
+function handleRegistrationError(errorMessage: string) {
+  alert(errorMessage);
+  throw new Error(errorMessage);
 }

@@ -1382,9 +1382,7 @@ export async function getPushToken(userId: string): Promise<PushToken | null> {
 
 // 푸시 알림 설정 추가
 export async function createPushToken(pushTokenData: PushToken) {
-  const { error } = await supabase
-    .from("pushToken")
-    .upsert(pushTokenData, { onConflict: "userId" });
+  const { error } = await supabase.from("pushToken").insert(pushTokenData);
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
@@ -1392,18 +1390,18 @@ export async function createPushToken(pushTokenData: PushToken) {
 }
 
 // 푸시 알림 설정 업데이트
-export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
+export async function updatePushToken({
+  userId,
+  pushToken,
+  grantedNotifications,
+}: PushTokenUpdateData) {
   const { error } = await supabase
     .from("pushToken")
     .update({
-      ...(pushTokenData.pushToken === undefined
-        ? {}
-        : { pushToken: pushTokenData.pushToken }),
-      ...(pushTokenData.grantedNotifications === undefined
-        ? {}
-        : { grantedNotifications: pushTokenData.grantedNotifications }),
+      ...(pushToken === undefined ? {} : { pushToken }),
+      ...(grantedNotifications === undefined ? {} : { grantedNotifications }),
     })
-    .eq("userId", pushTokenData.userId);
+    .eq("userId", userId);
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);

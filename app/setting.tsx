@@ -9,6 +9,7 @@ import type {
   NotificationType,
   PushToken,
 } from "@/types/Notification.interface";
+import { isTokenValid } from "@/utils/pushTokenManager";
 import {
   deleteUser,
   getCurrentSession,
@@ -42,7 +43,7 @@ export default function Setting() {
   // 푸시알림 설정 정보 조회
   const { data: token, isPending: isTokenPending } =
     useFetchData<PushToken | null>(
-      ["pushToken", session?.user.id],
+      ["pushTokenData"],
       () => getPushToken(session?.user.id || ""),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
       !!session,
@@ -269,10 +270,7 @@ function NotificationSetting({
         allSwitch.value = true;
         isAllSwitchInit.value = false;
         // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
-        if (
-          !token?.pushToken ||
-          !token.pushToken.startsWith("ExponentPushToken")
-        ) {
+        if (isTokenValid(token?.pushToken)) {
         }
       }
     } else if (
@@ -298,7 +296,7 @@ function NotificationSetting({
 
     if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort())) {
       await updatePushToken({ userId, grantedNotifications: newGranted });
-      queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
+      queryClient.refetchQueries({ queryKey: ["pushTokenData"] });
     }
   }, [queryClient, SWITCH_CONFIG, userId, granted]);
 
