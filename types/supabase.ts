@@ -380,6 +380,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_user_data: {
+        Args: {
+          user_id: string;
+        };
+        Returns: undefined;
+      };
       get_comments: {
         Args: {
           postid: number;
