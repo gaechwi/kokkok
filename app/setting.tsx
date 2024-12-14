@@ -17,8 +17,8 @@ import {
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
@@ -73,6 +73,7 @@ export default function Setting() {
   };
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
+  // 최상단 스위치 클릭 핸들러
   const handleAllSwitchPress = () => {
     for (const { value } of Object.values(SWITCH_CONFIG)) {
       value.value = !allSwitch.value;
@@ -80,6 +81,7 @@ export default function Setting() {
     allSwitch.value = !allSwitch.value;
   };
 
+  // 개별 스위치 클릭 핸들러
   const handleSwitchPress = (type: SwitchType) => {
     if (!SWITCH_CONFIG[type].value.value) {
       // 이전값이 false -> 이제 true: 하나라도 true면 allSwitch는 true
@@ -96,15 +98,16 @@ export default function Setting() {
     SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
   };
 
-  useEffect(() => {
-    const updateGrantedNotifications = async (
-      userId: string,
-      grantedNotifications: NotificationType[],
-    ) => {
+  // 알림 설정 변경 사항 업데이트
+  const updateGrantedNotifications = useCallback(
+    async (userId: string, grantedNotifications: NotificationType[]) => {
       await updatePushToken({ userId, grantedNotifications });
       queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
-    };
+    },
+    [queryClient.invalidateQueries],
+  );
 
+  useFocusEffect(() => {
     return () => {
       if (!session) return;
 
@@ -115,7 +118,7 @@ export default function Setting() {
       if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort()))
         updateGrantedNotifications(session.user.id, newGranted);
     };
-  }, [session, granted, queryClient.invalidateQueries]);
+  });
 
   return (
     <>

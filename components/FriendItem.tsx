@@ -88,7 +88,7 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => user && handlePoke({ user: user, friend })}
+        onPress={() => user && handlePoke({ user, friend })}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
