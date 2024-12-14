@@ -132,14 +132,17 @@ export default function Setting() {
               onPress={async () => {
                 setIsLoading(true);
 
-                await deleteUser(currentUser?.id ?? "");
+                try {
+                  await deleteUser(currentUser?.id ?? "");
+
+                  router.replace("/sign-in");
+                  showToast("success", "탈퇴가 완료되었습니다!");
+                } catch (error) {
+                  showToast("error", "탈퇴에 실패했습니다.");
+                }
 
                 setIsDeleteModalVisible(false);
                 setIsLoading(false);
-
-                router.replace("/sign-in");
-
-                showToast("success", "탈퇴가 완료되었습니다!");
               }}
               disabled={isLoading}
             >

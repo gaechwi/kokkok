@@ -68,8 +68,10 @@ export default function CommentsSection({
 
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
-  const inputRef = useRef<TextInput>(null);
+  const [isToast, setIsToast] = useState(false);
+
   const queryClient = useQueryClient();
+  const inputRef = useRef<TextInput>(null);
 
   const router = useRouter();
 
@@ -91,17 +93,23 @@ export default function CommentsSection({
   );
 
   // 댓글 가져오기
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: ["comments", postId],
-      queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNext ? lastPage.nextPage : undefined,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      placeholderData: keepPreviousData,
-      initialPageParam: 0,
-    });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useInfiniteQuery({
+    queryKey: ["comments", postId],
+    queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? lastPage.nextPage : undefined,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: keepPreviousData,
+    initialPageParam: 0,
+  });
 
   // 댓글 더 불러오기
   const loadMore = useCallback(() => {
@@ -199,11 +207,17 @@ export default function CommentsSection({
       showToast("fail", "댓글 삭제에 실패했어요.");
     },
   });
+  const onCloseComments = useCallback(() => {
+    onClose();
+    setIsToast(false);
+    queryClient.removeQueries({ queryKey: ["comments", postId] });
+    queryClient.removeQueries({ queryKey: ["replies"] });
+  }, [onClose, postId, queryClient]);
 
   return (
     <MotionModal
       visible={visible}
-      onClose={onClose}
+      onClose={onCloseComments}
       maxHeight={deviceHeight}
       initialHeight={deviceHeight * 0.8}
     >
@@ -270,68 +284,105 @@ export default function CommentsSection({
           )}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator size="large" className="py-4" />
+              <ActivityIndicator
+                size="large"
+                className="py-4"
+                color={colors.primary}
+              />
             ) : null
           }
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           ListEmptyComponent={
-            <View className="flex-1 items-center justify-center">
-              <Text className="title-3 text-gray-70">아직 댓글이 없어요.</Text>
-            </View>
+            isFetching ? (
+              <View>
+                {[...Array(5)].map((_, index) => (
+                  <View
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`skeleton-${index}`}
+                    className="mb-8 animate-pulse gap-[13px]"
+                  >
+                    <View className="h-12 flex-1 flex-row items-center gap-2">
+                      <View className="size-12 rounded-full bg-gray-25" />
+
+                      <View className="h-12 flex-1 justify-center gap-[5px]">
+                        <View className="h-[16px] w-16 rounded-md bg-gray-25" />
+                        <View className="h-[13px] w-10 rounded-md bg-gray-25" />
+                      </View>
+
+                      <View className="size-[28px] rounded-full bg-gray-25" />
+                    </View>
+
+                    <View className="gap-[13px]">
+                      <View className="h-[18px] w-[80%] rounded-md bg-gray-25" />
+                      <View className="h-[14px] w-10 rounded-md bg-gray-25" />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <Text className="title-3 text-gray-70">
+                  아직 댓글이 없어요.
+                </Text>
+              </View>
+            )
           }
         />
       </View>
 
-      <MotionModal
-        visible={isLikedModalVisible}
-        onClose={() => setIsLikedModalVisible(false)}
-        maxHeight={deviceHeight}
-        initialHeight={deviceHeight * 0.6}
-      >
-        <View className="flex-1 ">
-          <FlatList
-            className="w-full px-4 py-2 "
-            data={likedAuthor}
-            keyExtractor={(item, index) => `liked-author-${index}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setIsLikedModalVisible(false);
-                  onClose();
-                  if (user.data?.id === item.author?.id) router.push("/mypage");
-                  else router.push(`/user/${item.author?.id}`);
-                }}
-                className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
-              >
-                <Image
-                  source={
-                    item.author?.avatarUrl
-                      ? { uri: item.author?.avatarUrl }
-                      : images.AvaTarDefault
-                  }
-                  resizeMode="cover"
-                  className="size-10 rounded-full"
-                />
-                <Text
-                  className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
+      {isLikedModalVisible && (
+        <MotionModal
+          visible={isLikedModalVisible}
+          onClose={() => setIsLikedModalVisible(false)}
+          maxHeight={deviceHeight}
+          initialHeight={deviceHeight * 0.6}
+        >
+          <View className="flex-1 ">
+            <FlatList
+              className="w-full px-4 py-2 "
+              data={likedAuthor}
+              keyExtractor={(item, index) => `liked-author-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsLikedModalVisible(false);
+                    onClose();
+                    if (user.data?.id === item.author?.id)
+                      router.push("/mypage");
+                    else router.push(`/user/${item.author?.id}`);
+                  }}
+                  className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
                 >
-                  {item.author?.username}
-                </Text>
+                  <Image
+                    source={
+                      item.author?.avatarUrl
+                        ? { uri: item.author?.avatarUrl }
+                        : images.AvaTarDefault
+                    }
+                    resizeMode="cover"
+                    className="size-10 rounded-full"
+                  />
+                  <Text
+                    className="flex-1 font-psemibold text-[16px] text-gray-90 leading-[150%]"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.author?.username}
+                  </Text>
 
-                <Icons.HeartIcon
-                  width={24}
-                  height={24}
-                  color={colors.secondary.red}
-                  fill={colors.secondary.red}
-                />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </MotionModal>
+                  <Icons.HeartIcon
+                    width={24}
+                    height={24}
+                    color={colors.secondary.red}
+                    fill={colors.secondary.red}
+                  />
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </MotionModal>
+      )}
 
       {/* 삭제 모달 */}
       <DeleteModal
@@ -399,6 +450,7 @@ export default function CommentsSection({
             }
             onSubmit={() => {
               if (comment.trim() && !writeCommentMutation.isPending) {
+                setIsToast(true);
                 writeCommentMutation.mutate();
               }
             }}
@@ -406,7 +458,7 @@ export default function CommentsSection({
           />
         </View>
       </>
-      <Toast config={ToastConfig} />
+      {isToast && <Toast config={ToastConfig} />}
     </MotionModal>
   );
 }
