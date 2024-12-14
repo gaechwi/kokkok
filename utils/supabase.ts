@@ -1334,7 +1334,7 @@ export async function createNotification(notification: Notification) {
       body: message.content,
       data: notification.data,
     };
-    sendPushNotification(pushMessage);
+    await sendPushNotification(pushMessage);
   } catch (error) {
     console.error("푸시 알림 생성에 실패했습니다.", error);
   }
@@ -1342,7 +1342,7 @@ export async function createNotification(notification: Notification) {
 
 // 푸시 알림 보내기
 async function sendPushNotification(message: PushMessage) {
-  await fetch("https://exp.host/--/api/v2/push/send", {
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${expoPushToken}`,
@@ -1352,6 +1352,13 @@ async function sendPushNotification(message: PushMessage) {
     },
     body: JSON.stringify(message),
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      `푸시 알림 전송 실패: ${error.message || response.statusText}`,
+    );
+  }
 }
 
 // ============================================
