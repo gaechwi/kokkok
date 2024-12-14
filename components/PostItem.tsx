@@ -3,6 +3,7 @@ import icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
@@ -78,8 +79,8 @@ export default function PostItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
-      if (isLiked && user.data?.id !== author.id) {
-        sendNotificationMutation.mutate();
+      if (user.data && isLiked && user.data?.id !== author.id) {
+        sendNotificationMutation.mutate(user.data);
       }
     },
     onError: () => {
@@ -101,10 +102,10 @@ export default function PostItem({
     },
   });
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: () =>
+  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
+    mutationFn: (from) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: author.id,
         type: "like",
         data: { postId },

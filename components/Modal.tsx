@@ -2,7 +2,6 @@ import Icons from "@/constants/icons";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Modal, Text, TouchableOpacity } from "react-native";
 import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 interface BottomModalProps {
   children: React.ReactNode;
@@ -56,14 +55,13 @@ export default function CustomModal({
             ],
           }}
         >
-          <SafeAreaView
-            edges={[]}
-            className={`z-10 h-fit w-full bg-white ${
+          <View
+            className={`h-fit w-full bg-white ${
               position === "middle" ? "rounded-xl" : "rounded-t-xl"
             }`}
           >
             {children}
-          </SafeAreaView>
+          </View>
         </AnimatedView>
       </View>
     </Modal>

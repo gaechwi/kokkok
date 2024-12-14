@@ -3,6 +3,7 @@ import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
@@ -125,8 +126,8 @@ export default function CommentItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
-      if (isLiked && user.data?.id !== author?.id) {
-        sendNotificationMutation.mutate();
+      if (user.data && isLiked && user.data?.id !== author?.id) {
+        sendNotificationMutation.mutate(user.data);
       }
 
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -137,10 +138,10 @@ export default function CommentItem({
     },
   });
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: () =>
+  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
+    mutationFn: (from) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: author?.id || "",
         type: "commentLike",
         data: {

@@ -2,6 +2,7 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
+import type { UserProfile } from "@/types/User.interface";
 import {
   createComment,
   createNotification,
@@ -142,8 +143,9 @@ export default function CommentsSection({
       showToast("success", "댓글이 작성되었어요!");
 
       const replyToId = replyTo?.userId || authorId;
-      if (replyToId !== user.data?.id) {
+      if (user.data && replyToId !== user.data?.id) {
         sendNotificationMutation.mutate({
+          from: user.data,
           commentId: data.id,
           type: replyToId === authorId ? "comment" : "mention",
         });
@@ -163,11 +165,16 @@ export default function CommentsSection({
 
   const sendNotificationMutation = useMutation({
     mutationFn: ({
+      from,
       commentId,
       type = "comment",
-    }: { commentId: number; type?: "comment" | "mention" }) =>
+    }: {
+      from: UserProfile;
+      commentId: number;
+      type?: "comment" | "mention";
+    }) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: replyTo?.userId || authorId || "",
         type: type,
         data: {

@@ -28,7 +28,6 @@ const useSubscribeNotification = () => {
           filter: `to=eq.${session.user.id}`,
         },
         () => {
-          console.log("알림 추가");
           queryClient.invalidateQueries({ queryKey: ["notification"] });
           queryClient.invalidateQueries({ queryKey: ["lastNotification"] });
         },

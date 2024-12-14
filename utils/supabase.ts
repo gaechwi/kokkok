@@ -12,12 +12,19 @@ import {
   type RequestResponse,
   type StatusInfo,
 } from "@/types/Friend.interface";
-import type { NotificationResponse } from "@/types/Notification.interface";
+import type {
+  NotificationResponse,
+  PushMessage,
+  PushToken,
+  PushTokenUpdateData,
+} from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
+import { formMessage } from "./formMessage";
 import { formatDate } from "./formatDate";
 
+const expoPushToken = Constants.expoConfig?.extra?.EXPO_PUSH_TOKEN;
 const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
 const supabaseAnonKey = Constants.expoConfig?.extra?.SUPABASE_ANON_KEY;
 
@@ -1252,6 +1259,7 @@ export async function getNotifications(
         `,
     )
     .eq("to", userId)
+    .neq("type", "friend")
     .order("createdAt", { ascending: false })
     .limit(30);
 
@@ -1302,8 +1310,99 @@ export async function getLatestStabForFriend(
 
 // 알림 생성
 export async function createNotification(notification: Notification) {
-  const { error } = await supabase.from("notification").insert(notification);
+  const { error } = await supabase
+    .from("notification")
+    .insert({ ...notification, from: notification.from.id });
   if (error) throw error;
+
+  // 푸시 알림 생성
+  try {
+    const data = await getPushToken(notification.to);
+    // 푸시 알림 수신 동의하지 않은 경우
+    if (!data || !data.pushToken) return;
+    if (!data.grantedNotifications.includes(notification.type)) return;
+
+    const message = formMessage(
+      notification.type,
+      notification.from.username,
+      notification.data?.commentInfo?.content,
+    );
+    const pushMessage = {
+      to: data.pushToken,
+      sound: "default",
+      title: message.title,
+      body: message.content,
+      data: notification.data,
+    };
+    sendPushNotification(pushMessage);
+  } catch (error) {
+    console.error("푸시 알림 생성에 실패했습니다.", error);
+  }
+}
+
+// 푸시 알림 보내기
+async function sendPushNotification(message: PushMessage) {
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${expoPushToken}`,
+      Accept: "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
+}
+
+// ============================================
+//
+//                 push token
+//
+// ============================================
+
+// 푸시 알림 설정 불러오기
+export async function getPushToken(userId: string): Promise<PushToken | null> {
+  const { data, error } = await supabase
+    .from("pushToken")
+    .select("*")
+    .eq("userId", userId)
+    .limit(1);
+
+  if (error) throw error;
+  if (!data) throw new Error("푸시 알림 설정 정보를 가져올 수 없습니다.");
+  return data.length ? data[0] : null;
+}
+
+// 푸시 알림 설정 추가
+export async function createPushToken(pushTokenData: PushToken) {
+  const { error } = await supabase
+    .from("pushToken")
+    .upsert(pushTokenData, { onConflict: "userId" });
+
+  if (error) {
+    console.error("푸시 알림 정보 저장 실패:", error);
+    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
+  }
+}
+
+// 푸시 알림 설정 업데이트
+export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
+  const { error } = await supabase
+    .from("pushToken")
+    .update({
+      ...(pushTokenData.pushToken === undefined
+        ? {}
+        : { pushToken: pushTokenData.pushToken }),
+      ...(pushTokenData.grantedNotifications === undefined
+        ? {}
+        : { grantedNotifications: pushTokenData.grantedNotifications }),
+    })
+    .eq("userId", pushTokenData.userId);
+
+  if (error) {
+    console.error("푸시 알림 정보 저장 실패:", error);
+    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
+  }
 }
 
 // ============================================

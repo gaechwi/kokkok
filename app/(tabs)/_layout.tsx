@@ -1,5 +1,4 @@
 import { Tabs } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { Platform, Text, View } from "react-native";
 
 import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
@@ -122,8 +121,6 @@ export default function TabsLayout() {
           }}
         />
       </Tabs>
-
-      <StatusBar style="auto" />
     </>
   );
 }

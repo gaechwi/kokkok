@@ -264,26 +264,23 @@ export type Database = {
       pushToken: {
         Row: {
           createdAt: string;
-          deviceId: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id: number;
-          pushToken: string;
+          pushToken: string | null;
           userId: string;
         };
         Insert: {
           createdAt?: string;
-          deviceId: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          pushToken: string;
+          pushToken: string | null;
           userId: string;
         };
         Update: {
           createdAt?: string;
-          deviceId?: string;
           grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          pushToken?: string;
+          pushToken?: string | null;
           userId?: string;
         };
         Relationships: [
@@ -503,7 +500,13 @@ export type Database = {
       };
     };
     Enums: {
-      notificationtype: "poke" | "comment" | "like" | "commentLike" | "mention";
+      notificationtype:
+        | "poke"
+        | "comment"
+        | "like"
+        | "commentLike"
+        | "mention"
+        | "friend";
       workoutstatus: "done" | "rest";
     };
     CompositeTypes: {
