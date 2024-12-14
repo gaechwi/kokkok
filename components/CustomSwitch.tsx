@@ -14,8 +14,8 @@ interface SwitchProps {
   onPress: () => void;
   duration?: number;
   size?: {
-    switchWidth: number;
-    switchHeight: number;
+    width: number;
+    height: number;
     padding: number;
   };
   trackColors?: { on: string; off: string };
@@ -26,10 +26,10 @@ export default function CustomSwitch({
   isInit,
   onPress,
   duration = 400,
-  size = { switchWidth: 45, switchHeight: 22, padding: 3 },
+  size = { width: 45, height: 22, padding: 3 },
   trackColors = { on: colors.primary, off: colors.gray[25] },
 }: SwitchProps) {
-  const thumbSize = size.switchHeight - 2 * size.padding;
+  const thumbSize = size.height - 2 * size.padding;
 
   const trackAnimatedStyle = useAnimatedStyle(() => {
     const color = interpolateColor(
@@ -43,7 +43,7 @@ export default function CustomSwitch({
 
     return {
       backgroundColor: colorValue,
-      borderRadius: size.switchHeight / 2,
+      borderRadius: size.height / 2,
     };
   });
 
@@ -51,7 +51,7 @@ export default function CustomSwitch({
     const moveValue = interpolate(
       Number(value.value),
       [0, 1],
-      [0, size.switchWidth - size.switchHeight],
+      [0, size.width - size.height],
     );
     const translateValue = withTiming(moveValue, {
       duration: isInit.value ? 0 : duration,
@@ -59,19 +59,16 @@ export default function CustomSwitch({
 
     return {
       transform: [{ translateX: translateValue }],
-      borderRadius: size.switchHeight / 2,
+      borderRadius: size.height / 2,
     };
   });
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <Animated.View
-        className={`w-[${size.switchWidth}px] h-[${size.switchHeight}px] p-[${size.padding}px]`}
-        style={[trackAnimatedStyle]}
-      >
+      <Animated.View style={[trackAnimatedStyle, size]}>
         <Animated.View
           className={`size-[${thumbSize}px] bg-white`}
-          style={[thumbAnimatedStyle]}
+          style={[thumbAnimatedStyle, { width: thumbSize, height: thumbSize }]}
         />
       </Animated.View>
     </TouchableWithoutFeedback>
