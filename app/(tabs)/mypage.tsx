@@ -1,3 +1,4 @@
+import LoadingScreen from "@/components/LoadingScreen";
 import CustomModal from "@/components/Modal";
 import PostGrid from "@/components/PostGrid";
 import ProfileSection from "@/components/ProfileSection";
@@ -30,13 +31,7 @@ export default function MyPage() {
   );
 
   if (isUserLoading || isPostsLoading) {
-    return (
-      <SafeAreaView edges={[]} className="flex-1 bg-white">
-        <View className="flex-1 items-center justify-center">
-          <Text>로딩중...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingScreen />;
   }
 
   return (
