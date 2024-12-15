@@ -15,6 +15,7 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.epilogue.kokkok",
       infoPlist: {
         NSPhotoLibraryUsageDescription:
           "사용자가 사진을 선택할 수 있도록 앨범 접근 권한이 필요합니다.",
@@ -28,6 +29,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      googleServicesFile: "./google-services.json",
       package: "com.epilogue.kokkok",
     },
     web: {
@@ -50,6 +52,7 @@ module.exports = {
       eas: {
         projectId: "85f67272-5b0c-4bdc-9b49-4d03903e47ba",
       },
+      EXPO_PUSH_TOKEN: process.env.EXPO_PUSH_TOKEN,
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     },

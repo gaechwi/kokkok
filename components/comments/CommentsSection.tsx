@@ -2,6 +2,7 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
+import type { UserProfile } from "@/types/User.interface";
 import {
   createComment,
   createNotification,
@@ -182,11 +183,16 @@ export default function CommentsSection({
 
   const sendNotificationMutation = useMutation({
     mutationFn: ({
+      from,
       commentId,
       type = "comment",
-    }: { commentId: number; type?: "comment" | "mention" }) =>
+    }: {
+      from: UserProfile;
+      commentId: number;
+      type?: "comment" | "mention";
+    }) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: replyTo?.userId || authorId || "",
         type: type,
         data: {

@@ -3,6 +3,7 @@ import icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
@@ -75,8 +76,8 @@ export default function PostItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
-      if (isLiked && user.data?.id !== author.id) {
-        sendNotificationMutation.mutate();
+      if (user.data && isLiked && user.data?.id !== author.id) {
+        sendNotificationMutation.mutate(user.data);
       }
     },
     onError: () => {
@@ -87,10 +88,21 @@ export default function PostItem({
     },
   });
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: () =>
+  const deletePostMutation = useMutation({
+    mutationFn: () => deletePost(postId),
+    onSuccess: () => {
+      showToast("success", "게시글이 삭제되었어요.");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: () => {
+      showToast("fail", "게시글 삭제에 실패했어요.");
+    },
+  });
+
+  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
+    mutationFn: (from) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: author.id,
         type: "like",
         data: { postId },

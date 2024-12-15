@@ -1,6 +1,5 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 
 import { Header, HeaderWithBack } from "@/components/Header";
 
@@ -48,7 +47,6 @@ const AuthLayout = () => {
         />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="dark" />
     </>
   );
 };
