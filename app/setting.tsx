@@ -236,7 +236,7 @@ function NotificationSetting({
       isInit: useSharedValue(true),
     },
     mention: {
-      title: "언급 알림",
+      title: "멘션 알림",
       value: useSharedValue(granted.includes("mention")),
       isInit: useSharedValue(true),
     },
