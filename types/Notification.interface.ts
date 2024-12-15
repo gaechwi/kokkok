@@ -34,15 +34,15 @@ export interface NotificationResponse {
   createdAt: string;
 }
 
-export interface PushToken {
+export interface PushSetting {
   userId: string;
-  pushToken: string | null;
+  token: string | null;
   grantedNotifications: NotificationType[];
 }
 
-export interface PushTokenUpdateData {
+export interface PushSettingUpdateData {
   userId: string;
-  pushToken?: string | null;
+  token?: string | null;
   grantedNotifications?: NotificationType[];
 }
 

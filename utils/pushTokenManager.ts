@@ -3,58 +3,116 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import * as Supabase from "./supabase";
+import { createPushSetting, updatePushSetting } from "./supabase";
+
+interface AddPushTokenProps {
+  userId: string;
+  setAllTrue?: boolean;
+  retry?: boolean;
+  handleUpdate: () => void;
+}
+
+interface UpdatePushTokenProps {
+  userId: string;
+  existingToken: string | null;
+  retry?: boolean;
+  handleUpdate: () => void;
+}
+
+interface ReRequestTokenProps {
+  userId: string;
+  token?: string | null;
+  handleUpdate: () => void;
+}
 
 export const isTokenValid = (token?: string | null) =>
   !!token?.startsWith("ExponentPushToken");
 
 // 기존에 토큰이 없던 유저에게 새로운 토큰을 받아서 추가
-export function addPushToken(userId: string, handleUpdate: () => void) {
-  registerForPushNotificationsAsync()
-    .then(async (token) => {
-      await Supabase.createPushToken({
+export async function addPushToken({
+  userId,
+  setAllTrue = true,
+  retry = false,
+  handleUpdate,
+}: AddPushTokenProps): Promise<boolean> {
+  try {
+    const token = await registerForPushNotificationsAsync(retry);
+    if (!isTokenValid(token)) return false;
+
+    await createPushSetting({
+      userId,
+      token,
+      grantedNotifications: setAllTrue ? Object.values(NOTIFICATION_TYPE) : [],
+    });
+    handleUpdate();
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      await createPushSetting({
         userId,
-        pushToken: token || null,
-        grantedNotifications: Object.values(NOTIFICATION_TYPE),
-      });
-      handleUpdate();
-    })
-    .catch(async (error) => {
-      await Supabase.createPushToken({
-        userId,
-        pushToken: error,
+        token: error.message,
         grantedNotifications: [],
       });
       handleUpdate();
-    });
+    }
+  }
+
+  return false;
 }
 
 // 기존 설정 값이 있는 유저의 경우 토큰 값만 변경
-export function updatePushToken(
-  userId: string,
-  existingToken: string | null,
-  handleUpdate: () => void,
-) {
-  registerForPushNotificationsAsync()
-    .then(async (token) => {
-      if (token !== existingToken) {
-        await Supabase.updatePushToken({
-          userId,
-          pushToken: token || null,
-        });
-        handleUpdate();
-      }
-    })
-    .catch(async (error) => {
-      await Supabase.updatePushToken({
-        userId,
-        pushToken: error,
-      });
+export async function updatePushToken({
+  userId,
+  existingToken,
+  retry = false,
+  handleUpdate,
+}: UpdatePushTokenProps): Promise<boolean> {
+  try {
+    const token = await registerForPushNotificationsAsync(retry);
+    if (isTokenValid(token) && token !== existingToken) {
+      await updatePushSetting({ userId, token });
       handleUpdate();
-    });
+      return true;
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      await updatePushSetting({ userId, token: error.message });
+      handleUpdate();
+    }
+  }
+
+  return false;
 }
 
-async function registerForPushNotificationsAsync() {
+export async function reRequestToken({
+  userId,
+  token,
+  handleUpdate,
+}: ReRequestTokenProps) {
+  if (token !== undefined) {
+    // 설정이 있었다면 토큰만 업데이트
+    const isSuccess = await updatePushToken({
+      userId,
+      existingToken: token,
+      retry: true,
+      handleUpdate,
+    });
+    if (!isSuccess) return false;
+  } else {
+    // 없다면 기본값 []로 새 알림 정보 생성
+    const isSuccess = await addPushToken({
+      userId,
+      retry: true,
+      handleUpdate,
+    });
+    if (!isSuccess) return false;
+  }
+  return true;
+}
+
+async function registerForPushNotificationsAsync(
+  retry = false,
+): Promise<string | null> {
   // 안드로이드 알림 설정
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
@@ -75,8 +133,12 @@ async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      handleRegistrationError("푸시 알림 권한 설정이 필요합니다!");
-      return;
+      if (retry) {
+        handleRegistrationError("푸시 알림 권한 설정이 필요합니다!");
+        // TODO 가능하다면 설정 창으로 이동
+        // Linking.openURL("app-settings:");
+      }
+      return null;
     }
 
     const projectId =
@@ -84,6 +146,7 @@ async function registerForPushNotificationsAsync() {
       Constants?.easConfig?.projectId;
     if (!projectId) {
       handleRegistrationError("Project ID를 찾을 수 없습니다");
+      return null;
     }
 
     try {
@@ -97,6 +160,8 @@ async function registerForPushNotificationsAsync() {
   } else {
     handleRegistrationError("Must use physical device for push notifications");
   }
+
+  return null;
 }
 
 function handleRegistrationError(errorMessage: string) {

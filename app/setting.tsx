@@ -7,15 +7,15 @@ import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import type {
   NotificationType,
-  PushToken,
+  PushSetting,
 } from "@/types/Notification.interface";
-import { isTokenValid } from "@/utils/pushTokenManager";
+import { isTokenValid, reRequestToken } from "@/utils/pushTokenManager";
 import {
   deleteUser,
   getCurrentSession,
-  getPushToken,
+  getPushSetting,
   supabase,
-  updatePushToken,
+  updatePushSetting,
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,10 +41,10 @@ export default function Setting() {
   );
 
   // 푸시알림 설정 정보 조회
-  const { data: token, isPending: isTokenPending } =
-    useFetchData<PushToken | null>(
-      ["pushTokenData"],
-      () => getPushToken(session?.user.id || ""),
+  const { data: pushSetting, isPending: isTokenPending } =
+    useFetchData<PushSetting | null>(
+      ["pushTokenSetting"],
+      () => getPushSetting(session?.user.id || ""),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
       !!session,
     );
@@ -58,7 +58,7 @@ export default function Setting() {
             <LoadingScreen />
           </View>
         ) : (
-          <NotificationSetting userId={session.user.id} token={token} />
+          <NotificationSetting userId={session.user.id} setting={pushSetting} />
         )}
 
         {/* 계정 설정 */}
@@ -189,9 +189,9 @@ export default function Setting() {
                   if (session) {
                     setIsLoading(true);
 
-                    await updatePushToken({
+                    await updatePushSetting({
                       userId: session.user.id,
-                      pushToken: null,
+                      token: null,
                     });
                     await supabase.auth.signOut();
 
@@ -216,12 +216,12 @@ export default function Setting() {
 
 function NotificationSetting({
   userId,
-  token,
-}: { userId: string; token?: PushToken | null }) {
+  setting,
+}: { userId: string; setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
 
   const [isInit, setIsInit] = useState(true);
-  const granted = token?.grantedNotifications || [];
+  const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
   const isAllSwitchInit = useSharedValue(true);
   const SWITCH_CONFIG = {
@@ -262,7 +262,19 @@ function NotificationSetting({
   }, [allSwitch, SWITCH_CONFIG]);
 
   // 최상단 스위치 클릭 핸들러
-  const handleAllSwitchPress = () => {
+  const handleAllSwitchPress = async () => {
+    if (!isTokenValid(setting?.token)) {
+      const isSuccess = await reRequestToken({
+        userId,
+        token: setting?.token,
+        handleUpdate: () =>
+          queryClient.invalidateQueries({
+            queryKey: ["pushTokenSetting"],
+          }),
+      });
+      if (!isSuccess) return;
+    }
+
     for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
       value.value = !allSwitch.value;
       isInit.value = false;
@@ -272,23 +284,32 @@ function NotificationSetting({
   };
 
   // 개별 스위치 클릭 핸들러
-  const handleSwitchPress = (type: SwitchType) => {
+  const handleSwitchPress = async (type: SwitchType) => {
+    // 이전값이 false -> 이제 true
     if (!SWITCH_CONFIG[type].value.value) {
-      // 이전값이 false -> 이제 true: 하나라도 true면 allSwitch는 true
-      if (!allSwitch.value) {
-        allSwitch.value = true;
-        isAllSwitchInit.value = false;
-        // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
-        if (isTokenValid(token?.pushToken)) {
-        }
+      // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
+      if (!isTokenValid(setting?.token)) {
+        const isSuccess = await reRequestToken({
+          userId,
+          token: setting?.token,
+          handleUpdate: () =>
+            queryClient.invalidateQueries({
+              queryKey: ["pushTokenSetting"],
+            }),
+        });
+        if (!isSuccess) return;
       }
+      // 하나라도 true면 allSwitch도 true
+      allSwitch.value = true;
+      isAllSwitchInit.value = false;
+
+      // 이전값이 true -> 이제 false
     } else if (
-      // 이전값이 true -> 이제 false: 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
       Object.entries(SWITCH_CONFIG).every(
         ([key, { value }]) => key === type || !value.value,
-      ) &&
-      allSwitch.value
+      )
     ) {
+      // 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
       allSwitch.value = false;
       isAllSwitchInit.value = false;
     }
@@ -304,17 +325,17 @@ function NotificationSetting({
       .map(([key]) => key as NotificationType);
 
     if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort())) {
-      await updatePushToken({ userId, grantedNotifications: newGranted });
-      queryClient.refetchQueries({ queryKey: ["pushTokenData"] });
+      await updatePushSetting({ userId, grantedNotifications: newGranted });
+      queryClient.refetchQueries({ queryKey: ["pushTokenSetting"] });
     }
   }, [queryClient, SWITCH_CONFIG, userId, granted]);
 
   // 초기에 토큰정보가 올바르지 않으면 모두 false로 설정
   useEffect(() => {
     if (!isInit) return;
-    if (!isTokenValid(token?.pushToken)) setAllFalse();
-    if (token !== undefined) setIsInit(false);
-  }, [setAllFalse, token, isInit]);
+    if (!isTokenValid(setting?.token)) setAllFalse();
+    if (setting !== undefined) setIsInit(false);
+  }, [setAllFalse, setting, isInit]);
 
   // 설정화면에서 떠날 때 알림 설정 변경사항 저장
   useFocusEffect(() => {

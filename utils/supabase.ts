@@ -15,8 +15,8 @@ import {
 import type {
   NotificationResponse,
   PushMessage,
-  PushToken,
-  PushTokenUpdateData,
+  PushSetting,
+  PushSettingUpdateData,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
@@ -1317,9 +1317,9 @@ export async function createNotification(notification: Notification) {
 
   // 푸시 알림 생성
   try {
-    const data = await getPushToken(notification.to);
+    const data = await getPushSetting(notification.to);
     // 푸시 알림 수신 동의하지 않은 경우
-    if (!data || !data.pushToken) return;
+    if (!data || !data.token) return;
     if (!data.grantedNotifications.includes(notification.type)) return;
 
     const message = formMessage(
@@ -1328,7 +1328,7 @@ export async function createNotification(notification: Notification) {
       notification.data?.commentInfo?.content,
     );
     const pushMessage = {
-      to: data.pushToken,
+      to: data.token,
       sound: "default",
       title: message.title,
       body: message.content,
@@ -1368,7 +1368,9 @@ async function sendPushNotification(message: PushMessage) {
 // ============================================
 
 // 푸시 알림 설정 불러오기
-export async function getPushToken(userId: string): Promise<PushToken | null> {
+export async function getPushSetting(
+  userId: string,
+): Promise<PushSetting | null> {
   const { data, error } = await supabase
     .from("pushToken")
     .select("*")
@@ -1381,8 +1383,8 @@ export async function getPushToken(userId: string): Promise<PushToken | null> {
 }
 
 // 푸시 알림 설정 추가
-export async function createPushToken(pushTokenData: PushToken) {
-  const { error } = await supabase.from("pushToken").insert(pushTokenData);
+export async function createPushSetting(pushTokenData: PushSetting) {
+  const { error } = await supabase.from("pushToken").upsert(pushTokenData);
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
@@ -1390,15 +1392,15 @@ export async function createPushToken(pushTokenData: PushToken) {
 }
 
 // 푸시 알림 설정 업데이트
-export async function updatePushToken({
+export async function updatePushSetting({
   userId,
-  pushToken,
+  token,
   grantedNotifications,
-}: PushTokenUpdateData) {
+}: PushSettingUpdateData) {
   const { error } = await supabase
     .from("pushToken")
     .update({
-      ...(pushToken === undefined ? {} : { pushToken }),
+      ...(token === undefined ? {} : { token }),
       ...(grantedNotifications === undefined ? {} : { grantedNotifications }),
     })
     .eq("userId", userId);
