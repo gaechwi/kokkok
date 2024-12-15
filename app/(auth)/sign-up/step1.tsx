@@ -157,7 +157,7 @@ const Step1 = () => {
 
             <TouchableOpacity
               className={`mt-10 h-[62px] w-full items-center justify-center rounded-[10px] ${
-                isLoading ? "bg-gray-40" : "bg-primary"
+                isLoading ? "bg-gray-20" : "bg-primary"
               }`}
               onPress={handleContinue}
               disabled={isLoading}
@@ -175,7 +175,10 @@ const Step1 = () => {
       </KeyboardAvoidingView>
       <CustomModal
         visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={() => {
+          setIsModalVisible(false);
+          router.push("/sign-up/step2");
+        }}
         position="middle"
       >
         <View className="w-full items-center">
