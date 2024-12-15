@@ -1,5 +1,4 @@
-import CustomModal from "@/components/Modal";
-import Icons from "@/constants/icons";
+import { OneButtonModal } from "@/components/Modal";
 import { sendUpOTP, supabase } from "@/utils/supabase";
 import images from "@constants/images";
 import { signUpFormAtom } from "@contexts/auth";
@@ -173,33 +172,20 @@ const Step1 = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <CustomModal
-        visible={isModalVisible}
+      <OneButtonModal
+        isVisible={isModalVisible}
         onClose={() => {
           setIsModalVisible(false);
           router.push("/sign-up/step2");
         }}
-        position="middle"
-      >
-        <View className="w-full items-center">
-          <View className="w-full items-center px-[55px] py-6">
-            <Icons.FaceDoneIcon width={40} height={40} />
-            <Text className="title-3 mt-4 text-center">
-              이메일로 전송된{"\n"}
-              인증 코드를 확인해주세요!
-            </Text>
-            <TouchableOpacity
-              className="mt-5 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
-              onPress={() => {
-                setIsModalVisible(false);
-                router.push("/sign-up/step2");
-              }}
-            >
-              <Text className="title-2 text-white">확인</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </CustomModal>
+        emoji="happy"
+        contents={"이메일로 전송된\n인증 코드를 확인해주세요!"}
+        buttonText="확인"
+        onPress={() => {
+          setIsModalVisible(false);
+          router.push("/sign-up/step2");
+        }}
+      />
     </>
   );
 };
