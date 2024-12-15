@@ -118,6 +118,7 @@ export default function NotificationProvider({ children }: Props) {
     const handlePermissionChange = async () => {
       const { status } = await Notifications.getPermissionsAsync();
       if (status === pushPermission || !session) return;
+      setPushPermission(status);
 
       const userId = session.user.id;
       if (status === "granted") {
@@ -126,8 +127,6 @@ export default function NotificationProvider({ children }: Props) {
         await resetPushSetting(userId);
         handleUpdate();
       }
-
-      setPushPermission(status);
     };
 
     // 앱이 foreground 로 돌아왔을 때 권한변경 감지
