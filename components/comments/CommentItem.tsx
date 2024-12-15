@@ -7,7 +7,6 @@ import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
-  deleteComment,
   getCurrentUser,
   getReplies,
   toggleLikeComment,
@@ -28,8 +27,7 @@ import {
   View,
 } from "react-native";
 import { FlatList } from "react-native";
-import CustomModal, { DeleteModal } from "../Modal";
-import { showToast } from "../ToastConfig";
+import CustomModal from "../Modal";
 
 interface CommentItemProps {
   id: number;
@@ -59,6 +57,7 @@ interface CommentItemProps {
   isReply?: boolean;
   onCommentsClose: () => void;
   onLikedAuthorPress: (commentId: number) => void;
+  onDeletedPress: (commentId: number) => void;
 }
 
 export default function CommentItem({
@@ -76,10 +75,10 @@ export default function CommentItem({
   isReply = false,
   onCommentsClose,
   onLikedAuthorPress,
+  onDeletedPress,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
   const queryClient = useQueryClient();
 
@@ -114,10 +113,6 @@ export default function CommentItem({
 
   const toggleModal = () => {
     setIsModalVisible((prev) => !prev);
-  };
-
-  const toggleDeleteModal = () => {
-    setIsDeleteModalVisible((prev) => !prev);
   };
 
   const toggleLike = useMutation({
@@ -158,20 +153,6 @@ export default function CommentItem({
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
-
-  const deleteCommentMutation = useMutation({
-    mutationFn: () => deleteComment(id),
-    onSuccess: () => {
-      showToast("success", "댓글이 삭제되었어요.");
-
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["replies"] });
-    },
-    onError: () => {
-      showToast("fail", "댓글 삭제에 실패했어요.");
-    },
-  });
 
   const diff = diffDate(new Date(createdAt));
 
@@ -271,7 +252,7 @@ export default function CommentItem({
                 <View className="items-center">
                   <TouchableOpacity
                     onPress={() => {
-                      toggleDeleteModal();
+                      onDeletedPress(id);
                       toggleModal();
                     }}
                     className="h-[82px] w-full items-center justify-center"
@@ -280,16 +261,6 @@ export default function CommentItem({
                   </TouchableOpacity>
                 </View>
               </CustomModal>
-
-              <DeleteModal
-                isVisible={isDeleteModalVisible}
-                onClose={toggleDeleteModal}
-                onDelete={() => {
-                  if (deleteCommentMutation.isPending) return;
-                  deleteCommentMutation.mutate();
-                  toggleDeleteModal();
-                }}
-              />
             </TouchableOpacity>
           )}
         </View>
@@ -352,6 +323,7 @@ export default function CommentItem({
                   isReply={true}
                   onCommentsClose={onCommentsClose}
                   onLikedAuthorPress={onLikedAuthorPress}
+                  onDeletedPress={onDeletedPress}
                 />
               )}
               ListFooterComponent={() =>

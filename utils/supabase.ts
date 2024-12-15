@@ -621,6 +621,12 @@ export async function deletePost(postId: number) {
 
     await supabase.from("post").delete().eq("id", postId);
 
+    await supabase
+      .from("notification")
+      .delete()
+      .contains("data", { postId })
+      .in("type", ["commentLike", "like"]);
+
     return { message: "게시글이 삭제되었습니다." };
   } catch (error) {
     const errorMessage =
@@ -871,6 +877,12 @@ export async function deleteComment(commentId: number) {
     }
 
     await supabase.from("comment").delete().eq("id", commentId);
+
+    await supabase
+      .from("notification")
+      .delete()
+      .contains("data", { commentInfo: { id: commentId } })
+      .in("type", ["commentLike"]);
 
     return { message: "댓글이 삭제되었습니다." };
   } catch (error) {

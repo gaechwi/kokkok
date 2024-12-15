@@ -6,6 +6,7 @@ import type { UserProfile } from "@/types/User.interface";
 import {
   createComment,
   createNotification,
+  deleteComment,
   getCommentLikes,
   getComments,
   getCurrentUser,
@@ -31,9 +32,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { DeleteModal } from "../Modal";
 import MotionModal from "../MotionModal";
-import { ToastConfig, showToast } from "../ToastConfig";
+import { showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
@@ -60,9 +61,13 @@ export default function CommentsSection({
     parentId: number;
     replyCommentId: number;
   } | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedCommentId, setSelectedCommentId] = useState<number | null>(
+    null,
+  );
+
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
-  const [isToast, setIsToast] = useState(false);
 
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
@@ -142,13 +147,28 @@ export default function CommentsSection({
     onSuccess: (data) => {
       showToast("success", "댓글이 작성되었어요!");
 
-      const replyToId = replyTo?.userId || authorId;
-      if (user.data && replyToId !== user.data?.id) {
-        sendNotificationMutation.mutate({
-          from: user.data,
-          commentId: data.id,
-          type: replyToId === authorId ? "comment" : "mention",
-        });
+      const isAuthor = authorId === user.data?.id; // 게시글 작성자가 본인인지 확인
+      const isReplyToOthers = replyTo?.userId !== user.data?.id; // 답글 대상자가 본인인지 확인
+      const isReply = replyTo !== null; // 답글 여부 확인
+
+      if (isReply) {
+        // 답글 대상자가 본인이 아닌 경우 알림 전송
+        if (user.data && isReplyToOthers) {
+          sendNotificationMutation.mutate({
+            from: user.data,
+            commentId: data.id,
+            type: "mention",
+          });
+        }
+      } else {
+        // 댓글 작성자가 게시글 작성자가 아닌 경우 알림 전송
+        if (user.data && !isAuthor) {
+          sendNotificationMutation.mutate({
+            from: user.data,
+            commentId: data.id,
+            type: "comment",
+          });
+        }
       }
 
       setComment("");
@@ -192,9 +212,24 @@ export default function CommentsSection({
     setIsLikedModalVisible(true);
   }, []);
 
+  const deleteCommentMutation = useMutation({
+    mutationFn: async () => {
+      if (selectedCommentId) await deleteComment(selectedCommentId);
+    },
+    onSuccess: () => {
+      showToast("success", "댓글이 삭제되었어요.");
+
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["replies"] });
+    },
+    onError: () => {
+      showToast("fail", "댓글 삭제에 실패했어요.");
+    },
+  });
+
   const onCloseComments = useCallback(() => {
     onClose();
-    setIsToast(false);
     queryClient.removeQueries({ queryKey: ["comments", postId] });
     queryClient.removeQueries({ queryKey: ["replies"] });
   }, [onClose, postId, queryClient]);
@@ -207,7 +242,7 @@ export default function CommentsSection({
       initialHeight={deviceHeight * 0.8}
     >
       <View className="flex-1">
-        <View className="relative z-10 w-full pb-2.5">
+        <View className="relative w-full pb-2.5">
           <LinearGradient
             colors={["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 0)"]}
             start={[0, 0]}
@@ -261,6 +296,10 @@ export default function CommentsSection({
               onReply={handleReply}
               onCommentsClose={onClose}
               onLikedAuthorPress={onLikedAuthorPress}
+              onDeletedPress={(commentId) => {
+                setSelectedCommentId(commentId);
+                setIsDeleteModalVisible(true);
+              }}
             />
           )}
           ListFooterComponent={
@@ -365,6 +404,16 @@ export default function CommentsSection({
         </MotionModal>
       )}
 
+      {/* 삭제 모달 */}
+      <DeleteModal
+        isVisible={isDeleteModalVisible}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onDelete={() => {
+          deleteCommentMutation.mutate();
+          setIsDeleteModalVisible(false);
+        }}
+      />
+
       {/* comment input */}
       <>
         {replyTo?.username && (
@@ -420,16 +469,13 @@ export default function CommentsSection({
                 : "댓글을 입력해주세요."
             }
             onSubmit={() => {
-              if (comment.trim() && !writeCommentMutation.isPending) {
-                setIsToast(true);
+              if (comment.trim() && !writeCommentMutation.isPending)
                 writeCommentMutation.mutate();
-              }
             }}
             isPending={writeCommentMutation.isPending}
           />
         </View>
       </>
-      {isToast && <Toast config={ToastConfig} />}
     </MotionModal>
   );
 }
