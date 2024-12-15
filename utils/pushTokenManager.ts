@@ -3,11 +3,14 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { createPushSetting, updatePushSetting } from "./supabase";
+import {
+  createPushSetting,
+  resetPushSetting,
+  updatePushSetting,
+} from "./supabase";
 
 interface AddPushTokenProps {
   userId: string;
-  setAllTrue?: boolean;
   retry?: boolean;
   handleUpdate: () => void;
 }
@@ -31,7 +34,6 @@ export const isTokenValid = (token?: string | null) =>
 // 기존에 토큰이 없던 유저에게 새로운 토큰을 받아서 추가
 export async function addPushToken({
   userId,
-  setAllTrue = true,
   retry = false,
   handleUpdate,
 }: AddPushTokenProps): Promise<boolean> {
@@ -42,7 +44,7 @@ export async function addPushToken({
     await createPushSetting({
       userId,
       token,
-      grantedNotifications: setAllTrue ? Object.values(NOTIFICATION_TYPE) : [],
+      grantedNotifications: Object.values(NOTIFICATION_TYPE),
     });
     handleUpdate();
     return true;
@@ -62,17 +64,20 @@ export async function updatePushToken({
 }: UpdatePushTokenProps): Promise<boolean> {
   try {
     const token = await registerForPushNotificationsAsync(retry);
-    if (token !== existingToken && isTokenValid(token)) {
+    if (!isTokenValid(token)) {
+      await resetPushSetting(userId);
+      handleUpdate();
+      return false;
+    }
+    if (token !== existingToken) {
       await updatePushSetting({ userId, token });
       handleUpdate();
       return true;
     }
   } catch (error) {
-    if (error) {
-      await updatePushSetting({ userId, token: null });
-      console.error(error);
-      handleUpdate();
-    }
+    console.error(error);
+    await resetPushSetting(userId);
+    handleUpdate();
   }
 
   return false;

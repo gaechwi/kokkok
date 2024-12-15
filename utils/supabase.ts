@@ -1411,6 +1411,10 @@ export async function updatePushSetting({
   }
 }
 
+export async function resetPushSetting(userId: string) {
+  await updatePushSetting({ userId, token: null, grantedNotifications: [] });
+}
+
 // ============================================
 //
 //                    type

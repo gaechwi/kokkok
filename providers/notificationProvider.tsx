@@ -4,7 +4,7 @@ import { addPushToken, updatePushToken } from "@/utils/pushTokenManager";
 import {
   getCurrentSession,
   getPushSetting,
-  updatePushSetting,
+  resetPushSetting,
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
@@ -115,7 +115,7 @@ export default function NotificationProvider({ children }: Props) {
       if (status === "granted") {
         await updatePushToken({ userId, existingToken: null, handleUpdate });
       } else {
-        await updatePushSetting({ userId, token: null });
+        await resetPushSetting(userId);
         handleUpdate();
       }
 

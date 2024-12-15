@@ -20,7 +20,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -225,7 +225,6 @@ function NotificationSetting({
 }: { userId: string; setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
 
-  const [isInit, setIsInit] = useState(true);
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
   const isAllSwitchInit = useSharedValue(true);
@@ -261,14 +260,6 @@ function NotificationSetting({
   const handleUpdate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["pushToken"] });
   }, [queryClient]);
-
-  // 모두 값을 false로 변경
-  const setAllFalse = useCallback(() => {
-    for (const { value } of Object.values(SWITCH_CONFIG)) {
-      value.value = false;
-    }
-    allSwitch.value = false;
-  }, [allSwitch, SWITCH_CONFIG]);
 
   // 최상단 스위치 클릭 핸들러
   const handleAllSwitchPress = async () => {
@@ -333,13 +324,6 @@ function NotificationSetting({
       queryClient.invalidateQueries({ queryKey: ["pushToken"] });
     }
   }, [queryClient, SWITCH_CONFIG, userId, granted]);
-
-  // 초기에 토큰정보가 올바르지 않으면 모두 false로 설정
-  useEffect(() => {
-    if (!isInit) return;
-    if (!isTokenValid(setting?.token)) setAllFalse();
-    if (setting !== undefined) setIsInit(false);
-  }, [setAllFalse, setting, isInit]);
 
   // 설정화면에서 떠날 때 알림 설정 변경사항 저장
   useFocusEffect(() => {
