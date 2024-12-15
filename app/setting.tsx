@@ -1,5 +1,5 @@
 import CustomSwitch from "@/components/CustomSwitch";
-import CustomModal from "@/components/Modal";
+import { TwoButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -120,11 +120,47 @@ export default function Setting() {
     };
   });
 
+  // 계정 탈퇴 핸들러
+  const handleDeleteAccount = async () => {
+    setIsLoading(true);
+
+    try {
+      await deleteUser(session?.user.id ?? "");
+
+      router.replace("/sign-in");
+      showToast("success", "탈퇴가 완료되었습니다!");
+    } catch (error) {
+      showToast("error", "탈퇴에 실패했습니다.");
+    }
+
+    setIsDeleteModalVisible(false);
+    setIsLoading(false);
+  };
+
+  // 로그아웃 핸들러
+  const handleSignOut = async () => {
+    if (session) {
+      setIsLoading(true);
+
+      await updatePushToken({
+        userId: session.user.id,
+        pushToken: null,
+      });
+      await supabase.auth.signOut();
+
+      setIsLoading(false);
+    }
+    setIsSignOutModalVisible(false);
+    router.replace("/sign-in");
+
+    showToast("success", "로그아웃이 완료되었습니다!");
+  };
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="gap-2 bg-gray-5 pb-2">
         {/* 알림 설정 */}
-        <View className="bg-white px-6 py-[22px] gap-5">
+        <View className="gap-5 bg-white px-6 py-[22px]">
           <View className="flex-row items-center justify-between ">
             <Text className="heading-2 text-gray-80">알림 설정</Text>
             <CustomSwitch value={allSwitch} onPress={handleAllSwitchPress} />
@@ -202,100 +238,32 @@ export default function Setting() {
       </View>
 
       <View className="flex-1">
-        <CustomModal
-          visible={isDeleteModalVisible}
+        <TwoButtonModal
+          isVisible={isDeleteModalVisible}
           onClose={() => setIsDeleteModalVisible(false)}
-          position="middle"
-        >
-          <View className="w-full items-center p-[24px]">
-            <Icons.FaceNotDoneIcon width={40} height={40} />
-            <Text className="title-3 mt-4 text-center">
-              탈퇴하면 되돌릴 수 없어요{"\n"}
-              그래도 탈퇴하시겠어요?
-            </Text>
-            <View className="mt-5 flex-row justify-between gap-5">
-              <TouchableOpacity
-                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
-                onPress={() => {
-                  setIsDeleteModalVisible(false);
-                }}
-                disabled={isLoading}
-              >
-                <Text className="title-2 text-white">취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
-                onPress={async () => {
-                  setIsLoading(true);
-
-                  try {
-                    await deleteUser(session?.user.id ?? "");
-
-                    router.replace("/sign-in");
-                    showToast("success", "탈퇴가 완료되었습니다!");
-                  } catch (error) {
-                    showToast("error", "탈퇴에 실패했습니다.");
-                  }
-
-                  setIsDeleteModalVisible(false);
-                  setIsLoading(false);
-                }}
-                disabled={isLoading}
-              >
-                <Text className="title-2 text-white">탈퇴</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </CustomModal>
+          emoji="sad"
+          contents={"탈퇴하면 되돌릴 수 없어요\n그래도 탈퇴하시겠어요?"}
+          leftButtonText="취소"
+          rightButtonText="탈퇴"
+          onLeftButtonPress={() => setIsDeleteModalVisible(false)}
+          onRightButtonPress={handleDeleteAccount}
+          isLoading={isLoading}
+          variant="danger"
+        />
       </View>
 
-      <View className="flex-1 ">
-        <CustomModal
-          visible={isSignOutModalVisible}
+      <View className="flex-1">
+        <TwoButtonModal
+          isVisible={isSignOutModalVisible}
           onClose={() => setIsSignOutModalVisible(false)}
-          position="middle"
-        >
-          <View className="h-[180px] w-full items-center p-[24px]">
-            <Text className="title-3 text-center">
-              이 계정에서{"\n"}
-              로그아웃 하시겠어요?
-            </Text>
-            <View className="mt-[28px] flex-row justify-between gap-5">
-              <TouchableOpacity
-                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-gray-40"
-                onPress={() => {
-                  setIsSignOutModalVisible(false);
-                }}
-                disabled={isLoading}
-              >
-                <Text className="title-2 text-white">취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="h-[52px] w-[127px] items-center justify-center rounded-[10px] bg-primary"
-                onPress={async () => {
-                  if (session) {
-                    setIsLoading(true);
-
-                    await updatePushToken({
-                      userId: session.user.id,
-                      pushToken: null,
-                    });
-                    await supabase.auth.signOut();
-
-                    setIsLoading(false);
-                  }
-                  setIsSignOutModalVisible(false);
-                  router.replace("/sign-in");
-
-                  showToast("success", "로그아웃이 완료되었습니다!");
-                }}
-                disabled={isLoading}
-              >
-                <Text className="title-2 text-white">로그아웃</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </CustomModal>
+          contents={"이 계정에서\n로그아웃 하시겠어요?"}
+          leftButtonText="취소"
+          rightButtonText="로그아웃"
+          onLeftButtonPress={() => setIsSignOutModalVisible(false)}
+          onRightButtonPress={handleSignOut}
+          isLoading={isLoading}
+          variant="danger"
+        />
       </View>
     </SafeAreaView>
   );
