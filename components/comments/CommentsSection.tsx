@@ -146,12 +146,26 @@ export default function CommentsSection({
     onSuccess: (data) => {
       showToast("success", "댓글이 작성되었어요!");
 
-      const replyToId = replyTo?.userId || authorId;
-      if (replyToId !== user.data?.id) {
-        sendNotificationMutation.mutate({
-          commentId: data.id,
-          type: replyToId === authorId ? "comment" : "mention",
-        });
+      const isAuthor = authorId === user.data?.id; // 게시글 작성자가 본인인지 확인
+      const isReplyToOthers = replyTo?.userId !== user.data?.id; // 답글 대상자가 본인인지 확인
+      const isReply = replyTo !== null; // 답글 여부 확인
+
+      if (isReply) {
+        // 답글 대상자가 본인이 아닌 경우 알림 전송
+        if (isReplyToOthers) {
+          sendNotificationMutation.mutate({
+            commentId: data.id,
+            type: "mention",
+          });
+        }
+      } else {
+        // 댓글 작성자가 게시글 작성자가 아닌 경우 알림 전송
+        if (!isAuthor) {
+          sendNotificationMutation.mutate({
+            commentId: data.id,
+            type: "comment",
+          });
+        }
       }
 
       setComment("");
