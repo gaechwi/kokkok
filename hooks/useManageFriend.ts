@@ -14,14 +14,14 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface CreateProps {
-  fromUserId: string;
+  fromUser: UserProfile;
   toUserId: string;
 }
 
 interface AcceptProps {
   requestId?: number;
   fromUserId: string;
-  toUserId: string;
+  toUser: UserProfile;
 }
 
 interface RefuseProps {
@@ -57,15 +57,22 @@ const useManageFriend = () => {
   // 친구 요청 생성
   const useCreateRequest = () => {
     const { mutate, isPending } = useMutation<CreateProps, Error, CreateProps>({
-      mutationFn: async ({ fromUserId, toUserId }) => {
+      mutationFn: async ({ fromUser, toUserId }) => {
+        const fromUserId = fromUser.id;
         await createFriendRequest(fromUserId, toUserId, null);
-        return { fromUserId, toUserId };
+        await createNotification({
+          from: fromUser,
+          to: toUserId,
+          type: NOTIFICATION_TYPE.FRIEND,
+          data: { isAccepted: false },
+        });
+        return { fromUser, toUserId };
       },
-      onSuccess: ({ fromUserId, toUserId }) => {
+      onSuccess: ({ fromUser, toUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", fromUserId, toUserId],
+          queryKey: ["relation", fromUser.id, toUserId],
         });
       },
       onError: (error) => {
@@ -79,7 +86,9 @@ const useManageFriend = () => {
   // 친구 요청 수락
   const useAcceptRequest = () => {
     const { mutate, isPending } = useMutation<AcceptProps, Error, AcceptProps>({
-      mutationFn: async ({ requestId, fromUserId, toUserId }) => {
+      mutationFn: async ({ requestId, fromUserId, toUser }) => {
+        const toUserId = toUser.id;
+
         // 친구 요청이 그사이 취소되었는지 확인
         const hasFriendRequest = requestId
           ? await checkFriendRequest(String(requestId))
@@ -93,13 +102,19 @@ const useManageFriend = () => {
         }
 
         await acceptFriendRequest(fromUserId, toUserId, requestId);
-        return { fromUserId, toUserId };
+        await createNotification({
+          from: toUser,
+          to: fromUserId,
+          type: NOTIFICATION_TYPE.FRIEND,
+          data: { isAccepted: true },
+        });
+        return { fromUserId, toUser };
       },
-      onSuccess: ({ fromUserId, toUserId }) => {
+      onSuccess: ({ fromUserId, toUser }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", toUserId, fromUserId],
+          queryKey: ["relation", toUser.id, fromUserId],
         });
       },
       onError: (error) => {

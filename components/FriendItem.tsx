@@ -20,7 +20,7 @@ interface FriendItemProps {
 
 interface FriendRequestProps {
   requestId: number;
-  toUserId: string;
+  toUser: UserProfile;
   fromUser: UserProfile;
   isLoading: boolean;
 }
@@ -112,7 +112,7 @@ export function FriendItem({ friend }: FriendItemProps) {
 
 export function FriendRequest({
   requestId,
-  toUserId,
+  toUser,
   fromUser,
   isLoading,
 }: FriendRequestProps) {
@@ -130,7 +130,7 @@ export function FriendRequest({
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
           onPress={() =>
-            handleAccept({ requestId, fromUserId: fromUser.id, toUserId })
+            handleAccept({ requestId, fromUserId: fromUser.id, toUser })
           }
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 수락"
@@ -142,7 +142,11 @@ export function FriendRequest({
         <TouchableOpacity
           className="bg-white  px-[12px] py-[11px] rounded-[10px] border-primary border-[1px]"
           onPress={() =>
-            handleRefuse({ requestId, fromUserId: fromUser.id, toUserId })
+            handleRefuse({
+              requestId,
+              fromUserId: fromUser.id,
+              toUserId: toUser.id,
+            })
           }
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 거절"

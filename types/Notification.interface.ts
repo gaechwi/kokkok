@@ -12,11 +12,12 @@ export type NotificationType =
   (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];
 
 export interface NotificationData {
-  postId: number;
+  postId?: number;
   commentInfo?: {
     id: number;
     content?: string;
   };
+  isAccepted?: boolean;
 }
 
 export interface Notification {

@@ -13,7 +13,11 @@ export function NotificationItem({
   createdAt,
 }: NotificationResponse) {
   const diff = diffDate(new Date(createdAt));
-  const message = formMessage(type, from.username, data?.commentInfo?.content);
+  const message = formMessage({
+    type,
+    username: from.username,
+    comment: data?.commentInfo?.content,
+  });
 
   return (
     <TouchableWithoutFeedback

@@ -4,17 +4,26 @@ import {
 } from "@/types/Notification.interface";
 
 const COMMENT_MAX_LENGTH = 18;
+
 export const shorten_comment = (
   comment: string,
   maxLength = COMMENT_MAX_LENGTH,
 ) =>
   `"${comment.length > maxLength ? comment.slice(0, maxLength).concat("...") : comment}"`;
 
-export function formMessage(
-  type: NotificationType,
-  username?: string,
-  comment?: string,
-) {
+interface FormMessageProps {
+  type: NotificationType;
+  username?: string;
+  comment?: string;
+  isAccepted?: boolean;
+}
+
+export function formMessage({
+  type,
+  username,
+  comment,
+  isAccepted,
+}: FormMessageProps) {
   const NOTIFICATION_CONFIG = {
     [NOTIFICATION_TYPE.POKE]: {
       title: "👈 콕!",
@@ -35,6 +44,12 @@ export function formMessage(
     [NOTIFICATION_TYPE.LIKE]: {
       title: `${username}님이`,
       content: "게시글에 좋아요를 눌렀어요❤️",
+    },
+    [NOTIFICATION_TYPE.FRIEND]: {
+      title: `${username}님이`,
+      content: isAccepted
+        ? "친구 요청을 수락하셨어요😊"
+        : "친구 요청을 보냈어요",
     },
   };
 

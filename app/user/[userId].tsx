@@ -5,6 +5,7 @@ import ProfileSection from "@/components/ProfileSection";
 import useFetchData from "@/hooks/useFetchData";
 import useManageFriend from "@/hooks/useManageFriend";
 import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
+import type { UserProfile } from "@/types/User.interface";
 import {
   getCurrentUser,
   getFriendStatus,
@@ -19,14 +20,14 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface RequestButtonProps {
-  currentUserId: string;
+  currentUser: UserProfile;
   userId: string;
   relation: RelationType;
   onPress: () => void;
 }
 
 function RequestButton({
-  currentUserId,
+  currentUser,
   userId,
   relation,
   onPress,
@@ -40,22 +41,20 @@ function RequestButton({
     [RELATION_TYPE.FRIEND]: {
       message: "친구 끊기",
       onPress: () =>
-        handleUnfriend({ fromUserId: currentUserId, toUserId: userId }),
+        handleUnfriend({ fromUserId: currentUser.id, toUserId: userId }),
     },
     [RELATION_TYPE.ASKING]: {
       message: "친구 요청 취소",
       onPress: () =>
-        handleUnfriend({ fromUserId: currentUserId, toUserId: userId }),
+        handleUnfriend({ fromUserId: currentUser.id, toUserId: userId }),
     },
     [RELATION_TYPE.ASKED]: {
       message: "친구 요청 수락",
-      onPress: () =>
-        handleAccept({ fromUserId: userId, toUserId: currentUserId }),
+      onPress: () => handleAccept({ fromUserId: userId, toUser: currentUser }),
     },
     [RELATION_TYPE.NONE]: {
       message: "친구 요청",
-      onPress: () =>
-        handleCreate({ fromUserId: currentUserId, toUserId: userId }),
+      onPress: () => handleCreate({ fromUser: currentUser, toUserId: userId }),
     },
   };
 
@@ -162,7 +161,7 @@ const User = () => {
         <View className="items-center">
           {relation && currentUser && !isRelationPending && (
             <RequestButton
-              currentUserId={currentUser.id}
+              currentUser={currentUser}
               userId={userId as string}
               relation={relation}
               onPress={() => setIsModalVisible(false)}

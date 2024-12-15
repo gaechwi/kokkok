@@ -86,12 +86,20 @@ export default function NotificationProvider({ children }: Props) {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const { data } = response.notification.request.content;
-        if (!data) {
-          // 찌르기나 친구 요청 수락 알림
-          router.navigate("/friend");
-        } else {
+        if (!Object.keys(data).length) {
+          // 찌르기
+          router.navigate("/home");
+        } else if (data.postId) {
           // 게시글 댓글, 좋아요, 멘션, 댓글 좋아요 알림
           router.navigate(`/post/${data.postId}`);
+        } else {
+          if (data.isAccepted) {
+            // 친구 수락
+            router.navigate("/friend");
+          } else {
+            // 친구 요청
+            router.navigate("/friend/request");
+          }
         }
       },
     );

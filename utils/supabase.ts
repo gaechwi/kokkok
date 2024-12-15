@@ -1004,7 +1004,7 @@ export async function getFriendRequests(
       `
           id,
           from: user!friendRequest_from_fkey (id, username, avatarUrl, description),
-          to
+          to: user!friendRequest_to_fkey (id, username, avatarUrl, description)
         `,
       { count: "exact" },
     )
@@ -1019,7 +1019,7 @@ export async function getFriendRequests(
   return {
     data: data.map((request) => ({
       requestId: request.id,
-      toUserId: request.to,
+      toUser: request.to as UserProfile,
       fromUser: request.from as UserProfile,
     })),
     total: count || 0,
@@ -1322,11 +1322,12 @@ export async function createNotification(notification: Notification) {
     if (!data || !data.token) return;
     if (!data.grantedNotifications.includes(notification.type)) return;
 
-    const message = formMessage(
-      notification.type,
-      notification.from.username,
-      notification.data?.commentInfo?.content,
-    );
+    const message = formMessage({
+      type: notification.type,
+      username: notification.from.username,
+      comment: notification.data?.commentInfo?.content,
+      isAccepted: notification.data?.isAccepted,
+    });
     const pushMessage = {
       to: data.token,
       sound: "default",
