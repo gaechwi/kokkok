@@ -25,21 +25,25 @@ import {
 const Step2 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
   const [otpcode, setOtpcode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
 
   const handleSignUp = async () => {
+    if (isLoading) return;
+
     if (!signUpForm.username) {
       Alert.alert("닉네임을 채워주세요");
       return;
     }
 
+    setIsLoading(true);
     try {
       const res = await verifySignUpOTP(signUpForm.email, otpcode);
 
       await signUp({
-        id: res.user?.id,
+        id: res.user?.id ?? "",
         email: signUpForm.email,
         password: signUpForm.password,
         username: signUpForm.username,
@@ -58,9 +62,11 @@ const Step2 = () => {
       } else {
         Alert.alert(
           "회원가입 실패",
-          error instanceof Error ? error.message : "회원가입에 실패했습니다.",
+          "회원가입에 실패했습니다.\n인증코드를 확인해주세요",
         );
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,10 +97,17 @@ const Step2 = () => {
           </View>
 
           <TouchableOpacity
-            className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+            className={`mt-10 h-[62px] w-full items-center justify-center rounded-[10px] ${
+              isLoading ? "bg-gray-20" : "bg-primary"
+            }`}
             onPress={handleSignUp}
+            disabled={isLoading}
           >
-            <Text className="heading-2 text-white">완료</Text>
+            {isLoading ? (
+              <Text className="heading-2 text-white">인증코드 확인중...</Text>
+            ) : (
+              <Text className="heading-2 text-white">완료</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
