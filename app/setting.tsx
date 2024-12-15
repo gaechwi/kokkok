@@ -253,9 +253,14 @@ function NotificationSetting({
   } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
+  const handleUpdate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+    queryClient.refetchQueries({ queryKey: ["pushTokenSetting"] });
+  }, [queryClient]);
+
   // 모두 값을 false로 변경
   const setAllFalse = useCallback(() => {
-    for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
+    for (const { value } of Object.values(SWITCH_CONFIG)) {
       value.value = false;
     }
     allSwitch.value = false;
@@ -263,14 +268,12 @@ function NotificationSetting({
 
   // 최상단 스위치 클릭 핸들러
   const handleAllSwitchPress = async () => {
+    // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
     if (!isTokenValid(setting?.token)) {
       const isSuccess = await reRequestToken({
         userId,
         token: setting?.token,
-        handleUpdate: () =>
-          queryClient.invalidateQueries({
-            queryKey: ["pushTokenSetting"],
-          }),
+        handleUpdate,
       });
       if (!isSuccess) return;
     }
@@ -292,10 +295,7 @@ function NotificationSetting({
         const isSuccess = await reRequestToken({
           userId,
           token: setting?.token,
-          handleUpdate: () =>
-            queryClient.invalidateQueries({
-              queryKey: ["pushTokenSetting"],
-            }),
+          handleUpdate,
         });
         if (!isSuccess) return;
       }

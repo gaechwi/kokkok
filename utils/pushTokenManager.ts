@@ -47,14 +47,7 @@ export async function addPushToken({
     handleUpdate();
     return true;
   } catch (error) {
-    if (error instanceof Error && error.message) {
-      await createPushSetting({
-        userId,
-        token: error.message,
-        grantedNotifications: [],
-      });
-      handleUpdate();
-    }
+    console.error(error);
   }
 
   return false;
@@ -69,14 +62,15 @@ export async function updatePushToken({
 }: UpdatePushTokenProps): Promise<boolean> {
   try {
     const token = await registerForPushNotificationsAsync(retry);
-    if (isTokenValid(token) && token !== existingToken) {
+    if (token !== existingToken && isTokenValid(token)) {
       await updatePushSetting({ userId, token });
       handleUpdate();
       return true;
     }
   } catch (error) {
-    if (error instanceof Error && error.message) {
-      await updatePushSetting({ userId, token: error.message });
+    if (error) {
+      await updatePushSetting({ userId, token: null });
+      console.error(error);
       handleUpdate();
     }
   }
@@ -114,7 +108,7 @@ async function registerForPushNotificationsAsync(
   retry = false,
 ): Promise<string | null> {
   // 안드로이드 알림 설정
-  if (Platform.OS === "android") {
+  if (!retry && Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
       importance: Notifications.AndroidImportance.MAX,
