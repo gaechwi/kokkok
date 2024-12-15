@@ -67,7 +67,7 @@ export default function CustomSwitch({
     <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View style={[trackAnimatedStyle, size]}>
         <Animated.View
-          className={`size-[${thumbSize}px] bg-white`}
+          className="bg-white"
           style={[thumbAnimatedStyle, { width: thumbSize, height: thumbSize }]}
         />
       </Animated.View>
