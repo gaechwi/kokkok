@@ -61,7 +61,7 @@ function RequestButton({
 
   return (
     <TouchableOpacity
-      className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+      className="h-[82px] w-full items-center justify-center"
       onPress={() => {
         BUTTON_CONFIG[relation].onPress();
         onPress();
@@ -168,15 +168,6 @@ const User = () => {
               onPress={() => setIsModalVisible(false)}
             />
           )}
-          <TouchableOpacity
-            className="h-[82px] w-full items-center justify-center"
-            onPress={() => {
-              setIsModalVisible(false);
-              router.push("/profile");
-            }}
-          >
-            <Text className="title-2 text-gray-90">신고하기</Text>
-          </TouchableOpacity>
         </View>
       </CustomModal>
     </>
