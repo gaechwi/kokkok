@@ -153,16 +153,18 @@ export default function CommentsSection({
 
       if (isReply) {
         // 답글 대상자가 본인이 아닌 경우 알림 전송
-        if (isReplyToOthers) {
+        if (user.data && isReplyToOthers) {
           sendNotificationMutation.mutate({
+            from: user.data,
             commentId: data.id,
             type: "mention",
           });
         }
       } else {
         // 댓글 작성자가 게시글 작성자가 아닌 경우 알림 전송
-        if (!isAuthor) {
+        if (user.data && !isAuthor) {
           sendNotificationMutation.mutate({
+            from: user.data,
             commentId: data.id,
             type: "comment",
           });
