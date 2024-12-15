@@ -257,21 +257,21 @@ function NotificationSetting({
   } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
-  const handleUpdate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["pushToken"] });
-  }, [queryClient]);
+  // 기존 토큰이 유효하지 않으면 다시 한 번 점검
+  const checkPermission = useCallback(async () => {
+    if (isTokenValid(setting?.token)) return true;
+
+    return await reRequestToken({
+      userId,
+      token: setting?.token,
+      handleUpdate: () =>
+        queryClient.invalidateQueries({ queryKey: ["pushToken"] }),
+    });
+  }, [queryClient, setting?.token, userId]);
 
   // 최상단 스위치 클릭 핸들러
   const handleAllSwitchPress = async () => {
-    // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
-    if (!isTokenValid(setting?.token)) {
-      const isSuccess = await reRequestToken({
-        userId,
-        token: setting?.token,
-        handleUpdate,
-      });
-      if (!isSuccess) return;
-    }
+    if (!(await checkPermission())) return;
 
     for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
       value.value = !allSwitch.value;
@@ -285,15 +285,8 @@ function NotificationSetting({
   const handleSwitchPress = async (type: SwitchType) => {
     // 이전값이 false -> 이제 true
     if (!SWITCH_CONFIG[type].value.value) {
-      // 기존에 푸시 알람 권한 허용이 제대로 되지 않았던 경우
-      if (!isTokenValid(setting?.token)) {
-        const isSuccess = await reRequestToken({
-          userId,
-          token: setting?.token,
-          handleUpdate,
-        });
-        if (!isSuccess) return;
-      }
+      if (!(await checkPermission())) return;
+
       // 하나라도 true면 allSwitch도 true
       allSwitch.value = true;
       isAllSwitchInit.value = false;
