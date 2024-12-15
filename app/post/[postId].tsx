@@ -88,45 +88,43 @@ export default function PostDetail() {
   });
 
   return (
-    <>
-      <SafeAreaView edges={["top"]} className="flex-1 bg-white">
-        <HeaderWithUsername
-          name={post?.userData.username ?? ""}
-          type="POST_PAGE"
+    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+      <HeaderWithUsername
+        name={post?.userData.username ?? ""}
+        type="POST_PAGE"
+      />
+      {post && (
+        <PostItem
+          author={{
+            id: post?.userData?.id || "",
+            name: post?.userData?.username || "",
+            avatar: post?.userData?.avatarUrl || "",
+          }}
+          images={post?.images || []}
+          contents={post?.contents || ""}
+          liked={post?.isLikedByUser || false}
+          likedAuthorAvatars={post?.likedAvatars || []}
+          createdAt={post?.createdAt || ""}
+          commentsCount={post?.totalComments || 0}
+          comment={
+            post?.commentData
+              ? {
+                  author: {
+                    name: post.commentData.author.username,
+                    avatar: post.commentData.author.avatarUrl || "",
+                  },
+                  content: post.commentData.contents,
+                }
+              : null
+          }
+          postId={Number(postId)}
+          onCommentsPress={() => setIsCommentsVisible(true)}
+          onAuthorPress={onOpenLikedAuthor}
+          onDeletePress={() => {
+            setIsDeleteModalVisible(true);
+          }}
         />
-        {post && (
-          <PostItem
-            author={{
-              id: post?.userData?.id || "",
-              name: post?.userData?.username || "",
-              avatar: post?.userData?.avatarUrl || "",
-            }}
-            images={post?.images || []}
-            contents={post?.contents || ""}
-            liked={post?.isLikedByUser || false}
-            likedAuthorAvatars={post?.likedAvatars || []}
-            createdAt={post?.createdAt || ""}
-            commentsCount={post?.totalComments || 0}
-            comment={
-              post?.commentData
-                ? {
-                    author: {
-                      name: post.commentData.author.username,
-                      avatar: post.commentData.author.avatarUrl || "",
-                    },
-                    content: post.commentData.contents,
-                  }
-                : null
-            }
-            postId={Number(postId)}
-            onCommentsPress={() => setIsCommentsVisible(true)}
-            onAuthorPress={onOpenLikedAuthor}
-            onDeletePress={() => {
-              setIsDeleteModalVisible(true);
-            }}
-          />
-        )}
-      </SafeAreaView>
+      )}
 
       {isCommentsVisible && (
         <View className="flex-1">
@@ -206,26 +204,28 @@ export default function PostDetail() {
       )}
 
       {isNotFoundModalVisible && (
-        <TwoButtonModal
-          isVisible={isNotFoundModalVisible}
-          onClose={() => {
-            setIsNotFoundModalVisible(false);
-            router.back();
-          }}
-          emoji="sad"
-          contents={"게시글이 삭제되었어요."}
-          leftButtonText="뒤로가기"
-          rightButtonText="홈으로"
-          onLeftButtonPress={() => {
-            setIsNotFoundModalVisible(false);
-            router.back();
-          }}
-          onRightButtonPress={() => {
-            setIsNotFoundModalVisible(false);
-            router.replace("/home");
-          }}
-        />
+        <View className="flex-1">
+          <TwoButtonModal
+            isVisible={isNotFoundModalVisible}
+            onClose={() => {
+              setIsNotFoundModalVisible(false);
+              router.back();
+            }}
+            emoji="sad"
+            contents={"게시글이 삭제되었어요."}
+            leftButtonText="뒤로가기"
+            rightButtonText="홈으로"
+            onLeftButtonPress={() => {
+              setIsNotFoundModalVisible(false);
+              router.back();
+            }}
+            onRightButtonPress={() => {
+              setIsNotFoundModalVisible(false);
+              router.replace("/home");
+            }}
+          />
+        </View>
       )}
-    </>
+    </SafeAreaView>
   );
 }

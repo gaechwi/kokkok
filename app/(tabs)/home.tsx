@@ -124,13 +124,11 @@ export default function Home() {
   });
 
   return (
-    <SafeAreaView
-      edges={[]}
-      className="flex-1 items-center justify-center bg-white"
-    >
+    <SafeAreaView edges={[]} className="flex-1 items-center justify-center">
       <FlatList
         data={data?.pages.flatMap((page) => page.posts) ?? []}
         keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ gap: 10 }}
         renderItem={({ item: post }) => (
           <PostItem
             key={post.id}

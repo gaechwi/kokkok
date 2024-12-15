@@ -36,6 +36,7 @@ export default function CustomModal({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
+      className="flex-1"
     >
       <View
         className={`flex-1 bg-black/50 ${
@@ -118,7 +119,7 @@ export function OneButtonModal({
 }: {
   isVisible: boolean;
   onClose: () => void;
-  emoji?: "sad" | "happy";
+  emoji?: EmojiType;
   contents: string;
   buttonText: string;
   onPress: () => void;
@@ -126,12 +127,7 @@ export function OneButtonModal({
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
       <View className="items-center px-7 py-6">
-        {!!emoji &&
-          (emoji === "sad" ? (
-            <Icons.FaceNotDoneIcon width={40} height={40} />
-          ) : (
-            <Icons.FaceDoneIcon width={40} height={40} />
-          ))}
+        {!!emoji && Emojis[emoji]}
 
         <Text className="title-3 mt-4 text-center text-gray-90">
           {contents}
@@ -165,7 +161,7 @@ export function TwoButtonModal({
 }: {
   isVisible: boolean;
   onClose: () => void;
-  emoji?: "sad" | "happy";
+  emoji?: EmojiType;
   contents: string;
   leftButtonText: string;
   rightButtonText: string;
@@ -175,12 +171,7 @@ export function TwoButtonModal({
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
       <View className="items-center px-7 py-6">
-        {!!emoji &&
-          (emoji === "sad" ? (
-            <Icons.FaceNotDoneIcon width={40} height={40} />
-          ) : (
-            <Icons.FaceDoneIcon width={40} height={40} />
-          ))}
+        {!!emoji && Emojis[emoji]}
 
         <Text className="title-3 mt-4 text-center text-gray-90">
           {contents}
@@ -213,3 +204,10 @@ export function TwoButtonModal({
     </CustomModal>
   );
 }
+
+const Emojis = {
+  sad: <Icons.FaceNotDoneIcon width={40} height={40} />,
+  happy: <Icons.FaceDoneIcon width={40} height={40} />,
+};
+
+type EmojiType = "sad" | "happy";
