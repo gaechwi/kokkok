@@ -27,6 +27,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Setting() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
@@ -43,7 +44,7 @@ export default function Setting() {
   // 푸시알림 설정 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
     useFetchData<PushSetting | null>(
-      ["pushTokenSetting"],
+      ["pushToken", session?.user.id],
       () => getPushSetting(session?.user.id || ""),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
       !!session,
@@ -198,6 +199,10 @@ export default function Setting() {
                     setIsLoading(false);
                   }
                   setIsSignOutModalVisible(false);
+
+                  queryClient.refetchQueries({ queryKey: ["session"] });
+                  queryClient.refetchQueries({ queryKey: ["currentUser"] });
+                  // 아마 세션 여부에 따른 리다이렉트 되면 자동 이동 될지도
                   router.replace("/sign-in");
 
                   showToast("success", "로그아웃이 완료되었습니다!");
@@ -255,7 +260,6 @@ function NotificationSetting({
 
   const handleUpdate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["pushToken"] });
-    queryClient.refetchQueries({ queryKey: ["pushTokenSetting"] });
   }, [queryClient]);
 
   // 모두 값을 false로 변경
@@ -326,7 +330,7 @@ function NotificationSetting({
 
     if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort())) {
       await updatePushSetting({ userId, grantedNotifications: newGranted });
-      queryClient.refetchQueries({ queryKey: ["pushTokenSetting"] });
+      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
     }
   }, [queryClient, SWITCH_CONFIG, userId, granted]);
 

@@ -40,7 +40,7 @@ export default function NotificationProvider({ children }: Props) {
   // 기존 푸시 알림 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
     useFetchData<PushSetting | null>(
-      ["pushToken"],
+      ["pushToken", session?.user.id],
       () => getPushSetting(session?.user.id || ""),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
       !!session,
@@ -54,18 +54,16 @@ export default function NotificationProvider({ children }: Props) {
 
   // 로그인 한 첫회에만 푸시 토큰 업데이트
   useEffect(() => {
-    if (!session || isTokenPending) return;
-    if (!isInit) return;
+    if (!session || isTokenPending || !isInit) return;
 
     // 푸시알람 관련 정보 업데이트 시 캐시된 데이터 삭제, 더이상 첫 업데이트 아님을 마킹
     const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ["pushToken"] });
-      queryClient.invalidateQueries({ queryKey: ["pushTokenSetting"] });
       setIsInit(false);
     };
 
     const userId = session.user.id;
-    if (pushSetting) {
+    if (pushSetting?.userId) {
       updatePushToken({
         userId,
         existingToken: pushSetting.token,
@@ -74,7 +72,14 @@ export default function NotificationProvider({ children }: Props) {
     } else {
       addPushToken({ userId, handleUpdate });
     }
-  }, [session, pushSetting, isTokenPending, isInit, queryClient]);
+  }, [
+    session,
+    isTokenPending,
+    pushSetting?.userId,
+    pushSetting?.token,
+    isInit,
+    queryClient,
+  ]);
 
   // 푸시 알림 관련 포스트 페이지로 바로 이동
   useEffect(() => {
@@ -98,8 +103,7 @@ export default function NotificationProvider({ children }: Props) {
   useEffect(() => {
     // 앱 푸시알림 설정 변경 시 관련 정보 리패치
     const handleUpdate = () => {
-      queryClient.refetchQueries({ queryKey: ["pushToken"] });
-      queryClient.refetchQueries({ queryKey: ["pushTokenSetting"] });
+      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
     };
 
     // 권한 설정 정보 저장
@@ -121,7 +125,6 @@ export default function NotificationProvider({ children }: Props) {
     // 앱이 foreground 로 돌아왔을 때 권한변경 감지
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState === "active") {
-        console.log("welcome back");
         handlePermissionChange();
       }
     });
