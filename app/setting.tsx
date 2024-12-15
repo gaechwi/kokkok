@@ -5,9 +5,10 @@ import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
-import type {
-  NotificationType,
-  PushSetting,
+import {
+  NOTIFICATION_TYPE,
+  type NotificationType,
+  type PushSetting,
 } from "@/types/Notification.interface";
 import { isTokenValid, reRequestToken } from "@/utils/pushTokenManager";
 import {
@@ -19,8 +20,8 @@ import {
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -258,7 +259,7 @@ function NotificationSetting({
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
   // 기존 토큰이 유효하지 않으면 다시 한 번 점검
-  const checkPermission = useCallback(async () => {
+  const checkPermission = async () => {
     if (isTokenValid(setting?.token)) return true;
 
     return await reRequestToken({
@@ -267,31 +268,53 @@ function NotificationSetting({
       handleUpdate: () =>
         queryClient.invalidateQueries({ queryKey: ["pushToken"] }),
     });
-  }, [queryClient, setting?.token, userId]);
+  };
+
+  // grantedNotification의 변경사항을 서버에 반영
+  const updateGrantedNotifications = async (newGranted: NotificationType[]) => {
+    try {
+      await updatePushSetting({
+        userId,
+        grantedNotifications: newGranted,
+      });
+      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+    } catch {
+      showToast("fail", "알림 설정 업데이트에 실패했습니다.");
+    }
+  };
 
   // 최상단 스위치 클릭 핸들러
   const handleAllSwitchPress = async () => {
     if (!(await checkPermission())) return;
 
+    const prevAllSwitch = allSwitch.value;
     for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
-      value.value = !allSwitch.value;
+      // 개별 스위치 업데이트
+      value.value = !prevAllSwitch;
       isInit.value = false;
     }
-    allSwitch.value = !allSwitch.value;
+    // 최상단 스위치 업데이트
+    allSwitch.value = !prevAllSwitch;
     isAllSwitchInit.value = false;
+
+    // DB에 변경사항 반영
+    const newGranted = prevAllSwitch
+      ? []
+      : [...Object.values(NOTIFICATION_TYPE)];
+    updateGrantedNotifications(newGranted);
   };
 
   // 개별 스위치 클릭 핸들러
   const handleSwitchPress = async (type: SwitchType) => {
-    // 이전값이 false -> 이제 true
-    if (!SWITCH_CONFIG[type].value.value) {
-      if (!(await checkPermission())) return;
+    if (!(await checkPermission())) return;
 
+    const prevValue = SWITCH_CONFIG[type].value.value;
+
+    // 최상단 스위치 업데이트
+    if (!prevValue) {
       // 하나라도 true면 allSwitch도 true
       allSwitch.value = true;
       isAllSwitchInit.value = false;
-
-      // 이전값이 true -> 이제 false
     } else if (
       Object.entries(SWITCH_CONFIG).every(
         ([key, { value }]) => key === type || !value.value,
@@ -302,28 +325,23 @@ function NotificationSetting({
       isAllSwitchInit.value = false;
     }
 
+    // 개별 스위치 업데이트
     SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
     SWITCH_CONFIG[type].isInit.value = false;
-  };
 
-  // 알림 설정 변경이 있다면 사항 업데이트
-  const updateGrantedNotifications = useCallback(async () => {
-    const newGranted = Object.entries(SWITCH_CONFIG)
-      .filter(([, { value }]) => value.value)
-      .map(([key]) => key as NotificationType);
-
-    if (JSON.stringify(granted.sort()) !== JSON.stringify(newGranted.sort())) {
-      await updatePushSetting({ userId, grantedNotifications: newGranted });
-      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+    // DB에 변경사항 반영
+    let newGranted = granted;
+    if (!prevValue) {
+      newGranted = granted.concat(
+        type === "like" ? ["like", "commentLike"] : type,
+      );
+    } else {
+      newGranted = granted.filter((t) =>
+        type === "like" ? !["like", "commentLike"].includes(t) : type !== t,
+      );
     }
-  }, [queryClient, SWITCH_CONFIG, userId, granted]);
-
-  // 설정화면에서 떠날 때 알림 설정 변경사항 저장
-  useFocusEffect(() => {
-    return () => {
-      updateGrantedNotifications();
-    };
-  });
+    updateGrantedNotifications(newGranted);
+  };
 
   return (
     <View className="bg-white px-6 py-[22px] gap-5">
