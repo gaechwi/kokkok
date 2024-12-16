@@ -48,6 +48,10 @@ export default function History() {
     "현재 사용자를 불러올 수 없습니다.",
   );
 
+  const userCreatedDate = currentUser
+    ? new Date(currentUser.createdAt)
+    : new Date(2025, 0, 1, 0, 0, 0);
+
   const handlePreviousMonth = () => {
     changeMonth(-1);
   };
@@ -84,18 +88,22 @@ export default function History() {
           date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
-          isNextDisabled={year === currentYear && month >= currentMonth}
+          isPreviousDisabled={
+            year < userCreatedDate.getFullYear() ||
+            (year === userCreatedDate.getFullYear() &&
+              month <= userCreatedDate.getMonth() + 1)
+          }
+          isNextDisabled={
+            year > currentYear ||
+            (year === currentYear && month >= currentMonth)
+          }
         />
 
         {isUserLoading || isHistoriesLoading ? (
           <LoadingScreen />
         ) : (
           <WorkoutCalendar
-            startingDate={
-              currentUser
-                ? new Date(currentUser.createdAt)
-                : new Date(2025, 0, 1, 0, 0, 0)
-            }
+            startingDate={userCreatedDate}
             currentDate={date}
             workoutStatuses={histories}
           />

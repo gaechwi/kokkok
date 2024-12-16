@@ -64,6 +64,7 @@ export default function WorkoutCalendar({
 
   const totalDaysInCalendar =
     Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7;
+
   const days = Array.from({ length: totalDaysInCalendar }, (_, index) => {
     // 달력에서 날짜에 해당되지 않는 빈 공간
     if (index < firstDayOfMonth || index >= firstDayOfMonth + daysInMonth) {
