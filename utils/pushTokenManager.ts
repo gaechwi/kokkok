@@ -132,11 +132,6 @@ async function registerForPushNotificationsAsync(
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      if (retry) {
-        handleRegistrationError("푸시 알림 권한 설정이 필요합니다!");
-        // TODO 가능하다면 설정 창으로 이동
-        // Linking.openURL("app-settings:");
-      }
       return null;
     }
 

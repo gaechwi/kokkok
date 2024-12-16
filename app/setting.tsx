@@ -1,6 +1,6 @@
 import CustomSwitch from "@/components/CustomSwitch";
 import LoadingScreen from "@/components/LoadingScreen";
-import CustomModal from "@/components/Modal";
+import CustomModal, { OneButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -10,7 +10,7 @@ import {
   type NotificationType,
   type PushSetting,
 } from "@/types/Notification.interface";
-import { isTokenValid, reRequestToken } from "@/utils/pushTokenManager";
+import { isTokenValid } from "@/utils/pushTokenManager";
 import {
   deleteUser,
   getCurrentSession,
@@ -22,7 +22,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Text, TouchableOpacity, View } from "react-native";
+import { Linking, Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -223,6 +223,7 @@ function NotificationSetting({
   setting,
 }: { userId: string; setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
+  const [isSettingModalVisible, setIsSettingModalVisible] = useState(false);
 
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
@@ -256,16 +257,18 @@ function NotificationSetting({
   } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
 
-  // 기존 토큰이 유효하지 않으면 다시 한 번 점검
-  const checkPermission = async () => {
-    if (isTokenValid(setting?.token)) return true;
+  const openSetting = async () => {
+    if (Platform.OS === "ios") {
+      await Linking.openURL("app-settings:");
+    } else {
+      await Linking.openSettings();
+    }
+  };
 
-    return await reRequestToken({
-      userId,
-      token: setting?.token,
-      handleUpdate: () =>
-        queryClient.invalidateQueries({ queryKey: ["pushToken"] }),
-    });
+  // 기존 토큰이 유효하지 않으면 권한 설정 이동 모달 띄우기
+  const checkPermission = () => {
+    if (isTokenValid(setting?.token)) return true;
+    setIsSettingModalVisible(true);
   };
 
   // grantedNotification의 변경사항을 서버에 반영
@@ -365,6 +368,18 @@ function NotificationSetting({
             />
           </View>
         ))}
+      </View>
+
+      <View className="flex-1">
+        <OneButtonModal
+          buttonText="설정으로 이동"
+          contents={"알림 권한을 허용해주세요"}
+          isVisible={isSettingModalVisible}
+          onClose={() => setIsSettingModalVisible(false)}
+          onPress={openSetting}
+          emoji="sad"
+          key="upload-info-modal"
+        />
       </View>
     </View>
   );
