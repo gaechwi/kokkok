@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import {
@@ -37,10 +36,11 @@ export default function History() {
     data: histories = [],
     isLoading: isHistoriesLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["histories", year, month],
-    queryFn: () => getHistories(year, month),
-  });
+  } = useFetchData(
+    ["histories", year, month],
+    () => getHistories(year, month),
+    "사용자의 기록을 불러올 수 없습니다.",
+  );
 
   const { data: currentUser, isLoading: isUserLoading } = useFetchData(
     ["currentUser"],
