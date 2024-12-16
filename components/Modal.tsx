@@ -156,6 +156,8 @@ export function TwoButtonModal({
   rightButtonText,
   onLeftButtonPress,
   onRightButtonPress,
+  isLoading,
+  variant = "default",
 }: {
   isVisible: boolean;
   onClose: () => void;
@@ -165,7 +167,19 @@ export function TwoButtonModal({
   rightButtonText: string;
   onLeftButtonPress: () => void;
   onRightButtonPress: () => void;
+  isLoading?: boolean;
+  variant?: "default" | "danger";
 }) {
+  const leftButtonStyle =
+    variant === "danger"
+      ? "h-full flex-1 items-center justify-center rounded-[8px] bg-gray-40"
+      : "h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white";
+
+  const leftButtonTextStyle =
+    variant === "danger"
+      ? "font-pbold text-[17px] text-white leading-[150%]"
+      : "font-pbold text-[17px] text-primary leading-[150%]";
+
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
       <View className="items-center px-7 py-6">
@@ -180,11 +194,10 @@ export function TwoButtonModal({
             onPress={() => {
               onLeftButtonPress();
             }}
-            className="h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white"
+            className={leftButtonStyle}
+            disabled={isLoading}
           >
-            <Text className="font-pbold text-[17px] text-primary leading-[150%]">
-              {leftButtonText}
-            </Text>
+            <Text className={leftButtonTextStyle}>{leftButtonText}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -192,6 +205,7 @@ export function TwoButtonModal({
               onRightButtonPress();
             }}
             className="h-full flex-1 items-center justify-center rounded-[8px] bg-primary"
+            disabled={isLoading}
           >
             <Text className="font-pbold text-[17px] text-white leading-[150%]">
               {rightButtonText}

@@ -65,13 +65,11 @@ export default function CommentsSection({
   const [selectedCommentId, setSelectedCommentId] = useState<number | null>(
     null,
   );
-
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
-
   const router = useRouter();
 
   const { data: likedAuthor } = useFetchData(

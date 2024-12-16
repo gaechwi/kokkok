@@ -22,6 +22,7 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   Text,
   TouchableOpacity,
   View,
@@ -80,10 +81,12 @@ export default function CommentItem({
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
-  const queryClient = useQueryClient();
-
   const { truncateText, calculateMaxChars } = useTruncateText();
+
+  const queryClient = useQueryClient();
   const router = useRouter();
+
+  const diff = diffDate(new Date(createdAt));
 
   // 답글 가져오기
   const {
@@ -111,10 +114,15 @@ export default function CommentItem({
     }
   }, [replyHasNextPage, isReplyFetchingNextPage, replyFetchNextPage]);
 
-  const toggleModal = () => {
-    setIsModalVisible((prev) => !prev);
-  };
+  const handleOpenModal = useCallback(() => {
+    setIsModalVisible(true);
+  }, []);
 
+  const handleCloseModal = useCallback(() => {
+    setIsModalVisible(false);
+  }, []);
+
+  // 좋아요 토글
   const toggleLike = useMutation({
     mutationFn: () => toggleLikeComment(id),
     onMutate: () => {
@@ -133,6 +141,7 @@ export default function CommentItem({
     },
   });
 
+  // 좋아요 알림
   const sendNotificationMutation = useMutation<void, Error, UserProfile>({
     mutationFn: (from) =>
       createNotification({
@@ -148,16 +157,21 @@ export default function CommentItem({
       }),
   });
 
+  // 현재 사용자 정보
   const user = useFetchData(
     ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
 
-  const diff = diffDate(new Date(createdAt));
-
   return (
-    <View>
+    <Pressable
+      onLongPress={() => {
+        if (author?.id === user.data?.id) {
+          handleOpenModal();
+        }
+      }}
+    >
       {/* header */}
       <View className="flex-row items-center justify-between pb-[13px]">
         {/* user info */}
@@ -235,34 +249,34 @@ export default function CommentItem({
             </TouchableOpacity>
           )}
 
-          {/* kebab menu */}
-          {user.data?.id === author?.id && (
-            <TouchableOpacity onPress={toggleModal} className="ml-2">
+          {/* kebab button */}
+          {author?.id === user.data?.id && (
+            <TouchableOpacity onPress={handleOpenModal} className="ml-2">
               <Icons.KebabMenuIcon
                 width={24}
                 height={24}
                 color={colors.black}
               />
-
-              <CustomModal
-                visible={isModalVisible}
-                onClose={toggleModal}
-                position="bottom"
-              >
-                <View className="items-center">
-                  <TouchableOpacity
-                    onPress={() => {
-                      onDeletedPress(id);
-                      toggleModal();
-                    }}
-                    className="h-[82px] w-full items-center justify-center"
-                  >
-                    <Text className="title-2 text-gray-90">삭제하기</Text>
-                  </TouchableOpacity>
-                </View>
-              </CustomModal>
             </TouchableOpacity>
           )}
+
+          <CustomModal
+            visible={isModalVisible}
+            onClose={handleCloseModal}
+            position="bottom"
+          >
+            <View className="items-center">
+              <TouchableOpacity
+                onPress={() => {
+                  onDeletedPress(id);
+                  handleCloseModal();
+                }}
+                className="h-[82px] w-full items-center justify-center"
+              >
+                <Text className="title-2 text-gray-90">삭제하기</Text>
+              </TouchableOpacity>
+            </View>
+          </CustomModal>
         </View>
       </View>
       {/* contents */}
@@ -271,6 +285,11 @@ export default function CommentItem({
           onPress={() =>
             contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
           }
+          onLongPress={() => {
+            if (author?.id === user.data?.id) {
+              handleOpenModal();
+            }
+          }}
           className="title-5 flex-1 text-gray-90"
         >
           {isReply && replyTo?.username && (
@@ -284,21 +303,22 @@ export default function CommentItem({
           )}
         </Text>
       </View>
+
       {/* reply button */}
       <TouchableOpacity
-        className={isReply ? "pb-[5px]" : "pb-[13px]"}
+        className={`${isReply ? "pb-[5px]" : "pb-[13px]"} self-start`}
         onPress={() => {
           if (author) {
             onReply(author.id, author.username, parentsCommentId ?? id, id);
           }
         }}
       >
-        <Text className="caption-2 text-gray-60">답글달기</Text>
+        <Text className="caption-2 w-20 text-gray-60 ">답글달기</Text>
       </TouchableOpacity>
 
       {/* reply */}
       {!!totalReplies && totalReplies > 0 && (
-        <View className="px-4">
+        <View className="pl-4">
           {!!replyData && (
             <FlatList
               className="gap-2"
@@ -359,8 +379,9 @@ export default function CommentItem({
             )}
         </View>
       )}
+
       {/* divider */}
       {!isReply && <View className="mt-2 mb-4 h-[1px] w-full bg-gray-20" />}
-    </View>
+    </Pressable>
   );
 }
