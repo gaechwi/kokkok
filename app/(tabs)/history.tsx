@@ -1,7 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 
 import CalendarNavigator from "@/components/CalendarNavigator";
+import LoadingScreen from "@/components/LoadingScreen";
 import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
@@ -79,7 +79,7 @@ export default function History() {
         <RestDayModal visible={isModalVisible} onClose={closeModal} />
       </View>
 
-      <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
+      <View className="mt-[20px] min-h-[300px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
         <CalendarNavigator
           date={date}
           onPrevious={handlePreviousMonth}
@@ -88,7 +88,7 @@ export default function History() {
         />
 
         {isUserLoading || isHistoriesLoading ? (
-          <ActivityIndicator size="large" />
+          <LoadingScreen />
         ) : (
           <WorkoutCalendar
             startingDate={
