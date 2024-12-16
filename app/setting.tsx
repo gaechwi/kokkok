@@ -26,6 +26,14 @@ import { Linking, Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
+  like: ["like", "commentLike"],
+  comment: ["comment"],
+  mention: ["mention"],
+  poke: ["poke"],
+  friend: ["friend"],
+} as const;
+
 export default function Setting() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -331,16 +339,10 @@ function NotificationSetting({
     SWITCH_CONFIG[type].isInit.value = false;
 
     // DB에 변경사항 반영
-    let newGranted = granted;
-    if (!prevValue) {
-      newGranted = granted.concat(
-        type === "like" ? ["like", "commentLike"] : type,
-      );
-    } else {
-      newGranted = granted.filter((t) =>
-        type === "like" ? !["like", "commentLike"].includes(t) : type !== t,
-      );
-    }
+    const typesToUpdate = NOTIFICATION_TYPE_GROUPS[type];
+    const newGranted = prevValue
+      ? granted.filter((t) => !typesToUpdate.includes(t))
+      : [...granted, ...typesToUpdate];
     updateGrantedNotifications(newGranted);
   };
 
