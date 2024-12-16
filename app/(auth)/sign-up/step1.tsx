@@ -143,7 +143,7 @@ const Step1 = () => {
         visible={isModalVisible}
         onClose={() => {
           setIsModalVisible(false);
-          router.push("/sign-up/step2");
+          router.replace("/sign-up/step2");
         }}
         position="middle"
       >
@@ -158,7 +158,7 @@ const Step1 = () => {
               className="mt-5 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
               onPress={() => {
                 setIsModalVisible(false);
-                router.push("/sign-up/step2");
+                router.replace("/sign-up/step2");
               }}
             >
               <Text className="title-2 text-white">확인</Text>

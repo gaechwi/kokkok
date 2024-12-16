@@ -50,6 +50,13 @@ const Step2 = () => {
         description: signUpForm.description,
       });
 
+      setSignUpForm({
+        email: "",
+        password: "",
+        username: "",
+        description: "",
+      });
+
       router.replace("/onboarding");
     } catch (error) {
       if (
