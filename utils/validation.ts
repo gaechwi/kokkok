@@ -107,6 +107,13 @@ export const validateEmailWithSupabase = async (
     return { message: "소셜 로그인으로 가입된 계정입니다.", field: "email" };
   }
 
+  if (userError) {
+    return {
+      message: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      field: "email",
+    };
+  }
+
   if (userData?.email) {
     return { message: "이미 가입된 이메일입니다.", field: "email" };
   }
