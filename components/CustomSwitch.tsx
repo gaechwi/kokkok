@@ -5,25 +5,31 @@ import Animated, {
   interpolateColor,
   type SharedValue,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 
-interface ToggleProps {
+interface SwitchProps {
   value: SharedValue<boolean>;
-  onPress?: () => void;
+  isInit: SharedValue<boolean>;
+  onPress: () => void;
   duration?: number;
+  size?: {
+    width: number;
+    height: number;
+    padding: number;
+  };
   trackColors?: { on: string; off: string };
 }
 
 export default function CustomSwitch({
   value,
+  isInit,
   onPress,
   duration = 400,
+  size = { width: 45, height: 22, padding: 3 },
   trackColors = { on: colors.primary, off: colors.gray[25] },
-}: ToggleProps) {
-  const height = useSharedValue(0);
-  const width = useSharedValue(0);
+}: SwitchProps) {
+  const thumbSize = size.height - 2 * size.padding;
 
   const trackAnimatedStyle = useAnimatedStyle(() => {
     const color = interpolateColor(
@@ -31,11 +37,13 @@ export default function CustomSwitch({
       [0, 1],
       [trackColors.off, trackColors.on],
     );
-    const colorValue = withTiming(color, { duration });
+    const colorValue = withTiming(color, {
+      duration: isInit.value ? 0 : duration,
+    });
 
     return {
       backgroundColor: colorValue,
-      borderRadius: height.value / 2,
+      borderRadius: size.height / 2,
     };
   });
 
@@ -43,29 +51,24 @@ export default function CustomSwitch({
     const moveValue = interpolate(
       Number(value.value),
       [0, 1],
-      [0, width.value - height.value],
+      [0, size.width - size.height],
     );
-    const translateValue = withTiming(moveValue, { duration });
+    const translateValue = withTiming(moveValue, {
+      duration: isInit.value ? 0 : duration,
+    });
 
     return {
       transform: [{ translateX: translateValue }],
-      borderRadius: height.value / 2,
+      borderRadius: size.height / 2,
     };
   });
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <Animated.View
-        onLayout={(e) => {
-          height.value = e.nativeEvent.layout.height;
-          width.value = e.nativeEvent.layout.width;
-        }}
-        className="w-[45px] h-[22px] p-[3px]"
-        style={[trackAnimatedStyle]}
-      >
+      <Animated.View style={[trackAnimatedStyle, size]}>
         <Animated.View
-          className="size-[16px] bg-white"
-          style={[thumbAnimatedStyle]}
+          className="bg-white"
+          style={[thumbAnimatedStyle, { width: thumbSize, height: thumbSize }]}
         />
       </Animated.View>
     </TouchableWithoutFeedback>

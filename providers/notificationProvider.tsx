@@ -1,22 +1,17 @@
 import useFetchData from "@/hooks/useFetchData";
+import type { PushSetting } from "@/types/Notification.interface";
+import { addPushToken, updatePushToken } from "@/utils/pushTokenManager";
 import {
-  NOTIFICATION_TYPE,
-  type PushToken,
-} from "@/types/Notification.interface";
-import {
-  createPushToken,
   getCurrentSession,
-  getPushToken,
-  updatePushToken,
+  getPushSetting,
+  resetPushSetting,
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import Constants from "expo-constants";
-import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { AppState } from "react-native";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -31,8 +26,9 @@ interface Props {
 }
 
 export default function NotificationProvider({ children }: Props) {
-  const [expoPushToken, setExpoPushToken] = useState("");
   const queryClient = useQueryClient();
+  const [isInit, setIsInit] = useState(true);
+  const [pushPermission, setPushPermission] = useState("");
 
   // 로그인한 유저 정보 조회
   const { data: session } = useFetchData<Session>(
@@ -41,29 +37,69 @@ export default function NotificationProvider({ children }: Props) {
     "로그인 정보 조회에 실패했습니다.",
   );
 
-  const { data: token, isPending: isTokenPending } =
-    useFetchData<PushToken | null>(
+  // 기존 푸시 알림 정보 조회
+  const { data: pushSetting, isPending: isTokenPending } =
+    useFetchData<PushSetting | null>(
       ["pushToken", session?.user.id],
-      () => getPushToken(session?.user.id || ""),
+      () => getPushSetting(session?.user.id || ""),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
       !!session,
     );
 
+  // 세션 바뀔 때마다 isInit true로 바꿈
   useEffect(() => {
-    registerForPushNotificationsAsync()
-      .then((token) => setExpoPushToken(token ?? ""))
-      .catch((error) => setExpoPushToken(`${error}`));
+    if (!session) return;
+    setIsInit(true);
+  }, [session]);
 
-    // 푸시 알림 관련 포스트 페이지로 바로 이동
+  // 로그인 한 첫회에만 푸시 토큰 업데이트
+  useEffect(() => {
+    if (!session || isTokenPending || !isInit) return;
+
+    // 푸시알람 관련 정보 업데이트 시 캐시된 데이터 삭제, 더이상 첫 업데이트 아님을 마킹
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+      setIsInit(false);
+    };
+
+    const userId = session.user.id;
+    if (pushSetting?.userId) {
+      updatePushToken({
+        userId,
+        existingToken: pushSetting.token,
+        handleUpdate,
+      });
+    } else {
+      addPushToken({ userId, handleUpdate });
+    }
+  }, [
+    session,
+    isTokenPending,
+    pushSetting?.userId,
+    pushSetting?.token,
+    isInit,
+    queryClient,
+  ]);
+
+  // 푸시 알림 관련 포스트 페이지로 바로 이동
+  useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const { data } = response.notification.request.content;
-        if (!data) {
-          // 찌르기나 친구 요청 수락 알림
-          router.navigate("/friend");
-        } else {
+        if (!Object.keys(data).length) {
+          // 찌르기
+          router.navigate("/home");
+        } else if (data.postId) {
           // 게시글 댓글, 좋아요, 멘션, 댓글 좋아요 알림
           router.navigate(`/post/${data.postId}`);
+        } else {
+          if (data.isAccepted) {
+            // 친구 수락
+            router.navigate("/friend");
+          } else {
+            // 친구 요청
+            router.navigate("/friend/request");
+          }
         }
       },
     );
@@ -71,82 +107,37 @@ export default function NotificationProvider({ children }: Props) {
     return () => subscription.remove();
   }, []);
 
+  // 권한 설정 변경 감지
   useEffect(() => {
-    if (!session || !expoPushToken) return;
-    const userId = session.user.id;
+    // 앱 푸시알림 설정 변경 시 관련 정보 리패치
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+    };
 
-    if (
-      !isTokenPending &&
-      !token &&
-      expoPushToken.startsWith("ExponentPushToken")
-    ) {
-      // 새로 토큰 등록하는 경우: 저장된 token이 없고, 새 토큰이 유효함
-      createPushToken({
-        userId,
-        pushToken: expoPushToken,
-        grantedNotifications: Object.values(NOTIFICATION_TYPE),
-      });
-      queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
-      return;
-    }
+    // 권한 설정 정보 저장
+    const handlePermissionChange = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status === pushPermission || !session) return;
+      setPushPermission(status);
 
-    // 토큰 값이 달라진 경우: 토큰은 있지만, 새로 얻은 것과 다름
-    if (token && token.pushToken !== expoPushToken) {
-      updatePushToken({ userId, pushToken: expoPushToken });
-      queryClient.invalidateQueries({ queryKey: ["pushToken", userId] });
-      return;
-    }
-  }, [session, token, isTokenPending, expoPushToken, queryClient]);
+      const userId = session.user.id;
+      if (status === "granted") {
+        await updatePushToken({ userId, existingToken: null, handleUpdate });
+      } else {
+        await resetPushSetting(userId);
+        handleUpdate();
+      }
+    };
+
+    // 앱이 foreground 로 돌아왔을 때 권한변경 감지
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        handlePermissionChange();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [pushPermission, session, queryClient]);
 
   return children;
-}
-
-function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage);
-  throw new Error(errorMessage);
-}
-
-async function registerForPushNotificationsAsync() {
-  // 안드로이드 알림 설정
-  if (Platform.OS === "android") {
-    Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-
-  if (Device.isDevice) {
-    // 권한 받기
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      handleRegistrationError("푸시 알림 권한 설정이 필요합니다!");
-      return;
-    }
-
-    const projectId =
-      Constants?.expoConfig?.extra?.eas?.projectId ??
-      Constants?.easConfig?.projectId;
-    if (!projectId) {
-      handleRegistrationError("Project ID를 찾을 수 없습니다");
-    }
-
-    try {
-      const pushTokenString = (
-        await Notifications.getExpoPushTokenAsync({ projectId })
-      ).data;
-      return pushTokenString;
-    } catch (e: unknown) {
-      handleRegistrationError(`${e}`);
-    }
-  } else {
-    handleRegistrationError("Must use physical device for push notifications");
-  }
 }

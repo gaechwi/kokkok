@@ -15,8 +15,8 @@ import {
 import type {
   NotificationResponse,
   PushMessage,
-  PushToken,
-  PushTokenUpdateData,
+  PushSetting,
+  PushSettingUpdateData,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
@@ -1016,7 +1016,7 @@ export async function getFriendRequests(
       `
           id,
           from: user!friendRequest_from_fkey (id, username, avatarUrl, description),
-          to
+          to: user!friendRequest_to_fkey (id, username, avatarUrl, description)
         `,
       { count: "exact" },
     )
@@ -1031,7 +1031,7 @@ export async function getFriendRequests(
   return {
     data: data.map((request) => ({
       requestId: request.id,
-      toUserId: request.to,
+      toUser: request.to as UserProfile,
       fromUser: request.from as UserProfile,
     })),
     total: count || 0,
@@ -1329,24 +1329,25 @@ export async function createNotification(notification: Notification) {
 
   // 푸시 알림 생성
   try {
-    const data = await getPushToken(notification.to);
+    const data = await getPushSetting(notification.to);
     // 푸시 알림 수신 동의하지 않은 경우
-    if (!data || !data.pushToken) return;
+    if (!data || !data.token) return;
     if (!data.grantedNotifications.includes(notification.type)) return;
 
-    const message = formMessage(
-      notification.type,
-      notification.from.username,
-      notification.data?.commentInfo?.content,
-    );
+    const message = formMessage({
+      type: notification.type,
+      username: notification.from.username,
+      comment: notification.data?.commentInfo?.content,
+      isAccepted: notification.data?.isAccepted,
+    });
     const pushMessage = {
-      to: data.pushToken,
+      to: data.token,
       sound: "default",
       title: message.title,
       body: message.content,
       data: notification.data,
     };
-    sendPushNotification(pushMessage);
+    await sendPushNotification(pushMessage);
   } catch (error) {
     console.error("푸시 알림 생성에 실패했습니다.", error);
   }
@@ -1354,7 +1355,7 @@ export async function createNotification(notification: Notification) {
 
 // 푸시 알림 보내기
 async function sendPushNotification(message: PushMessage) {
-  await fetch("https://exp.host/--/api/v2/push/send", {
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${expoPushToken}`,
@@ -1364,6 +1365,13 @@ async function sendPushNotification(message: PushMessage) {
     },
     body: JSON.stringify(message),
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      `푸시 알림 전송 실패: ${error.message || response.statusText}`,
+    );
+  }
 }
 
 // ============================================
@@ -1373,7 +1381,9 @@ async function sendPushNotification(message: PushMessage) {
 // ============================================
 
 // 푸시 알림 설정 불러오기
-export async function getPushToken(userId: string): Promise<PushToken | null> {
+export async function getPushSetting(
+  userId: string,
+): Promise<PushSetting | null> {
   const { data, error } = await supabase
     .from("pushToken")
     .select("*")
@@ -1386,10 +1396,27 @@ export async function getPushToken(userId: string): Promise<PushToken | null> {
 }
 
 // 푸시 알림 설정 추가
-export async function createPushToken(pushTokenData: PushToken) {
+export async function createPushSetting(pushTokenData: PushSetting) {
+  const { error } = await supabase.from("pushToken").upsert(pushTokenData);
+
+  if (error) {
+    console.error("푸시 알림 정보 저장 실패:", error);
+  }
+}
+
+// 푸시 알림 설정 업데이트
+export async function updatePushSetting({
+  userId,
+  token,
+  grantedNotifications,
+}: PushSettingUpdateData) {
   const { error } = await supabase
     .from("pushToken")
-    .upsert(pushTokenData, { onConflict: "userId" });
+    .update({
+      ...(token === undefined ? {} : { token }),
+      ...(grantedNotifications === undefined ? {} : { grantedNotifications }),
+    })
+    .eq("userId", userId);
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
@@ -1397,24 +1424,8 @@ export async function createPushToken(pushTokenData: PushToken) {
   }
 }
 
-// 푸시 알림 설정 업데이트
-export async function updatePushToken(pushTokenData: PushTokenUpdateData) {
-  const { error } = await supabase
-    .from("pushToken")
-    .update({
-      ...(pushTokenData.pushToken === undefined
-        ? {}
-        : { pushToken: pushTokenData.pushToken }),
-      ...(pushTokenData.grantedNotifications === undefined
-        ? {}
-        : { grantedNotifications: pushTokenData.grantedNotifications }),
-    })
-    .eq("userId", pushTokenData.userId);
-
-  if (error) {
-    console.error("푸시 알림 정보 저장 실패:", error);
-    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
-  }
+export async function resetPushSetting(userId: string) {
+  await updatePushSetting({ userId, token: null, grantedNotifications: [] });
 }
 
 // ============================================
