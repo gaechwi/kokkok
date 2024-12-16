@@ -1,26 +1,26 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
-import images from "@constants/images";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { verifyResetToken } from "@/utils/supabase";
-import { useAtom } from "jotai";
+import { OTP_TIME } from "@/constants/time";
 import { passwordResetFormAtom } from "@/contexts/auth";
-import { formatTime } from "@/utils/formatTime";
 import {
   alertExpirationOnTimeout,
   useTimerWithDuration,
 } from "@/hooks/useTimer";
-import { OTP_TIME } from "@/constants/time";
+import { formatTime } from "@/utils/formatTime";
+import { verifyResetToken } from "@/utils/supabase";
+import images from "@constants/images";
+import { useRouter } from "expo-router";
+import { useAtom } from "jotai";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Step2 = () => {
   const router = useRouter();

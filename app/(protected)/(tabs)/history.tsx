@@ -1,3 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import {
   ScrollView,
   Text,
@@ -5,17 +8,14 @@ import {
   type TouchableOpacityProps,
   View,
 } from "react-native";
-import { useCallback } from "react";
-import { useFocusEffect } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 
 import useCalendar from "@/hooks/useCalendar";
 import useModal from "@/hooks/useModal";
 
 import { getHistories } from "@/utils/supabase";
 
-import RestDayModal from "@/components/RestDayModal";
 import CalendarNavigator from "@/components/CalendarNavigator";
+import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 
 import icons from "@/constants/icons";

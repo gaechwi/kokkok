@@ -1,7 +1,7 @@
 import {
-  useQuery,
   type QueryKey,
   type UseQueryResult,
+  useQuery,
 } from "@tanstack/react-query";
 
 // queryKey, getService, defaultErrorMessage, enabled, refetchInterval 순

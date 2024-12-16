@@ -40,7 +40,7 @@ function FriendLayout({
         data={friends}
         keyExtractor={(friend) => friend.id}
         renderItem={({ item: friend }) => <FriendItem friend={friend} />}
-        className="px-6 grow w-full"
+        className="w-full grow px-6"
         contentContainerStyle={friends.length ? {} : { flex: 1 }}
         ListHeaderComponent={
           <SearchBar
