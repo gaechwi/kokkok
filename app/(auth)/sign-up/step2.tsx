@@ -5,6 +5,7 @@ import {
 } from "@/hooks/useTimer";
 import { formatTime } from "@/utils/formatTime";
 import { signUp, verifySignUpOTP } from "@/utils/supabase";
+import { validateStep2Form } from "@/utils/validation";
 import images from "@constants/images";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
@@ -33,8 +34,9 @@ const Step2 = () => {
   const handleSignUp = async () => {
     if (isLoading) return;
 
-    if (!signUpForm.username) {
-      Alert.alert("닉네임을 채워주세요");
+    const validationError = validateStep2Form(signUpForm.username, otpcode);
+    if (validationError) {
+      Alert.alert("알림", validationError.message);
       return;
     }
 
@@ -48,6 +50,13 @@ const Step2 = () => {
         password: signUpForm.password,
         username: signUpForm.username,
         description: signUpForm.description,
+      });
+
+      setSignUpForm({
+        email: "",
+        password: "",
+        username: "",
+        description: "",
       });
 
       router.replace("/onboarding");
