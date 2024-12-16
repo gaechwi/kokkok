@@ -249,6 +249,17 @@ export default function CommentItem({
             </TouchableOpacity>
           )}
 
+          {/* kebab button */}
+          {author?.id === user.data?.id && (
+            <TouchableOpacity onPress={handleOpenModal} className="ml-2">
+              <Icons.KebabMenuIcon
+                width={24}
+                height={24}
+                color={colors.black}
+              />
+            </TouchableOpacity>
+          )}
+
           <CustomModal
             visible={isModalVisible}
             onClose={handleCloseModal}
