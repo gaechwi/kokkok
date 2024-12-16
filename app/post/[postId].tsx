@@ -1,12 +1,20 @@
 import { HeaderWithUsername } from "@/components/Header";
+import { DeleteModal, TwoButtonModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
+import { showToast } from "@/components/ToastConfig";
 import CommentsSection from "@/components/comments/CommentsSection";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import { getCurrentUser, getPost, getPostLikes } from "@/utils/supabase";
+import {
+  deletePost,
+  getCurrentUser,
+  getPost,
+  getPostLikes,
+} from "@/utils/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, Image, Text, TouchableOpacity } from "react-native";
@@ -19,8 +27,11 @@ export default function PostDetail() {
   const { postId } = useLocalSearchParams();
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [isNotFoundModalVisible, setIsNotFoundModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: user } = useFetchData(
     ["currentUser"],
@@ -28,16 +39,20 @@ export default function PostDetail() {
     "현재 사용자를 불러올 수 없습니다.",
   );
 
-  const { data: post } = useFetchData(
+  const {
+    data: post,
+    isPending: isPostPending,
+    error: postError,
+  } = useFetchData(
     ["post", postId],
     () => getPost(Number(postId)),
     "포스트를 불러오는데 실패했습니다.",
   );
 
   const { data: likedAuthorData } = useFetchData(
-    ["likedAuthorAvatar", selectedPostId],
+    ["likedAuthorAvatar", postId],
     () => {
-      if (selectedPostId) return getPostLikes(selectedPostId);
+      if (postId) return getPostLikes(Number(postId));
       return Promise.resolve([]);
     },
     "좋아요한 사용자 정보를 불러오는데 실패했습니다.",
@@ -45,11 +60,10 @@ export default function PostDetail() {
   );
 
   useFocusEffect(() => {
-    if (!post) router.back();
+    if (postError || (!isPostPending && !post)) setIsNotFoundModalVisible(true);
   });
 
-  const onOpenLikedAuthor = useCallback((postId: number) => {
-    setSelectedPostId(postId);
+  const onOpenLikedAuthor = useCallback(() => {
     setIsLikedModalVisible(true);
   }, []);
 
@@ -57,13 +71,29 @@ export default function PostDetail() {
     setIsCommentsVisible(false);
   }, []);
 
+  const deletePostMutation = useMutation({
+    mutationFn: async () => {
+      await deletePost(Number(postId));
+    },
+    onSuccess: () => {
+      showToast("success", "게시글이 삭제되었어요.");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["notification"] });
+      router.back();
+    },
+    onError: () => {
+      showToast("fail", "게시글 삭제에 실패했어요.");
+    },
+  });
+
   return (
-    <>
-      <SafeAreaView edges={["top"]} className="flex-1 bg-white">
-        <HeaderWithUsername
-          name={post?.userData.username ?? ""}
-          type="POST_PAGE"
-        />
+    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+      <HeaderWithUsername
+        name={post?.userData.username ?? ""}
+        type="POST_PAGE"
+      />
+      {post && (
         <PostItem
           author={{
             id: post?.userData?.id || "",
@@ -90,8 +120,11 @@ export default function PostDetail() {
           postId={Number(postId)}
           onCommentsPress={() => setIsCommentsVisible(true)}
           onAuthorPress={onOpenLikedAuthor}
+          onDeletePress={() => {
+            setIsDeleteModalVisible(true);
+          }}
         />
-      </SafeAreaView>
+      )}
 
       {isCommentsVisible && (
         <View className="flex-1">
@@ -99,6 +132,7 @@ export default function PostDetail() {
             visible={isCommentsVisible}
             onClose={onCloseComments}
             postId={Number(postId)}
+            authorId={post?.userData.id || ""}
           />
         </View>
       )}
@@ -155,6 +189,43 @@ export default function PostDetail() {
           </MotionModal>
         </View>
       )}
-    </>
+
+      {isDeleteModalVisible && (
+        <View className="flex-1">
+          <DeleteModal
+            isVisible={isDeleteModalVisible}
+            onClose={() => setIsDeleteModalVisible(false)}
+            onDelete={() => {
+              deletePostMutation.mutate();
+              setIsDeleteModalVisible(false);
+            }}
+          />
+        </View>
+      )}
+
+      {isNotFoundModalVisible && (
+        <View className="flex-1">
+          <TwoButtonModal
+            isVisible={isNotFoundModalVisible}
+            onClose={() => {
+              setIsNotFoundModalVisible(false);
+              router.back();
+            }}
+            emoji="sad"
+            contents={"게시글이 삭제되었어요."}
+            leftButtonText="뒤로가기"
+            rightButtonText="홈으로"
+            onLeftButtonPress={() => {
+              setIsNotFoundModalVisible(false);
+              router.back();
+            }}
+            onRightButtonPress={() => {
+              setIsNotFoundModalVisible(false);
+              router.replace("/home");
+            }}
+          />
+        </View>
+      )}
+    </SafeAreaView>
   );
 }

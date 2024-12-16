@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Keyboard,
@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import { ToastConfig } from "./ToastConfig";
 
 interface CustomModalProps {
   visible: boolean;
@@ -32,6 +34,7 @@ export default function MotionModal({
   const heightAnim = useRef(new Animated.Value(initialHeight));
   const heightRef = useRef(initialHeight);
   const maxHeightRef = useRef(maxHeight);
+  const [showToast, setShowToast] = useState(false);
 
   const clampHeight = useCallback(
     (height: number) => Math.min(maxHeightRef.current, Math.max(0, height)),
@@ -131,11 +134,17 @@ export default function MotionModal({
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(slideAnim.current, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: false,
-      }).start();
+      requestAnimationFrame(() => {
+        Animated.timing(slideAnim.current, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: false,
+        }).start(() => {
+          setShowToast(true);
+        });
+      });
+    } else {
+      setShowToast(false);
     }
   }, [visible]);
 
@@ -143,7 +152,7 @@ export default function MotionModal({
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType="none"
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
@@ -175,10 +184,10 @@ export default function MotionModal({
             >
               <SafeAreaView
                 edges={["top"]}
-                className="h-full rounded-t-[20px] border border-gray-20 bg-white"
+                className="h-full flex-1 rounded-t-[20px] border border-gray-20 bg-white"
               >
                 <View
-                  className="w-full items-center py-2.5"
+                  className="w-full items-center py-4"
                   {...panResponder.panHandlers}
                 >
                   <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
@@ -189,6 +198,7 @@ export default function MotionModal({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+      {showToast && <Toast config={ToastConfig} />}
     </Modal>
   );
 }

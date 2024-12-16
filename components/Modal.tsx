@@ -2,7 +2,6 @@ import Icons from "@/constants/icons";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Modal, Text, TouchableOpacity } from "react-native";
 import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 interface BottomModalProps {
   children: React.ReactNode;
@@ -36,6 +35,7 @@ export default function CustomModal({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
+      className="flex-1"
     >
       <View
         className={`flex-1 bg-black/50 ${
@@ -56,14 +56,13 @@ export default function CustomModal({
             ],
           }}
         >
-          <SafeAreaView
-            edges={[]}
-            className={`z-10 h-fit w-full bg-white ${
+          <View
+            className={`h-fit w-full bg-white ${
               position === "middle" ? "rounded-xl" : "rounded-t-xl"
             }`}
           >
             {children}
-          </SafeAreaView>
+          </View>
         </AnimatedView>
       </View>
     </Modal>
@@ -118,20 +117,15 @@ export function OneButtonModal({
 }: {
   isVisible: boolean;
   onClose: () => void;
-  emoji?: "sad" | "happy";
+  emoji?: EmojiType;
   contents: string;
   buttonText: string;
   onPress: () => void;
 }) {
   return (
     <CustomModal visible={isVisible} onClose={onClose} position="middle">
-      <View className="items-center px-[55px] py-6">
-        {!!emoji &&
-          (emoji === "sad" ? (
-            <Icons.FaceNotDoneIcon width={40} height={40} />
-          ) : (
-            <Icons.FaceDoneIcon width={40} height={40} />
-          ))}
+      <View className="items-center px-7 py-6">
+        {!!emoji && Emojis[emoji]}
 
         <Text className="title-3 mt-4 text-center text-gray-90">
           {contents}
@@ -144,9 +138,88 @@ export function OneButtonModal({
           }}
           className="mt-5 h-[52px] w-full grow flex-row items-center justify-center rounded-[8px] bg-primary"
         >
-          <Text className="title-3 text-center text-white">{buttonText}</Text>
+          <Text className="text-center font-pbold text-[17px] text-white leading-[150%]">
+            {buttonText}
+          </Text>
         </TouchableOpacity>
       </View>
     </CustomModal>
   );
 }
+
+export function TwoButtonModal({
+  isVisible,
+  onClose,
+  emoji,
+  contents,
+  leftButtonText,
+  rightButtonText,
+  onLeftButtonPress,
+  onRightButtonPress,
+  isLoading,
+  variant = "default",
+}: {
+  isVisible: boolean;
+  onClose: () => void;
+  emoji?: EmojiType;
+  contents: string;
+  leftButtonText: string;
+  rightButtonText: string;
+  onLeftButtonPress: () => void;
+  onRightButtonPress: () => void;
+  isLoading?: boolean;
+  variant?: "default" | "danger";
+}) {
+  const leftButtonStyle =
+    variant === "danger"
+      ? "h-full flex-1 items-center justify-center rounded-[8px] bg-gray-40"
+      : "h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white";
+
+  const leftButtonTextStyle =
+    variant === "danger"
+      ? "font-pbold text-[17px] text-white leading-[150%]"
+      : "font-pbold text-[17px] text-primary leading-[150%]";
+
+  return (
+    <CustomModal visible={isVisible} onClose={onClose} position="middle">
+      <View className="items-center px-7 py-6">
+        {!!emoji && Emojis[emoji]}
+
+        <Text className="title-3 mt-4 text-center text-gray-90">
+          {contents}
+        </Text>
+
+        <View className="mt-5 h-[52px] w-full flex-row items-center gap-5">
+          <TouchableOpacity
+            onPress={() => {
+              onLeftButtonPress();
+            }}
+            className={leftButtonStyle}
+            disabled={isLoading}
+          >
+            <Text className={leftButtonTextStyle}>{leftButtonText}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              onRightButtonPress();
+            }}
+            className="h-full flex-1 items-center justify-center rounded-[8px] bg-primary"
+            disabled={isLoading}
+          >
+            <Text className="font-pbold text-[17px] text-white leading-[150%]">
+              {rightButtonText}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </CustomModal>
+  );
+}
+
+const Emojis = {
+  sad: <Icons.FaceNotDoneIcon width={40} height={40} />,
+  happy: <Icons.FaceDoneIcon width={40} height={40} />,
+};
+
+type EmojiType = "sad" | "happy";

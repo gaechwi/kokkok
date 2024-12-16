@@ -41,6 +41,3 @@ yarn-error.*
 # build
 ios/
 android/
-
-# credentials
-google-services.json

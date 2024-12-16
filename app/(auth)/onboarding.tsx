@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { router } from "expo-router";
+import React, { useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -7,29 +8,30 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import images from "@/constants/images";
-import { router } from "expo-router";
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { FloatingText, FloatingView } from "@/components/Floating";
+import images from "@/constants/images";
 
 const { width } = Dimensions.get("window");
 
 const slides = [
   {
     id: "slide1",
+    imageSource: images.OnBoarding1,
     component: <Slide1 />,
     buttonText: "응! 같이하자",
   },
-  { id: "slide2", component: <Slide2 /> },
-  { id: "slide3", component: <Slide3 /> },
+  { id: "slide2", imageSource: images.OnBoarding2, component: <Slide2 /> },
+  { id: "slide3", imageSource: images.OnBoarding3, component: <Slide3 /> },
   {
     id: "slide4",
+    imageSource: images.OnBoarding4,
     component: <Slide4 />,
     buttonText: "시작하기!",
   },
@@ -60,11 +62,15 @@ export default function Onboarding() {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <View style={{ width }}>
+            <ImageBackground
+              className="relative flex-1 items-center"
+              style={{ width }}
+              source={item.imageSource}
+            >
               {React.cloneElement(item.component, {
                 isActive: index === currentIndex,
               })}
-            </View>
+            </ImageBackground>
           )}
         />
 
@@ -94,186 +100,83 @@ interface SlideProps {
 }
 
 function Slide1({ isActive = false }: SlideProps) {
-  const text1Offset = useSharedValue(30);
-  const text2Offset = useSharedValue(30);
-  const opacity1 = useSharedValue(0);
-  const opacity2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (isActive) {
-      text1Offset.value = withTiming(0, {
-        duration: 1000,
-      });
-      text2Offset.value = withTiming(0, {
-        duration: 1800,
-      });
-      opacity1.value = withTiming(1, {
-        duration: 1000,
-      });
-      opacity2.value = withTiming(1, {
-        duration: 1800,
-      });
-    }
-  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
-
-  const text1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text1Offset.value }],
-    opacity: opacity1.value,
-  }));
-
-  const text2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text2Offset.value }],
-    opacity: opacity2.value,
-  }));
-
   return (
-    <ImageBackground
-      source={images.OnBoarding1}
-      className="relative flex-1 items-center bg-yellow-100"
-    >
-      <Animated.Text
-        style={text1Style}
+    <>
+      <FloatingText
         className="absolute top-[177px] font-pbold text-[40px] text-gray-90"
+        duration={1000}
+        isActive={isActive}
       >
         같이 운동하실래요?
-      </Animated.Text>
-      <Animated.Text
-        style={text2Style}
+      </FloatingText>
+      <FloatingText
         className="absolute bottom-[186px] font-psemibold text-[17px] text-gray-50"
+        duration={1800}
+        isActive={isActive}
       >
         콕콕의 사용법에 대해 알아봐요
-      </Animated.Text>
-    </ImageBackground>
+      </FloatingText>
+    </>
   );
 }
 
 function Slide2({ isActive = false }: SlideProps) {
-  const text1Offset = useSharedValue(30);
-  const text2Offset = useSharedValue(30);
-  const opacity1 = useSharedValue(0);
-  const opacity2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (isActive) {
-      text1Offset.value = withTiming(0, { duration: 1000 });
-      opacity1.value = withTiming(1, { duration: 1000 });
-      text2Offset.value = withTiming(0, { duration: 1800 });
-      opacity2.value = withTiming(1, { duration: 1800 });
-    }
-  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
-
-  const text1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text1Offset.value }],
-    opacity: opacity1.value,
-  }));
-
-  const text2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text2Offset.value }],
-    opacity: opacity2.value,
-  }));
-
   return (
-    <ImageBackground
-      source={images.OnBoarding2}
-      className="relative flex-1 items-center"
-    >
-      <View className="absolute top-[130px] items-center gap-[6px]">
-        <Animated.Text
-          style={text1Style}
-          className="font-pbold text-[40px] text-gray-90"
-        >
-          운동이 끝나면
-        </Animated.Text>
-        <Animated.Text
-          style={text2Style}
-          className="font-pbold text-[40px] text-gray-90"
-        >
-          사진으로 인증해요
-        </Animated.Text>
-      </View>
-    </ImageBackground>
+    <View className="absolute top-[130px] items-center gap-[6px]">
+      <FloatingText
+        className="font-pbold text-[40px] text-gray-90"
+        duration={1000}
+        isActive={isActive}
+      >
+        운동이 끝나면
+      </FloatingText>
+      <FloatingText
+        className="font-pbold text-[40px] text-gray-90"
+        duration={1800}
+        isActive={isActive}
+      >
+        사진으로 인증해요
+      </FloatingText>
+    </View>
   );
 }
 
 function Slide3({ isActive = false }: SlideProps) {
-  const text1Offset = useSharedValue(30);
-  const text2Offset = useSharedValue(30);
-  const opacity1 = useSharedValue(0);
-  const opacity2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (isActive) {
-      text1Offset.value = withTiming(0, { duration: 1000 });
-      opacity1.value = withTiming(1, { duration: 1000 });
-      text2Offset.value = withTiming(0, { duration: 1800 });
-      opacity2.value = withTiming(1, { duration: 1800 });
-    }
-  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
-
-  const text1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text1Offset.value }, { rotate: "8.5deg" }],
-    opacity: opacity1.value,
-  }));
-
-  const text2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text2Offset.value }],
-    opacity: opacity2.value,
-  }));
-
   return (
-    <ImageBackground
-      source={images.OnBoarding3}
-      className="relative flex-1 items-center"
-    >
-      <Animated.View
-        style={text1Style}
+    <>
+      <View
         className="absolute top-[130px] right-[80px]"
+        style={{ transform: [{ rotate: "8.5deg" }] }}
       >
-        <Text className="font-pjalnan text-[110px] text-primary">콕!</Text>
-      </Animated.View>
-      <Animated.View
-        style={text2Style}
+        <FloatingText
+          className="font-pjalnan text-[110px] text-primary"
+          duration={1000}
+          isActive={isActive}
+        >
+          콕!
+        </FloatingText>
+      </View>
+      <FloatingView
         className="absolute bottom-[204px] items-center gap-[6px]"
+        duration={1800}
+        isActive={isActive}
       >
         <Text className="font-pbold text-[40px] text-gray-90">운동 안 한</Text>
         <Text className="font-pbold text-[40px] text-gray-90">
           친구를 찔러요
         </Text>
-      </Animated.View>
-    </ImageBackground>
+      </FloatingView>
+    </>
   );
 }
 
 function Slide4({ isActive = false }: SlideProps) {
-  const text1Offset = useSharedValue(30);
-  const text2Offset = useSharedValue(30);
-  const opacity1 = useSharedValue(0);
-  const opacity2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (isActive) {
-      text1Offset.value = withTiming(0, { duration: 1000 });
-      opacity1.value = withTiming(1, { duration: 1000 });
-      text2Offset.value = withTiming(0, { duration: 1800 });
-      opacity2.value = withTiming(1, { duration: 1800 });
-    }
-  }, [isActive, text1Offset, text2Offset, opacity1, opacity2]);
-
-  const text1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text1Offset.value }],
-    opacity: opacity1.value,
-  }));
-
-  const text2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: text2Offset.value }],
-    opacity: opacity2.value,
-  }));
-
   return (
-    <ImageBackground source={images.OnBoarding4} className="relative flex-1">
-      <Animated.View
-        style={text1Style}
+    <>
+      <FloatingView
         className="absolute top-[95px] left-[60px] gap-[6px]"
+        duration={1000}
+        isActive={isActive}
       >
         <Text className="font-pbold text-[40px] text-gray-90">
           귀여운 이모지로
@@ -281,17 +184,18 @@ function Slide4({ isActive = false }: SlideProps) {
         <Text className="ml-[30px] font-pbold text-[40px] text-gray-90">
           한눈에
         </Text>
-      </Animated.View>
-      <Animated.View
-        style={text2Style}
+      </FloatingView>
+      <FloatingView
         className="absolute right-[60px] bottom-[187px] items-end gap-[6px]"
+        duration={1800}
+        isActive={isActive}
       >
         <Text className="font-pbold text-[40px] text-gray-90 ">내 기록을</Text>
         <Text className="mr-[30px] font-pbold text-[40px] text-gray-90">
           확인해요
         </Text>
-      </Animated.View>
-    </ImageBackground>
+      </FloatingView>
+    </>
   );
 }
 

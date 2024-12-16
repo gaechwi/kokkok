@@ -5,12 +5,12 @@ import Toast from "react-native-toast-message";
 
 export const ToastConfig = {
   success: (props: BaseToastProps) => (
-    <View className="bg-gray-60 p-4 rounded-[10px]">
+    <View className="z-10 rounded-[10px] bg-gray-60 p-4">
       <Text className="title-4 text-white ">{props.text1}</Text>
     </View>
   ),
   fail: (props: BaseToastProps) => (
-    <View className="bg-gray-60 p-4 rounded-[10px] gap-4 flex-row items-center">
+    <View className="z-10 flex-row items-center gap-4 rounded-[10px] bg-gray-60 p-4">
       <Icons.FaceNotDoneIcon width={24} height={24} />
       <Text className="title-4 text-white">{props.text1}</Text>
     </View>

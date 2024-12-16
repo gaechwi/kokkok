@@ -10,8 +10,10 @@ import { HeaderWithBack } from "@/components/Header";
 import { ToastConfig } from "@/components/ToastConfig";
 import { useAppState } from "@/hooks/useAppState";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
+import NotificationProvider from "@/providers/notificationProvider";
 import { supabase } from "@/utils/supabase";
 import { useFonts } from "expo-font";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,33 +63,37 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack
-        screenOptions={{
-          gestureEnabled: true,
-          gestureDirection: "horizontal",
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="notification"
-          options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
-        />
-        <Stack.Screen
-          name="setting"
-          options={{ header: () => <HeaderWithBack name="SETTING" /> }}
-        />
-        <Stack.Screen
-          name="profile"
-          options={{
-            header: () => <HeaderWithBack name="EDIT_PROFILE" />,
+      <NotificationProvider>
+        <Stack
+          screenOptions={{
+            gestureEnabled: true,
+            gestureDirection: "horizontal",
           }}
-        />
-        <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
-        <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
-      </Stack>
-      <Toast config={ToastConfig} />
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="notification"
+            options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
+          />
+          <Stack.Screen
+            name="setting"
+            options={{ header: () => <HeaderWithBack name="SETTING" /> }}
+          />
+          <Stack.Screen
+            name="profile"
+            options={{
+              header: () => <HeaderWithBack name="EDIT_PROFILE" />,
+            }}
+          />
+          <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+          <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+        </Stack>
+
+        <StatusBar style="dark" />
+        <Toast config={ToastConfig} />
+      </NotificationProvider>
     </QueryClientProvider>
   );
 }

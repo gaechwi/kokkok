@@ -3,10 +3,10 @@ import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
+import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
-  deleteComment,
   getCurrentUser,
   getReplies,
   toggleLikeComment,
@@ -22,13 +22,13 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { FlatList } from "react-native";
-import CustomModal, { DeleteModal } from "../Modal";
-import { showToast } from "../ToastConfig";
+import CustomModal from "../Modal";
 
 interface CommentItemProps {
   id: number;
@@ -58,6 +58,7 @@ interface CommentItemProps {
   isReply?: boolean;
   onCommentsClose: () => void;
   onLikedAuthorPress: (commentId: number) => void;
+  onDeletedPress: (commentId: number) => void;
 }
 
 export default function CommentItem({
@@ -75,15 +76,17 @@ export default function CommentItem({
   isReply = false,
   onCommentsClose,
   onLikedAuthorPress,
+  onDeletedPress,
 }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
-  const queryClient = useQueryClient();
-
   const { truncateText, calculateMaxChars } = useTruncateText();
+
+  const queryClient = useQueryClient();
   const router = useRouter();
+
+  const diff = diffDate(new Date(createdAt));
 
   // 답글 가져오기
   const {
@@ -111,22 +114,23 @@ export default function CommentItem({
     }
   }, [replyHasNextPage, isReplyFetchingNextPage, replyFetchNextPage]);
 
-  const toggleModal = () => {
-    setIsModalVisible((prev) => !prev);
-  };
+  const handleOpenModal = useCallback(() => {
+    setIsModalVisible(true);
+  }, []);
 
-  const toggleDeleteModal = () => {
-    setIsDeleteModalVisible((prev) => !prev);
-  };
+  const handleCloseModal = useCallback(() => {
+    setIsModalVisible(false);
+  }, []);
 
+  // 좋아요 토글
   const toggleLike = useMutation({
     mutationFn: () => toggleLikeComment(id),
     onMutate: () => {
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
-      if (isLiked && user.data?.id !== author?.id) {
-        sendNotificationMutation.mutate();
+      if (user.data && isLiked && user.data?.id !== author?.id) {
+        sendNotificationMutation.mutate(user.data);
       }
 
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -137,10 +141,11 @@ export default function CommentItem({
     },
   });
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: () =>
+  // 좋아요 알림
+  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
+    mutationFn: (from) =>
       createNotification({
-        from: user.data?.id || "",
+        from,
         to: author?.id || "",
         type: "commentLike",
         data: {
@@ -152,30 +157,21 @@ export default function CommentItem({
       }),
   });
 
+  // 현재 사용자 정보
   const user = useFetchData(
     ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
   );
 
-  const deleteCommentMutation = useMutation({
-    mutationFn: () => deleteComment(id),
-    onSuccess: () => {
-      showToast("success", "댓글이 삭제되었어요.");
-
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["replies"] });
-    },
-    onError: () => {
-      showToast("fail", "댓글 삭제에 실패했어요.");
-    },
-  });
-
-  const diff = diffDate(new Date(createdAt));
-
   return (
-    <View>
+    <Pressable
+      onLongPress={() => {
+        if (author?.id === user.data?.id) {
+          handleOpenModal();
+        }
+      }}
+    >
       {/* header */}
       <View className="flex-row items-center justify-between pb-[13px]">
         {/* user info */}
@@ -253,44 +249,34 @@ export default function CommentItem({
             </TouchableOpacity>
           )}
 
-          {/* kebab menu */}
-          {user.data?.id === author?.id && (
-            <TouchableOpacity onPress={toggleModal} className="ml-2">
+          {/* kebab button */}
+          {author?.id === user.data?.id && (
+            <TouchableOpacity onPress={handleOpenModal} className="ml-2">
               <Icons.KebabMenuIcon
                 width={24}
                 height={24}
                 color={colors.black}
               />
-
-              <CustomModal
-                visible={isModalVisible}
-                onClose={toggleModal}
-                position="bottom"
-              >
-                <View className="items-center">
-                  <TouchableOpacity
-                    onPress={() => {
-                      toggleDeleteModal();
-                      toggleModal();
-                    }}
-                    className="h-[82px] w-full items-center justify-center"
-                  >
-                    <Text className="title-2 text-gray-90">삭제하기</Text>
-                  </TouchableOpacity>
-                </View>
-              </CustomModal>
-
-              <DeleteModal
-                isVisible={isDeleteModalVisible}
-                onClose={toggleDeleteModal}
-                onDelete={() => {
-                  if (deleteCommentMutation.isPending) return;
-                  deleteCommentMutation.mutate();
-                  toggleDeleteModal();
-                }}
-              />
             </TouchableOpacity>
           )}
+
+          <CustomModal
+            visible={isModalVisible}
+            onClose={handleCloseModal}
+            position="bottom"
+          >
+            <View className="items-center">
+              <TouchableOpacity
+                onPress={() => {
+                  onDeletedPress(id);
+                  handleCloseModal();
+                }}
+                className="h-[82px] w-full items-center justify-center"
+              >
+                <Text className="title-2 text-gray-90">삭제하기</Text>
+              </TouchableOpacity>
+            </View>
+          </CustomModal>
         </View>
       </View>
       {/* contents */}
@@ -299,6 +285,11 @@ export default function CommentItem({
           onPress={() =>
             contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
           }
+          onLongPress={() => {
+            if (author?.id === user.data?.id) {
+              handleOpenModal();
+            }
+          }}
           className="title-5 flex-1 text-gray-90"
         >
           {isReply && replyTo?.username && (
@@ -312,21 +303,22 @@ export default function CommentItem({
           )}
         </Text>
       </View>
+
       {/* reply button */}
       <TouchableOpacity
-        className={isReply ? "pb-[5px]" : "pb-[13px]"}
+        className={`${isReply ? "pb-[5px]" : "pb-[13px]"} self-start`}
         onPress={() => {
           if (author) {
             onReply(author.id, author.username, parentsCommentId ?? id, id);
           }
         }}
       >
-        <Text className="caption-2 text-gray-60">답글달기</Text>
+        <Text className="caption-2 w-20 text-gray-60 ">답글달기</Text>
       </TouchableOpacity>
 
       {/* reply */}
       {!!totalReplies && totalReplies > 0 && (
-        <View className="px-4">
+        <View className="pl-4">
           {!!replyData && (
             <FlatList
               className="gap-2"
@@ -351,6 +343,7 @@ export default function CommentItem({
                   isReply={true}
                   onCommentsClose={onCommentsClose}
                   onLikedAuthorPress={onLikedAuthorPress}
+                  onDeletedPress={onDeletedPress}
                 />
               )}
               ListFooterComponent={() =>
@@ -386,8 +379,9 @@ export default function CommentItem({
             )}
         </View>
       )}
+
       {/* divider */}
       {!isReply && <View className="mt-2 mb-4 h-[1px] w-full bg-gray-20" />}
-    </View>
+    </Pressable>
   );
 }
