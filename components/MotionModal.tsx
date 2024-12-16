@@ -187,7 +187,7 @@ export default function MotionModal({
                 className="h-full flex-1 rounded-t-[20px] border border-gray-20 bg-white"
               >
                 <View
-                  className="w-full items-center py-2.5"
+                  className="w-full items-center py-4"
                   {...panResponder.panHandlers}
                 >
                   <View className="h-1 w-10 rounded-[2px] bg-gray-25" />
