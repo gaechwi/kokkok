@@ -1,6 +1,7 @@
 import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
-import { sendUpOTP, supabase } from "@/utils/supabase";
+import { sendUpOTP } from "@/utils/supabase";
+import { validateSignUpFormWithSupabase } from "@/utils/validation";
 import images from "@constants/images";
 import { signUpFormAtom } from "@contexts/auth";
 import { useRouter } from "expo-router";
@@ -31,50 +32,15 @@ const Step1 = () => {
 
     setIsLoading(true);
     try {
-      const { data: userData, error: userError } = await supabase
-        .from("user")
-        .select("isOAuth, email")
-        .eq("email", signUpForm.email)
-        .single();
+      const validationError = await validateSignUpFormWithSupabase(
+        signUpForm.email,
+        signUpForm.username,
+        signUpForm.password,
+        passwordConfirm,
+      );
 
-      if (
-        !signUpForm.email ||
-        !signUpForm.username ||
-        !signUpForm.password ||
-        !passwordConfirm
-      ) {
-        Alert.alert("빈칸을 채워주세요.");
-        return;
-      }
-
-      if (signUpForm.username.length < 3) {
-        Alert.alert("닉네임은 3자 이상이어야 합니다.");
-        return;
-      }
-
-      if (signUpForm.password !== passwordConfirm) {
-        Alert.alert("비밀번호가 일치하지 않습니다.");
-        return;
-      }
-
-      if (signUpForm.password.length < 8 || passwordConfirm.length < 8) {
-        Alert.alert("비밀번호는 8자 이상이어야 합니다.");
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(signUpForm.email)) {
-        Alert.alert("알림", "올바른 이메일 형식이 아닙니다.");
-        return;
-      }
-
-      if (userData?.isOAuth) {
-        Alert.alert("알림", "소셜 로그인으로 가입된 계정입니다.");
-        return;
-      }
-
-      if (userData?.email) {
-        Alert.alert("알림", "이미 가입된 이메일입니다.");
+      if (validationError) {
+        Alert.alert("알림", validationError.message);
         return;
       }
 
