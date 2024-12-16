@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 
 export interface SignUpValidationError {
   message: string;
-  field: "email" | "username" | "password" | "passwordConfirm";
+  field: "email" | "username" | "password" | "passwordConfirm" | "otpcode";
 }
 
 export const validateEmail = (email: string): SignUpValidationError | null => {
@@ -132,6 +132,29 @@ export const validateSignUpFormWithSupabase = async (
   // Supabase 이메일 검증
   const supabaseValidationError = await validateEmailWithSupabase(email);
   if (supabaseValidationError) return supabaseValidationError;
+
+  return null;
+};
+
+export const validateOTPCode = (
+  otpcode: string,
+): SignUpValidationError | null => {
+  if (!otpcode) {
+    return { message: "인증코드를 입력해주세요.", field: "otpcode" };
+  }
+
+  return null;
+};
+
+export const validateStep2Form = (
+  username: string,
+  otpcode: string,
+): SignUpValidationError | null => {
+  const usernameError = validateUsername(username);
+  if (usernameError) return usernameError;
+
+  const otpError = validateOTPCode(otpcode);
+  if (otpError) return otpError;
 
   return null;
 };
