@@ -165,7 +165,13 @@ export default function CommentItem({
   );
 
   return (
-    <Pressable onLongPress={handleOpenModal}>
+    <Pressable
+      onLongPress={() => {
+        if (author?.id === user.data?.id) {
+          handleOpenModal();
+        }
+      }}
+    >
       {/* header */}
       <View className="flex-row items-center justify-between pb-[13px]">
         {/* user info */}
@@ -268,7 +274,11 @@ export default function CommentItem({
           onPress={() =>
             contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
           }
-          onLongPress={handleOpenModal}
+          onLongPress={() => {
+            if (author?.id === user.data?.id) {
+              handleOpenModal();
+            }
+          }}
           className="title-5 flex-1 text-gray-90"
         >
           {isReply && replyTo?.username && (
