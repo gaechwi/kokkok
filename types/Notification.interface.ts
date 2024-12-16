@@ -12,11 +12,12 @@ export type NotificationType =
   (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];
 
 export interface NotificationData {
-  postId: number;
+  postId?: number;
   commentInfo?: {
     id: number;
     content?: string;
   };
+  isAccepted?: boolean;
 }
 
 export interface Notification {
@@ -34,15 +35,15 @@ export interface NotificationResponse {
   createdAt: string;
 }
 
-export interface PushToken {
+export interface PushSetting {
   userId: string;
-  pushToken: string | null;
+  token: string | null;
   grantedNotifications: NotificationType[];
 }
 
-export interface PushTokenUpdateData {
+export interface PushSettingUpdateData {
   userId: string;
-  pushToken?: string | null;
+  token?: string | null;
   grantedNotifications?: NotificationType[];
 }
 

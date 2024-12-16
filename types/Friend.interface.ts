@@ -10,7 +10,7 @@ export type RelationType = (typeof RELATION_TYPE)[keyof typeof RELATION_TYPE];
 
 export interface RequestInfo {
   requestId: number;
-  toUserId: string;
+  toUser: UserProfile;
   fromUser: UserProfile;
 }
 

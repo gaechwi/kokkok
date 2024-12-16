@@ -266,21 +266,21 @@ export type Database = {
           createdAt: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id: number;
-          pushToken: string | null;
+          token: string | null;
           userId: string;
         };
         Insert: {
           createdAt?: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          pushToken: string | null;
+          token: string | null;
           userId: string;
         };
         Update: {
           createdAt?: string;
           grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          pushToken?: string | null;
+          token?: string | null;
           userId?: string;
         };
         Relationships: [
@@ -377,6 +377,12 @@ export type Database = {
       decrement_comment_likes: {
         Args: {
           p_comment_id: number;
+        };
+        Returns: undefined;
+      };
+      delete_user_data: {
+        Args: {
+          user_id: string;
         };
         Returns: undefined;
       };
