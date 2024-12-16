@@ -1,24 +1,23 @@
+import { useQuery } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   Text,
   TouchableOpacity,
   type TouchableOpacityProps,
   View,
 } from "react-native";
-import { useCallback } from "react";
-import { useFocusEffect } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 
-import useCalendar from "@/hooks/useCalendar";
-import useModal from "@/hooks/useModal";
-
-import { getHistories } from "@/utils/supabase";
-
-import RestDayModal from "@/components/RestDayModal";
 import CalendarNavigator from "@/components/CalendarNavigator";
+import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
-
 import icons from "@/constants/icons";
+import useCalendar from "@/hooks/useCalendar";
+import useFetchData from "@/hooks/useFetchData";
+import useModal from "@/hooks/useModal";
+import { getCurrentUser, getHistories } from "@/utils/supabase";
 
 type History = Awaited<ReturnType<typeof getHistories>>[number];
 
@@ -34,10 +33,20 @@ export default function History() {
   } = useCalendar();
   const { isModalVisible, openModal, closeModal } = useModal();
 
-  const { data: histories = [], refetch } = useQuery({
+  const {
+    data: histories = [],
+    isLoading: isHistoriesLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["histories", year, month],
     queryFn: () => getHistories(year, month),
   });
+
+  const { data: currentUser, isLoading: isUserLoading } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
 
   const handlePreviousMonth = () => {
     changeMonth(-1);
@@ -77,7 +86,20 @@ export default function History() {
           onNext={handleNextMonth}
           isNextDisabled={year === currentYear && month >= currentMonth}
         />
-        <WorkoutCalendar date={date} workoutStatuses={histories} />
+
+        {isUserLoading || isHistoriesLoading ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <WorkoutCalendar
+            startingDate={
+              currentUser
+                ? new Date(currentUser.createdAt)
+                : new Date(2025, 0, 1, 0, 0, 0)
+            }
+            currentDate={date}
+            workoutStatuses={histories}
+          />
+        )}
       </View>
 
       <FaceExplanation />
