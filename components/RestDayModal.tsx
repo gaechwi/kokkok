@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -13,6 +13,7 @@ import RestDayCalendar from "./RestDayCalendar";
 
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
+import useFetchData from "@/hooks/useFetchData";
 import { showToast } from "./ToastConfig";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
@@ -34,10 +35,11 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   } = useCalendar();
   const [restDates, setRestDates] = useState<RestDay[]>([]);
 
-  const { data: defaultDates = [], isSuccess } = useQuery({
-    queryKey: ["restDates"],
-    queryFn: getRestDays,
-  });
+  const { data: defaultDates = [], isSuccess } = useFetchData(
+    ["restDates"],
+    getRestDays,
+    "사용자의 쉬는 날을 불러올 수 없습니다.",
+  );
 
   const queryClient = useQueryClient();
   const { mutate: handleSubmit } = useMutation({
