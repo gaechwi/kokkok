@@ -96,7 +96,7 @@ export default function Request() {
         renderItem={({ item: request }) => (
           <FriendRequest {...request} isLoading={isLoading} />
         )}
-        className="px-8 grow w-full"
+        className="w-full grow px-8"
         contentContainerStyle={requests.data.length ? {} : { flex: 1 }}
         ListHeaderComponent={<View className="h-2" />}
         ListFooterComponent={<View className="h-4" />}

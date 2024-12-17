@@ -1,10 +1,13 @@
-import { Stack } from "expo-router";
-import { useRouter } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 
 import { Header, HeaderWithBack } from "@/components/Header";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const AuthLayout = () => {
-  const router = useRouter();
+  const { session, isLoading } = useAuthSession();
+
+  if (isLoading) return null;
+  if (session) return <Redirect href="/home" />;
 
   return (
     <>
@@ -27,25 +30,6 @@ const AuthLayout = () => {
             header: () => <HeaderWithBack name="SIGNUP" />,
           }}
         />
-        <Stack.Screen
-          name="password-reset/step1"
-          options={{
-            header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
-          }}
-        />
-        <Stack.Screen
-          name="password-reset/step2"
-          options={{
-            header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
-          }}
-        />
-        <Stack.Screen
-          name="password-reset/step3"
-          options={{
-            header: () => <HeaderWithBack name="RESET_PASSWORD" />,
-          }}
-        />
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack>
     </>
   );

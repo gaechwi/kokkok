@@ -1,9 +1,8 @@
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
-import type { Session } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 import { HeaderWithBack } from "@/components/Header";
@@ -11,7 +10,6 @@ import { ToastConfig } from "@/components/ToastConfig";
 import { useAppState } from "@/hooks/useAppState";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import NotificationProvider from "@/providers/notificationProvider";
-import { supabase } from "@/utils/supabase";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 
@@ -22,8 +20,6 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [session, setSession] = useState<Session | null>(null);
-
   const [loaded, error] = useFonts({
     "Pretendard-Black": require("../assets/fonts/Pretendard-Black.otf"),
     "Pretendard-Bold": require("../assets/fonts/Pretendard-Bold.otf"),
@@ -48,17 +44,6 @@ export default function RootLayout() {
     }
   }, [loaded, error]);
 
-  // TODO - 세션 체크
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-
   if (!loaded && !error) return null;
 
   return (
@@ -72,23 +57,26 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
           <Stack.Screen
-            name="notification"
-            options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
-          />
-          <Stack.Screen
-            name="setting"
-            options={{ header: () => <HeaderWithBack name="SETTING" /> }}
-          />
-          <Stack.Screen
-            name="profile"
+            name="password-reset/step1"
             options={{
-              header: () => <HeaderWithBack name="EDIT_PROFILE" />,
+              header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
             }}
           />
-          <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
-          <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="password-reset/step2"
+            options={{
+              header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+            }}
+          />
+          <Stack.Screen
+            name="password-reset/step3"
+            options={{
+              header: () => <HeaderWithBack name="RESET_PASSWORD" />,
+            }}
+          />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         </Stack>
 
         <StatusBar style="dark" />
