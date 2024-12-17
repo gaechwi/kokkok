@@ -1,5 +1,6 @@
 import { DeleteModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
+import PostItem from "@/components/PostItem";
 import { showToast } from "@/components/ToastConfig";
 import CommentsSection from "@/components/comments/CommentsSection";
 import colors from "@/constants/colors";
@@ -31,7 +32,6 @@ import {
 } from "react-native";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import PostItem from "../../components/PostItem";
 
 const { height: deviceHeight } = Dimensions.get("window");
 

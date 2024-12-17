@@ -1,19 +1,19 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
+import { passwordResetFormAtom } from "@/contexts/auth";
+import { resetPassword } from "@/utils/supabase";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
-import { resetPassword } from "@/utils/supabase";
 import { useAtom } from "jotai";
-import { passwordResetFormAtom } from "@/contexts/auth";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Step1 = () => {
   const router = useRouter();

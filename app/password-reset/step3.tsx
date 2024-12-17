@@ -1,18 +1,18 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
+import { updateNewPassword } from "@/utils/supabase";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { updateNewPassword } from "@/utils/supabase";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Step3 = () => {
   const [resetPassword, setResetPassword] = useState({

@@ -315,7 +315,7 @@ function NotificationSetting({
   };
 
   return (
-    <View className="bg-white px-6 py-[22px] gap-5">
+    <View className="gap-5 bg-white px-6 py-[22px]">
       <View className="flex-row items-center justify-between ">
         <Text className="heading-2 text-gray-80">알림 설정</Text>
         <CustomSwitch
