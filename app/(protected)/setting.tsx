@@ -325,7 +325,7 @@ function NotificationSetting({
         />
       </View>
       {/* 개별 스위치 리스트 */}
-      <View className="gap-5 px-2">
+      <View className="gap-5 pl-2">
         {Object.keys(SWITCH_CONFIG).map((type) => (
           <View key={type} className="flex-row items-center justify-between">
             <Text className="font-pmedium text-gray-80 text-xl">
