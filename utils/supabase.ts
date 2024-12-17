@@ -962,7 +962,7 @@ export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
   // 나와 서로 친구 요청 없고, username이 keyword를 포함하는 유저 검색
   const { data, count, error } = await supabase
     .from("user")
-    .select("id, username, avatarUrl, description")
+    .select("id, username, avatarUrl, description", { count: "exact" })
     .ilike("username", `%${keyword}%`)
     .not("id", "in", `(${[...froms, ...tos].join(",")})`)
     .range(offset, offset + limit - 1);
