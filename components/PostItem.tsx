@@ -88,17 +88,6 @@ export default function PostItem({
     },
   });
 
-  const deletePostMutation = useMutation({
-    mutationFn: () => deletePost(postId),
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
-    },
-  });
-
   const sendNotificationMutation = useMutation<void, Error, UserProfile>({
     mutationFn: (from) =>
       createNotification({

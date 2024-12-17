@@ -29,6 +29,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE"],
       googleServicesFile: "./google-services.json",
       package: "com.epilogue.kokkok",
     },

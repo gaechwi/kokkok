@@ -12,6 +12,7 @@ import {
 } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -176,7 +177,8 @@ export default function Upload() {
 
     // 권한 요청
     const { status, accessPrivileges } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+      await MediaLibrary.requestPermissionsAsync();
+
     if (status !== "granted" && accessPrivileges !== "limited") {
       Alert.alert(
         "사진 접근 권한 필요",
@@ -185,7 +187,7 @@ export default function Upload() {
           { text: "취소", style: "cancel" },
           {
             text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
+            onPress: () => Linking.openSettings(),
           },
         ],
       );
