@@ -944,31 +944,17 @@ export async function getFriends(
 export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
   const { user } = await getCurrentSession();
 
-  // 내가 요청 보낸 사람들 + 친구
-  const tos = await supabase
-    .from("friendRequest")
-    .select("to")
-    .eq("from", user.id)
-    .then((res) => res.data?.map((request) => request.to) || []);
-
-  // 나에게 요청 보낸 사람들
-  const froms = await supabase
-    .from("friendRequest")
-    .select("from")
-    .eq("to", user.id)
-    .is("isAccepted", null)
-    .then((res) => res.data?.map((request) => request.from) || []);
-
-  // 나와 서로 친구 요청 없고, username이 keyword를 포함하는 유저 검색
-  const { data, count, error } = await supabase
-    .from("user")
-    .select("id, username, avatarUrl, description", { count: "exact" })
-    .ilike("username", `%${keyword}%`)
-    .not("id", "in", `(${[...froms, ...tos].join(",")})`)
-    .range(offset, offset + limit - 1);
+  const { data, error } = await supabase.rpc("get_non_friends", {
+    user_id: user.id,
+    keyword,
+    start_idx: offset,
+    num: limit,
+  });
 
   if (error) throw error;
   if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
+
+  const count = data?.[0]?.totalCount || 0;
 
   return {
     data,
