@@ -940,6 +940,44 @@ export async function getFriends(
   return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
 }
 
+// keyword 기반해 나와 친구 요청 없는 유저 검색
+export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
+  const { user } = await getCurrentSession();
+
+  // 내가 요청 보낸 사람들 + 친구
+  const tos = await supabase
+    .from("friendRequest")
+    .select("to")
+    .eq("from", user.id)
+    .then((res) => res.data?.map((request) => request.to) || []);
+
+  // 나에게 요청 보낸 사람들
+  const froms = await supabase
+    .from("friendRequest")
+    .select("from")
+    .eq("to", user.id)
+    .is("isAccepted", null)
+    .then((res) => res.data?.map((request) => request.from) || []);
+
+  // 나와 서로 친구 요청 없고, username이 keyword를 포함하는 유저 검색
+  const { data, count, error } = await supabase
+    .from("user")
+    .select("id, username, avatarUrl, description")
+    .ilike("username", `%${keyword}%`)
+    .not("id", "in", `(${[...froms, ...tos].join(",")})`)
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+  if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
+
+  return {
+    data,
+    total: count || 0,
+    hasMore: count ? offset + limit < count : false,
+  };
+}
+
+// 친구와의 관계 조회 (친구 요청 상태)
 export async function getFriendStatus(
   userId: string,
   friendId: string,
