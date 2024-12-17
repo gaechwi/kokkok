@@ -65,8 +65,6 @@ export default function Setting() {
 
     try {
       await deleteUser(session?.user.id ?? "");
-
-      router.replace("/sign-in");
       showToast("success", "탈퇴가 완료되었습니다!");
     } catch (error) {
       showToast("error", "탈퇴에 실패했습니다.");
@@ -89,7 +87,6 @@ export default function Setting() {
 
       setIsLoading(false);
     }
-    queryClient.clear();
 
     setIsSignOutModalVisible(false);
     // 아마 세션 여부에 따른 리다이렉트 되면 자동 이동 될지도
