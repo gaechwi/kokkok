@@ -62,14 +62,20 @@ export function HeaderWithNotification({ name }: HeaderProps) {
   function AdditionalButton() {
     if (name === "MY_PAGE")
       return (
-        <TouchableOpacity onPress={() => router.push("/setting")}>
+        <TouchableOpacity
+          onPress={() => router.push("/setting")}
+          accessibilityLabel="설정"
+        >
           <icons.SettingIcon width={24} height={24} />
         </TouchableOpacity>
       );
 
     if (name === "FRIEND")
       return (
-        <TouchableOpacity onPress={() => router.push("/user/search")}>
+        <TouchableOpacity
+          onPress={() => router.push("/user/search")}
+          accessibilityLabel="친구 찾기"
+        >
           <icons.PlusIcon width={24} height={24} color={colors.gray[90]} />
         </TouchableOpacity>
       );
