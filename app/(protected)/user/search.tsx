@@ -24,7 +24,7 @@ export default function UserSearch() {
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
-  }, 500);
+  }, 200);
 
   // 에러 스크린
   if (error) {

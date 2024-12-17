@@ -59,7 +59,7 @@ export default function Friend() {
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
-  }, 500);
+  }, 200);
 
   // 친구창에 focus 들어올 때마다 친구목록 새로고침 (검색중일 때 제외)
   useFocusEffect(() => {
