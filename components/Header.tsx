@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import colors from "@/constants/colors";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
 import useCheckNewNotification from "@/hooks/useCheckNewNotification";
@@ -18,6 +19,7 @@ const HEADER_TITLE = {
   MY_PAGE: "마이페이지",
   HISTORY: "기록",
   FRIEND: "친구",
+  SEARCH_FRIEND: "친구 검색",
   CHANGE_PASSWORD: "비밀번호 변경",
   POST_DETAIL: "게시물",
 } as const;
@@ -57,6 +59,24 @@ export function HeaderWithBack({ name }: HeaderProps) {
 export function HeaderWithNotification({ name }: HeaderProps) {
   const hasNewNotification = useCheckNewNotification();
 
+  function AdditionalButton() {
+    if (name === "MY_PAGE")
+      return (
+        <TouchableOpacity onPress={() => router.push("/setting")}>
+          <icons.SettingIcon width={24} height={24} />
+        </TouchableOpacity>
+      );
+
+    if (name === "FRIEND")
+      return (
+        <TouchableOpacity onPress={() => router.push("/user/search")}>
+          <icons.PlusIcon width={24} height={24} color={colors.gray[90]} />
+        </TouchableOpacity>
+      );
+
+    return <></>;
+  }
+
   return (
     <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
       <View className="h-14 flex-row items-center justify-between px-4">
@@ -71,13 +91,9 @@ export function HeaderWithNotification({ name }: HeaderProps) {
           <Text className="heading-2">{HEADER_TITLE[name]}</Text>
         )}
 
-        <View className="flex-row gap-2">
-          {/* 마이페이지에서만 설정 버튼 추가 */}
-          {name === "MY_PAGE" && (
-            <TouchableOpacity onPress={() => router.push("/setting")}>
-              <icons.SettingIcon width={24} height={24} />
-            </TouchableOpacity>
-          )}
+        <View className="flex-row gap-4">
+          {/* 마이페이지, 친구페이지의 버튼 추가 */}
+          <AdditionalButton />
 
           {/* 새 알람 여부에 따른 아이콘 렌더링 */}
           <TouchableOpacity onPress={() => router.push("/notification")}>
@@ -86,21 +102,6 @@ export function HeaderWithNotification({ name }: HeaderProps) {
             ) : (
               <icons.BellIcon width={24} height={24} />
             )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-export function HeaderWithSettingAndNotification({ name }: HeaderProps) {
-  return (
-    <SafeAreaView edges={["top"]} className="border-gray-25 border-b bg-white">
-      <View className="h-14 flex-row items-center justify-between px-4">
-        <Text className="heading-2">{HEADER_TITLE[name]}</Text>
-        <View className="flex-row gap-2">
-          <TouchableOpacity onPress={() => router.push("/setting")}>
-            <icons.SettingIcon width={24} height={24} />
           </TouchableOpacity>
         </View>
       </View>
