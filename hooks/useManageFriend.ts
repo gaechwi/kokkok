@@ -71,6 +71,7 @@ const useManageFriend = () => {
       onSuccess: ({ fromUser, toUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
+        queryClient.invalidateQueries({ queryKey: ["search", "users"] });
         queryClient.invalidateQueries({
           queryKey: ["relation", fromUser.id, toUserId],
         });

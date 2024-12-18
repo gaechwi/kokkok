@@ -18,6 +18,10 @@ interface FriendItemProps {
   friend: UserProfile;
 }
 
+interface NonFriendItemProps {
+  user: UserProfile;
+}
+
 interface FriendRequestProps {
   requestId: number;
   toUser: UserProfile;
@@ -105,6 +109,37 @@ export function FriendItem({ friend }: FriendItemProps) {
             {!timeLeft ? "👈 콕 찌르기" : formatTime(timeLeft)}
           </Text>
         )}
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+export function NonFriendItem({ user }: NonFriendItemProps) {
+  const { data: currentUser } = useFetchData<User>(
+    ["currentUser"],
+    getCurrentUser,
+    "로그인 정보 조회에 실패했습니다.",
+  );
+
+  const { useCreateRequest } = useManageFriend();
+  const { mutate: handleCreateRequest, isPending: isCreatePending } =
+    useCreateRequest();
+
+  return (
+    <View className="py-4 px-2 border-b-[1px] border-gray-25 flex-row justify-between items-center">
+      <FriendProfile {...user} />
+
+      <TouchableOpacity
+        className="bg-primary w-[89px] h-[36px] rounded-[10px] items-center justify-center"
+        disabled={isCreatePending}
+        accessibilityLabel="친구 요청"
+        accessibilityHint="이 버튼을 누르면 친구 요청을 보냅니다"
+        onPress={() =>
+          currentUser &&
+          handleCreateRequest({ fromUser: currentUser, toUserId: user.id })
+        }
+      >
+        <Text className="body-5 text-white">친구 요청</Text>
       </TouchableOpacity>
     </View>
   );

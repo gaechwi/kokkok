@@ -940,6 +940,30 @@ export async function getFriends(
   return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
 }
 
+// keyword 기반해 나와 친구 요청 없는 유저 검색
+export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
+  const { user } = await getCurrentSession();
+
+  const { data, error } = await supabase.rpc("get_non_friends", {
+    user_id: user.id,
+    keyword,
+    start_idx: offset,
+    num: limit,
+  });
+
+  if (error) throw error;
+  if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
+
+  const count = data?.[0]?.totalCount || 0;
+
+  return {
+    data,
+    total: count || 0,
+    hasMore: count ? offset + limit < count : false,
+  };
+}
+
+// 친구와의 관계 조회 (친구 요청 상태)
 export async function getFriendStatus(
   userId: string,
   friendId: string,

@@ -409,6 +409,21 @@ export type Database = {
           totalReplies: number;
         }[];
       };
+      get_non_friends: {
+        Args: {
+          user_id: string;
+          keyword: string;
+          start_idx: number;
+          num: number;
+        };
+        Returns: {
+          id: string;
+          username: string;
+          avatarUrl: string;
+          description: string | null;
+          totalCount: number;
+        }[];
+      };
       get_post_with_details: {
         Args: {
           postId: number;

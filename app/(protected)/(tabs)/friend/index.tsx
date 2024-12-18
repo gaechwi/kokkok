@@ -1,12 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { FlatList, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import ErrorScreen from "@/components/ErrorScreen";
 import { FriendItem } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
-import SearchBar from "@/components/SearchBar";
+import { SearchLayout } from "@/components/SearchLayout";
 import useFetchData from "@/hooks/useFetchData";
 import type { StatusInfo } from "@/types/Friend.interface";
 import type { UserProfile } from "@/types/User.interface";
@@ -20,44 +18,6 @@ import {
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useFocusEffect } from "expo-router";
-
-interface FriendLayoutProps {
-  friends: UserProfile[];
-  onChangeKeyword: (newKeyword: string) => void;
-  emptyComponent: React.ReactElement;
-}
-
-function FriendLayout({
-  friends,
-  onChangeKeyword,
-  emptyComponent,
-}: FriendLayoutProps) {
-  const [keyword, setKeyword] = useState("");
-
-  return (
-    <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <FlatList
-        data={friends}
-        keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
-        className="w-full grow px-6"
-        contentContainerStyle={friends.length ? {} : { flex: 1 }}
-        ListHeaderComponent={
-          <SearchBar
-            value={keyword}
-            customClassName="mt-6 mb-2"
-            handleChangeText={(newKeyword: string) => {
-              setKeyword(newKeyword);
-              onChangeKeyword(newKeyword);
-            }}
-          />
-        }
-        ListEmptyComponent={emptyComponent}
-        ListFooterComponent={<View className="h-4" />}
-      />
-    </SafeAreaView>
-  );
-}
 
 export default function Friend() {
   const queryClient = useQueryClient();
@@ -99,7 +59,7 @@ export default function Friend() {
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
-  }, 500);
+  }, 200);
 
   // 친구창에 focus 들어올 때마다 친구목록 새로고침 (검색중일 때 제외)
   useFocusEffect(() => {
@@ -170,9 +130,10 @@ export default function Friend() {
       statusError?.message ||
       "친구 조회에 실패했습니다.";
     return (
-      <FriendLayout
-        friends={[]}
+      <SearchLayout
+        data={[]}
         onChangeKeyword={handleKeywordChange}
+        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
         emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
       />
     );
@@ -181,18 +142,20 @@ export default function Friend() {
   // 로딩 스크린
   if (isFriendLoading || isStatusLoading || !friendsData) {
     return (
-      <FriendLayout
-        friends={[]}
+      <SearchLayout
+        data={[]}
         onChangeKeyword={handleKeywordChange}
+        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
         emptyComponent={<LoadingScreen />}
       />
     );
   }
 
   return (
-    <FriendLayout
-      friends={friends}
+    <SearchLayout
+      data={friends}
       onChangeKeyword={handleKeywordChange}
+      renderItem={({ item: friend }) => <FriendItem friend={friend} />}
       emptyComponent={
         <ErrorScreen
           errorMessage={
