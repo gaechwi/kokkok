@@ -59,6 +59,7 @@ export default function PostItem({
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -74,6 +75,14 @@ export default function PostItem({
     mutationFn: () => toggleLikePost(postId),
     onMutate: () => {
       setIsLiked((prev) => !prev);
+      if (!isLiked) {
+        setShowHeart(true);
+        setTimeout(() => {
+          setShowHeart(false);
+        }, 1000);
+      } else if (isLiked && showHeart) {
+        setShowHeart(false);
+      }
     },
     onSuccess: () => {
       if (user.data && isLiked && user.data?.id !== author.id) {
@@ -88,17 +97,6 @@ export default function PostItem({
     },
   });
 
-  const deletePostMutation = useMutation({
-    mutationFn: () => deletePost(postId),
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
-    },
-  });
-
   const sendNotificationMutation = useMutation<void, Error, UserProfile>({
     mutationFn: (from) =>
       createNotification({
@@ -108,6 +106,10 @@ export default function PostItem({
         data: { postId },
       }),
   });
+
+  const onDoubleTap = () => {
+    if (!toggleLike.isPending && !isLiked) toggleLike.mutate();
+  };
 
   return (
     <View className="grow bg-white ">
@@ -174,7 +176,11 @@ export default function PostItem({
 
       {/* carousel */}
       <View className="h-max w-full bg-white pb-1">
-        <Carousel images={images} />
+        <Carousel
+          images={images}
+          onDoubleTap={onDoubleTap}
+          showHeart={showHeart}
+        />
       </View>
 
       {/* relation */}
