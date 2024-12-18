@@ -18,7 +18,6 @@ export function useAuthSession(queryClient: QueryClient) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log(session?.user.id);
       setSession(session);
       queryClient.clear();
     });
