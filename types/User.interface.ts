@@ -16,4 +16,5 @@ export interface UserProfile {
 export interface User extends UserProfile {
   email: string;
   notificationCheckedAt: string;
+  createdAt: string;
 }
