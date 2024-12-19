@@ -67,6 +67,8 @@ export default function Setting() {
       await deleteUser(session?.user.id ?? "");
 
       await supabase.auth.signOut();
+      queryClient.clear();
+
       showToast("success", "탈퇴가 완료되었습니다!");
     } catch (error) {
       showToast("error", "탈퇴에 실패했습니다.");
