@@ -6,10 +6,10 @@ import { Stack } from "expo-router";
 
 const ProtectedLayout = () => {
   const queryClient = useQueryClient();
-  const { session, isLoading } = useAuthSession(queryClient);
+  const { isLoggedIn, isLoading } = useAuthSession(queryClient);
 
   if (isLoading) return null;
-  if (!session) return <Redirect href="/sign-in" />;
+  if (!isLoggedIn) return <Redirect href="/sign-in" />;
 
   return (
     <Stack
