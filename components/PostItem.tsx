@@ -152,7 +152,7 @@ export default function PostItem({
               <View className="items-center">
                 <TouchableOpacity
                   onPress={() => {
-                    setIsModalVisible(true);
+                    setIsModalVisible(false);
                     router.push(`/upload?postId=${postId}`);
                   }}
                   className="h-[82px] w-full items-center justify-center border-gray-20 border-b"

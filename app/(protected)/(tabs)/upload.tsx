@@ -18,19 +18,29 @@ import {
   Alert,
   Image,
   Linking,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DraggableFlatList, {
+  type DragEndParams,
+  type RenderItemParams,
+  ScaleDecorator,
+} from "react-native-draggable-flatlist";
+
+interface ImageItem {
+  type: "prev" | "new";
+  index: number;
+  uri: string;
+  imagePickerAsset?: ImagePicker.ImagePickerAsset;
+}
 
 export default function Upload() {
   const params = useLocalSearchParams<{ postId?: string }>();
   const postId = params.postId ? Number(params.postId) : undefined;
   const router = useRouter();
-  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  const [prevImages, setPrevImages] = useState<string[]>([]);
+  const [imageItems, setImageItems] = useState<ImageItem[]>([]);
   const [contents, setContents] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
@@ -48,34 +58,54 @@ export default function Upload() {
       if (postId) {
         post.refetch().then((data) => {
           if (data !== null && data !== undefined) {
-            setPrevImages(data.data?.images ?? []);
+            const prevImageItems: ImageItem[] = (data.data?.images ?? []).map(
+              (uri, index) => ({
+                type: "prev",
+                uri,
+                index,
+              }),
+            );
+            setImageItems(prevImageItems);
             setContents(data.data?.contents ?? "");
           } else {
-            setPrevImages([]);
+            setImageItems([]);
             setContents("");
           }
         });
+      } else {
+        setImageItems([]);
+        setContents("");
       }
     }, [postId, post.refetch]),
   );
 
   useEffect(() => {
     if (post.data !== null && post.data !== undefined) {
-      setPrevImages(post.data.images ?? []);
+      const prevImageItems: ImageItem[] = (post.data.images ?? []).map(
+        (uri, index) => ({
+          type: "prev",
+          uri,
+          index,
+        }),
+      );
+      setImageItems(prevImageItems);
       setContents(post.data.contents ?? "");
     } else {
-      setPrevImages([]);
+      setImageItems([]);
       setContents("");
     }
   }, [post.data]);
 
   const uploadPostMutation = useMutation({
     mutationFn: () => {
-      return createPost({ contents, images });
+      const newImages = imageItems
+        .filter((item) => item.type === "new")
+        .map((item) => item.imagePickerAsset!)
+        .filter(Boolean);
+      return createPost({ contents, images: newImages });
     },
     onSuccess: () => {
-      setImages([]);
-      setPrevImages([]);
+      setImageItems([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -110,13 +140,35 @@ export default function Upload() {
         throw new Error("게시물 ID가 없습니다.");
       }
 
-      return updatePost({ postId, contents, images, prevImages });
+      // 이미지 순서대로 정렬
+      const sortedImages = imageItems.sort((a, b) => a.index - b.index);
+
+      // 이전 이미지와 새 이미지 분리
+      const prevImages = sortedImages
+        .filter((item) => item.type === "prev")
+        .map((item) => ({
+          uri: item.uri,
+          index: item.index,
+        }));
+
+      const newImages = sortedImages
+        .filter((item) => item.type === "new")
+        .map((item) => ({
+          imagePickerAsset: item.imagePickerAsset!,
+          index: item.index,
+        }));
+
+      return updatePost({
+        postId,
+        contents,
+        images: newImages,
+        prevImages: prevImages,
+      });
     },
     onSuccess: () => {
       showToast("success", "글이 수정되었어요!");
 
-      setImages([]);
-      setPrevImages([]);
+      setImageItems([]);
       setContents("");
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -129,7 +181,7 @@ export default function Upload() {
   });
 
   const handleUpload = async () => {
-    if (images.length === 0 && prevImages.length === 0) {
+    if (imageItems.length === 0) {
       Alert.alert("알림", "이미지를 추가해주세요.");
       return;
     }
@@ -167,8 +219,7 @@ export default function Upload() {
   const pickImage = async () => {
     if (uploadPostMutation.isPending) return;
 
-    const totalImages = images.length + prevImages.length;
-    if (totalImages >= 5) {
+    if (imageItems.length >= 5) {
       showToast("fail", "이미지는 5개까지 선택가능해요");
 
       return;
@@ -185,7 +236,7 @@ export default function Upload() {
           { text: "취소", style: "cancel" },
           {
             text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
+            onPress: () => Linking.openSettings(),
           },
         ],
       );
@@ -196,15 +247,20 @@ export default function Upload() {
     const result = await ImagePicker.launchImageLibraryAsync(imageOptions);
 
     if (!result.canceled) {
-      setImages([...images, result.assets[0]]);
+      const newImage: ImageItem = {
+        type: "new",
+        uri: result.assets[0].uri,
+        index: imageItems.length,
+        imagePickerAsset: result.assets[0],
+      };
+      setImageItems((prev) => [...prev, newImage]);
     }
   };
 
   const takePhoto = async () => {
     if (uploadPostMutation.isPending) return;
 
-    const totalImages = images.length + prevImages.length;
-    if (totalImages >= 5) {
+    if (imageItems.length >= 5) {
       showToast("fail", "이미지는 5개까지 선택가능해요");
       return;
     }
@@ -218,7 +274,7 @@ export default function Upload() {
           { text: "취소", style: "cancel" },
           {
             text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
+            onPress: () => Linking.openSettings(),
           },
         ],
       );
@@ -229,159 +285,171 @@ export default function Upload() {
     const result = await ImagePicker.launchCameraAsync(imageOptions);
 
     if (!result.canceled) {
-      setImages([...images, result.assets[0]]);
+      const newImage: ImageItem = {
+        type: "new",
+        uri: result.assets[0].uri,
+        index: imageItems.length,
+        imagePickerAsset: result.assets[0],
+      };
+      setImageItems((prev) => [...prev, newImage]);
     }
   };
 
-  const handleDeleteImage = (indexToDelete: number) => {
-    if (uploadPostMutation.isPending) return;
-    setImages(images.filter((_, index) => index !== indexToDelete));
+  const handleDeleteImage = useCallback(
+    (indexToDelete: number) => {
+      if (uploadPostMutation.isPending) return;
+      setImageItems((prev) =>
+        prev.filter((_, index) => index !== indexToDelete),
+      );
+    },
+    [uploadPostMutation.isPending],
+  );
+
+  const onDragEnd = ({ data }: DragEndParams<ImageItem>) => {
+    setImageItems(data.map((item, index) => ({ ...item, index })));
   };
 
-  const handleDeletePrevImage = (indexToDelete: number) => {
-    if (uploadPostMutation.isPending) return;
-    setPrevImages(prevImages.filter((_, index) => index !== indexToDelete));
-  };
+  const renderItem = ({
+    item,
+    drag,
+    getIndex,
+  }: RenderItemParams<ImageItem>) => (
+    <ScaleDecorator>
+      <TouchableOpacity
+        onLongPress={drag}
+        activeOpacity={0.7}
+        className="relative"
+      >
+        <Image
+          source={{ uri: item.uri }}
+          className="size-[152px] rounded-[10px]"
+        />
+        <TouchableOpacity
+          className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
+          onPress={() => handleDeleteImage(getIndex() as number)}
+        >
+          <Icons.XIcon width={16} height={16} color={colors.white} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </ScaleDecorator>
+  );
 
   const hasContentChanged = post.data?.contents !== contents;
   const hasImagesChanged =
-    images.length > 0 ||
-    prevImages.length !== post.data?.images?.length ||
-    prevImages.some((img, idx) => img !== post.data?.images?.[idx]);
+    imageItems.some((item) => item.type === "new") ||
+    imageItems.length !== post.data?.images?.length ||
+    imageItems
+      .filter((item) => item.type === "prev")
+      .some((item, idx) => item.uri !== post.data?.images?.[idx]);
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="flex-shrink-0 flex-grow-0"
-      >
-        <View className="w-full flex-row gap-4 p-6">
-          {/* 이전 이미지 표시 */}
-          {prevImages.map((image, index) => (
-            <View
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={`prev-image-${index}`}
-              className="relative"
-            >
-              <Image
-                source={{ uri: image }}
-                className="size-[152px] rounded-[10px]"
-              />
-              <TouchableOpacity
-                className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
-                onPress={() => handleDeletePrevImage(index)}
-                disabled={uploadPostMutation.isPending}
-              >
-                <Icons.XIcon width={16} height={16} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {/* 새로 선택된 이미지 표시 */}
-          {images.map((image, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <View key={`upload-image-${index}`} className="relative">
-              <Image
-                source={{ uri: image.uri }}
-                className="size-[152px] rounded-[10px]"
-              />
-              <TouchableOpacity
-                className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
-                onPress={() => handleDeleteImage(index)}
-                disabled={uploadPostMutation.isPending}
-              >
-                <Icons.XIcon width={16} height={16} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {/* 이미지 추가 버튼 - 총 이미지 개수가 5개 미만일 때만 표시 */}
-          {images.length + prevImages.length < 5 && (
-            <>
-              <TouchableOpacity
-                className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
-                onPress={() => setIsModalVisible(true)}
-                disabled={uploadPostMutation.isPending}
-              >
-                <Icons.PlusIcon width={24} height={24} color={colors.white} />
-              </TouchableOpacity>
-
-              <CustomModal
-                visible={isModalVisible}
-                onClose={() => setIsModalVisible(false)}
-                position="middle"
-              >
-                <View className="w-full items-center">
-                  <TouchableOpacity
-                    className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-                    onPress={async () => {
-                      await takePhoto();
-                      setIsModalVisible(false);
-                    }}
-                  >
-                    <Text className="title-2 text-gray-90">카메라</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    className="h-[82px] w-full items-center justify-center"
-                    onPress={async () => {
-                      await pickImage();
-                      setIsModalVisible(false);
-                    }}
-                  >
-                    <Text className="title-2 text-gray-90">갤러리</Text>
-                  </TouchableOpacity>
-                </View>
-              </CustomModal>
-            </>
-          )}
-        </View>
-      </ScrollView>
-
-      <View className="w-full items-center justify-center px-6 pt-7">
-        <TextInput
-          className="body-1 h-[120px] w-full rounded-[10px] border border-gray-20 p-4 "
-          placeholder="자유롭게 글을 적어주세요. (선택)"
-          placeholderTextColor={colors.gray[40]}
-          multiline={true}
-          textAlignVertical="top"
-          value={contents}
-          onChangeText={setContents}
-          editable={!uploadPostMutation.isPending}
-        />
-      </View>
-
-      <View className="px-6">
-        <TouchableOpacity
-          className="mt-8 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary disabled:bg-gray-20"
-          onPress={handleUpload}
-          disabled={
-            uploadPostMutation.isPending ||
-            (postId
-              ? // 수정 모드일 때
-                !hasContentChanged && !hasImagesChanged
-              : // 새 게시물 작성 모드일 때
-                images.length === 0 &&
-                prevImages.length === 0 &&
-                contents === "")
+    <>
+      <View className="flex-1 bg-white">
+        <DraggableFlatList
+          horizontal
+          data={imageItems}
+          onDragEnd={onDragEnd}
+          keyExtractor={(item: ImageItem, index: number) =>
+            `${item.type}-${item.uri}-${index}`
           }
-        >
-          <Text className="heading-2 text-white">
-            {uploadPostMutation.isPending ? "인증중..." : "인증"}
-          </Text>
-        </TouchableOpacity>
+          renderItem={renderItem}
+          className="flex-shrink-0 flex-grow-0 pt-6"
+          contentContainerStyle={{ gap: 16 }}
+          containerStyle={{ paddingHorizontal: 16 }}
+          autoscrollSpeed={100}
+          activationDistance={5}
+          showsHorizontalScrollIndicator={false}
+          ListFooterComponent={useCallback(
+            () =>
+              imageItems.length < 5 ? (
+                <TouchableOpacity
+                  className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
+                  onPress={() => setIsModalVisible(true)}
+                  disabled={uploadPostMutation.isPending}
+                >
+                  <Icons.PlusIcon width={24} height={24} color={colors.white} />
+                </TouchableOpacity>
+              ) : null,
+            [imageItems.length, uploadPostMutation.isPending],
+          )}
+        />
+
+        <View className="w-full items-center justify-center px-6 pt-7">
+          <TextInput
+            className="body-1 h-[120px] w-full rounded-[10px] border border-gray-20 p-4 "
+            placeholder="자유롭게 글을 적어주세요. (선택)"
+            placeholderTextColor={colors.gray[40]}
+            multiline={true}
+            textAlignVertical="top"
+            value={contents}
+            onChangeText={setContents}
+            editable={!uploadPostMutation.isPending}
+          />
+        </View>
+
+        <View className="px-6">
+          <TouchableOpacity
+            className="mt-8 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary disabled:bg-gray-20"
+            onPress={handleUpload}
+            disabled={
+              uploadPostMutation.isPending ||
+              (postId
+                ? !hasContentChanged && !hasImagesChanged
+                : imageItems.length === 0 && contents === "")
+            }
+          >
+            <Text className="heading-2 text-white">
+              {uploadPostMutation.isPending ? "인증중..." : "인증"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <OneButtonModal
-        buttonText="확인"
-        contents={"업로드에 실패했습니다 \n다시한번 시도해주세요"}
-        isVisible={isInfoModalVisible}
-        onClose={() => setIsInfoModalVisible(false)}
-        onPress={() => setIsInfoModalVisible(false)}
-        emoji="sad"
-        key="upload-info-modal"
-      />
-    </View>
+      {isModalVisible && (
+        <View className="flex-1">
+          <CustomModal
+            visible={isModalVisible}
+            onClose={() => setIsModalVisible(false)}
+            position="middle"
+          >
+            <View className="w-full items-center">
+              <TouchableOpacity
+                className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
+                onPress={async () => {
+                  setIsModalVisible(false);
+                  await takePhoto();
+                }}
+              >
+                <Text className="title-2 text-gray-90">카메라</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="h-[82px] w-full items-center justify-center"
+                onPress={async () => {
+                  setIsModalVisible(false);
+                  await pickImage();
+                }}
+              >
+                <Text className="title-2 text-gray-90">갤러리</Text>
+              </TouchableOpacity>
+            </View>
+          </CustomModal>
+        </View>
+      )}
+
+      {isInfoModalVisible && (
+        <View className="flex-1">
+          <OneButtonModal
+            buttonText="확인"
+            contents={"업로드에 실패했습니다 \n다시한번 시도해주세요"}
+            isVisible={isInfoModalVisible}
+            onClose={() => setIsInfoModalVisible(false)}
+            onPress={() => setIsInfoModalVisible(false)}
+            emoji="sad"
+            key="upload-info-modal"
+          />
+        </View>
+      )}
+    </>
   );
 }
