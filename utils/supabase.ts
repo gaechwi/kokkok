@@ -529,15 +529,15 @@ export async function updatePost({
   contents,
 }: {
   postId: number;
-  images: ImagePicker.ImagePickerAsset[];
-  prevImages: string[];
+  images: { imagePickerAsset: ImagePicker.ImagePickerAsset; index: number }[];
+  prevImages: { uri: string; index: number }[];
   contents: string;
 }) {
   try {
     const user = (await supabase.auth.getUser()).data.user;
     if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
 
-    // 기존 게시글 조회
+    // 기존 게시글 조회 및 권한 체크
     const { data: existingPost, error: postError } = await supabase
       .from("post")
       .select("userId, contents, images")
@@ -552,37 +552,22 @@ export async function updatePost({
       throw new Error("게시글 작성자만 수정할 수 있습니다.");
     }
 
-    // 변경사항 체크
-    const contentsChanged = contents !== existingPost.contents;
-    const hasNewImages = images.length > 0;
+    // 새로운 이미지 업로드
+    const uploadPromises = images.map(async ({ imagePickerAsset, index }) => {
+      const url = await uploadImage(imagePickerAsset);
+      return { uri: url, index };
+    });
+    const uploadedImages = await Promise.all(uploadPromises);
 
-    // 변경사항이 없으면 기존 게시글 반환
-    if (
-      !contentsChanged &&
-      !hasNewImages &&
-      prevImages.length === existingPost.images.length
-    ) {
-      return existingPost;
-    }
-
-    // 새로운 이미지만 업로드
-    let newImageUrls: string[] = [];
-    if (hasNewImages) {
-      const uploadedUrls = await Promise.all(
-        images.map((image) => uploadImage(image)),
-      );
-      newImageUrls = uploadedUrls.filter(
-        (url): url is string => url !== undefined,
-      );
-    }
-
-    // 이전 이미지와 새로운 이미지 합치기
-    const validImageUrls = [...prevImages, ...newImageUrls];
+    // 이전 이미지와 새로운 이미지를 index 기준으로 정렬하여 병합
+    const allImagesUrl = [...prevImages, ...uploadedImages]
+      .sort((a, b) => a.index - b.index)
+      .map((item) => item.uri);
 
     // 게시글 수정
     const { data: updatedPost, error: updateError } = await supabase
       .from("post")
-      .update({ contents, images: validImageUrls })
+      .update({ contents, images: allImagesUrl })
       .eq("id", postId)
       .select("*, user: userId (id, username, avatarUrl)")
       .single();

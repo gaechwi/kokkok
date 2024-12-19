@@ -12,6 +12,7 @@ import { useOnlineManager } from "@/hooks/useOnlineManager";
 import NotificationProvider from "@/providers/notificationProvider";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,41 +48,43 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <Stack
-          screenOptions={{
-            gestureEnabled: true,
-            gestureDirection: "horizontal",
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="password-reset/step1"
-            options={{
-              header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+    <GestureHandlerRootView>
+      <QueryClientProvider client={queryClient}>
+        <NotificationProvider>
+          <Stack
+            screenOptions={{
+              gestureEnabled: true,
+              gestureDirection: "horizontal",
             }}
-          />
-          <Stack.Screen
-            name="password-reset/step2"
-            options={{
-              header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
-            }}
-          />
-          <Stack.Screen
-            name="password-reset/step3"
-            options={{
-              header: () => <HeaderWithBack name="RESET_PASSWORD" />,
-            }}
-          />
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        </Stack>
+          >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="password-reset/step1"
+              options={{
+                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+              }}
+            />
+            <Stack.Screen
+              name="password-reset/step2"
+              options={{
+                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+              }}
+            />
+            <Stack.Screen
+              name="password-reset/step3"
+              options={{
+                header: () => <HeaderWithBack name="RESET_PASSWORD" />,
+              }}
+            />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          </Stack>
 
-        <StatusBar style="dark" />
-        <Toast config={ToastConfig} />
-      </NotificationProvider>
-    </QueryClientProvider>
+          <StatusBar style="dark" />
+          <Toast config={ToastConfig} />
+        </NotificationProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
