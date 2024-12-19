@@ -2,9 +2,11 @@ import { Redirect, Stack } from "expo-router";
 
 import { Header, HeaderWithBack } from "@/components/Header";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AuthLayout = () => {
-  const { session, isLoading } = useAuthSession();
+  const queryClient = useQueryClient();
+  const { session, isLoading } = useAuthSession(queryClient);
 
   if (isLoading) return null;
   if (session) return <Redirect href="/home" />;
