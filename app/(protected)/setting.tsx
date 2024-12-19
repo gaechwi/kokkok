@@ -1,6 +1,6 @@
 import CustomSwitch from "@/components/CustomSwitch";
 import LoadingScreen from "@/components/LoadingScreen";
-import { OneButtonModal, TwoButtonModal } from "@/components/Modal";
+import { TwoButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -20,9 +20,17 @@ import {
 } from "@/utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -199,7 +207,6 @@ function NotificationSetting({
   setting,
 }: { userId: string; setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
-  const [isSettingModalVisible, setIsSettingModalVisible] = useState(false);
 
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
@@ -242,9 +249,22 @@ function NotificationSetting({
   };
 
   // 기존 토큰이 유효하지 않으면 권한 설정 이동 모달 띄우기
-  const checkPermission = () => {
+  const checkPermission = async () => {
     if (isTokenValid(setting?.token)) return true;
-    setIsSettingModalVisible(true);
+
+    // 권한 요청
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "알림 권한 필요",
+        "푸시알림을 받기 위해 알림 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "설정으로 이동", onPress: openSetting },
+        ],
+      );
+      return false;
+    }
   };
 
   // grantedNotification의 변경사항을 서버에 반영
@@ -338,18 +358,6 @@ function NotificationSetting({
             />
           </View>
         ))}
-      </View>
-
-      <View className="flex-1">
-        <OneButtonModal
-          buttonText="설정으로 이동"
-          contents={"알림 권한을 허용해주세요"}
-          isVisible={isSettingModalVisible}
-          onClose={() => setIsSettingModalVisible(false)}
-          onPress={openSetting}
-          emoji="sad"
-          key="upload-info-modal"
-        />
       </View>
     </View>
   );
