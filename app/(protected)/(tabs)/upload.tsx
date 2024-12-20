@@ -306,7 +306,8 @@ export default function Upload() {
   );
 
   const onDragEnd = ({ data }: DragEndParams<ImageItem>) => {
-    setImageItems(data.map((item, index) => ({ ...item, index })));
+    const updatedData = data.map((item, index) => ({ ...item, index }));
+    setImageItems(updatedData);
   };
 
   const renderItem = ({
