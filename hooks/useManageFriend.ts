@@ -51,7 +51,7 @@ const useManageFriend = () => {
   const useCreateRequest = () => {
     const { mutate, isPending } = useMutation<CreateProps, Error, CreateProps>({
       mutationFn: async ({ toUserId }) => {
-        await createFriendRequest(toUserId, null);
+        await createFriendRequest(toUserId);
         await createNotification({
           to: toUserId,
           type: NOTIFICATION_TYPE.FRIEND,

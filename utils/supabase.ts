@@ -1063,14 +1063,11 @@ export async function checkFriendRequestWithUserId(
 }
 
 // 친구요청 생성
-export async function createFriendRequest(
-  to: string,
-  isAccepted: boolean | null,
-) {
+export async function createFriendRequest(to: string) {
   const userId = await getUserIdFromStorage();
   const { error } = await supabase
     .from("friendRequest")
-    .insert({ from: userId, to, isAccepted });
+    .insert({ from: userId, to, isAccepted: null });
 
   if (error) throw error;
 }
