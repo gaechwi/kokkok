@@ -100,8 +100,6 @@ const SignIn = () => {
           return;
         }
       }
-
-      router.replace("/home");
     }
   };
 
@@ -111,8 +109,6 @@ const SignIn = () => {
         email: userInput.email,
         password: userInput.password,
       });
-
-      router.replace("/home");
     } catch (error: unknown) {
       Alert.alert(
         "로그인 실패",

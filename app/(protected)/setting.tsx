@@ -13,12 +13,10 @@ import {
 import { isTokenValid } from "@/utils/pushTokenManager";
 import {
   deleteUser,
-  getCurrentSession,
   getPushSetting,
   supabase,
   updatePushSetting,
 } from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -43,20 +41,12 @@ export default function Setting() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // 로그인한 유저 정보 조회
-  const { data: session } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   // 푸시알림 설정 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
     useFetchData<PushSetting | null>(
-      ["pushToken", session?.user.id],
-      () => getPushSetting(session?.user.id || ""),
+      ["pushToken"],
+      () => getPushSetting(),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
-      !!session,
     );
 
   // 계정 탈퇴 핸들러
@@ -64,9 +54,8 @@ export default function Setting() {
     setIsLoading(true);
 
     try {
-      await deleteUser(session?.user.id ?? "");
-
-      router.replace("/sign-in");
+      await deleteUser();
+      await supabase.auth.signOut();
       showToast("success", "탈퇴가 완료되었습니다!");
     } catch (error) {
       showToast("error", "탈퇴에 실패했습니다.");
@@ -78,22 +67,16 @@ export default function Setting() {
 
   // 로그아웃 핸들러
   const handleSignOut = async () => {
-    if (session) {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      await updatePushSetting({
-        userId: session.user.id,
-        token: null,
-      });
-      await supabase.auth.signOut();
+    await updatePushSetting({
+      token: null,
+    });
+    await supabase.auth.signOut();
 
-      setIsLoading(false);
-    }
-    queryClient.clear();
+    setIsLoading(false);
 
     setIsSignOutModalVisible(false);
-    // 아마 세션 여부에 따른 리다이렉트 되면 자동 이동 될지도
-    router.replace("/sign-in");
     showToast("success", "로그아웃이 완료되었습니다!");
   };
 
@@ -101,12 +84,12 @@ export default function Setting() {
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="gap-2 bg-gray-5 pb-2">
         {/* 알림 설정 */}
-        {!session || isTokenPending ? (
+        {isTokenPending ? (
           <View className="h-[324px] items-center justify-center">
             <LoadingScreen />
           </View>
         ) : (
-          <NotificationSetting userId={session.user.id} setting={pushSetting} />
+          <NotificationSetting setting={pushSetting} />
         )}
 
         {/* 계정 설정 */}
@@ -194,10 +177,7 @@ export default function Setting() {
   );
 }
 
-function NotificationSetting({
-  userId,
-  setting,
-}: { userId: string; setting?: PushSetting | null }) {
+function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
   const [isSettingModalVisible, setIsSettingModalVisible] = useState(false);
 
@@ -251,7 +231,6 @@ function NotificationSetting({
   const updateGrantedNotifications = async (newGranted: NotificationType[]) => {
     try {
       await updatePushSetting({
-        userId,
         grantedNotifications: newGranted,
       });
       queryClient.invalidateQueries({ queryKey: ["pushToken"] });
@@ -325,7 +304,7 @@ function NotificationSetting({
         />
       </View>
       {/* 개별 스위치 리스트 */}
-      <View className="gap-5 px-2">
+      <View className="gap-5 pl-2">
         {Object.keys(SWITCH_CONFIG).map((type) => (
           <View key={type} className="flex-row items-center justify-between">
             <Text className="font-pmedium text-gray-80 text-xl">

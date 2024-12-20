@@ -1,18 +1,13 @@
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
-import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
-import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
-import {
-  createNotification,
-  getCurrentUser,
-  toggleLikePost,
-} from "@/utils/supabase";
+import { createNotification, toggleLikePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import Carousel from "./Carousel";
 import CustomModal from "./Modal";
@@ -56,17 +51,13 @@ export default function PostItem({
   onDeletePress,
 }: PostItemProps) {
   const diff = diffDate(new Date(createdAt));
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
-
-  const user = useFetchData(
-    ["currentUser"],
-    getCurrentUser,
-    "사용자 정보를 불러오는데 실패했습니다.",
-  );
 
   const { calculateMaxChars, truncateText } = useTruncateText();
 
@@ -74,10 +65,18 @@ export default function PostItem({
     mutationFn: () => toggleLikePost(postId),
     onMutate: () => {
       setIsLiked((prev) => !prev);
+      if (!isLiked) {
+        setShowHeart(true);
+        setTimeout(() => {
+          setShowHeart(false);
+        }, 1000);
+      } else if (isLiked && showHeart) {
+        setShowHeart(false);
+      }
     },
     onSuccess: () => {
-      if (user.data && isLiked && user.data?.id !== author.id) {
-        sendNotificationMutation.mutate(user.data);
+      if (isLiked && userId !== author.id) {
+        sendNotificationMutation.mutate();
       }
     },
     onError: () => {
@@ -88,26 +87,32 @@ export default function PostItem({
     },
   });
 
-  const deletePostMutation = useMutation({
-    mutationFn: () => deletePost(postId),
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
-    },
-  });
-
-  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
-    mutationFn: (from) =>
+  const sendNotificationMutation = useMutation({
+    mutationFn: () =>
       createNotification({
-        from,
         to: author.id,
         type: "like",
         data: { postId },
       }),
   });
+
+  const onDoubleTap = () => {
+    if (!toggleLike.isPending && !isLiked) toggleLike.mutate();
+  };
+
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      try {
+        setUserId(await SecureStore.getItemAsync("userId"));
+      } catch (error) {
+        console.error("userId 조회 중 오류 발생:", error);
+        setUserId(null);
+      }
+    };
+
+    handleLoadId();
+  }, []);
 
   return (
     <View className="grow bg-white ">
@@ -115,7 +120,7 @@ export default function PostItem({
       <View className="flex-row items-center justify-between bg-white px-4">
         <TouchableOpacity
           onPress={() => {
-            if (user.data?.id === author.id) router.push("/mypage");
+            if (userId === author.id) router.push("/mypage");
             else router.push(`/user/${author.id}`);
           }}
         >
@@ -134,7 +139,7 @@ export default function PostItem({
           </View>
         </TouchableOpacity>
 
-        {user.data?.id === author.id && (
+        {userId === author.id && (
           <TouchableOpacity onPress={() => setIsModalVisible(true)}>
             <icons.MeatballIcon
               width={24}
@@ -174,7 +179,11 @@ export default function PostItem({
 
       {/* carousel */}
       <View className="h-max w-full bg-white pb-1">
-        <Carousel images={images} />
+        <Carousel
+          images={images}
+          onDoubleTap={onDoubleTap}
+          showHeart={showHeart}
+        />
       </View>
 
       {/* relation */}
