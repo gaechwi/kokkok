@@ -30,8 +30,8 @@ export function useAuthSession(queryClient: QueryClient) {
     supabase.auth
       .getSession()
       .then(async ({ data: { session } }) => {
-        setIsLoggedIn(!!session);
         await updateUserInfo(session);
+        setIsLoggedIn(!!session);
         setIsLoading(false);
       })
       .catch(async (error) => {
@@ -47,8 +47,8 @@ export function useAuthSession(queryClient: QueryClient) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
-        setIsLoggedIn(!!session);
         await updateUserInfo(session);
+        setIsLoggedIn(!!session);
         queryClient.clear();
       } catch (error) {
         console.error("인증 상태 업데이트 중 오류 발생:", session, error);

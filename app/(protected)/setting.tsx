@@ -10,7 +10,7 @@ import {
   type NotificationType,
   type PushSetting,
 } from "@/types/Notification.interface";
-import { isTokenValid } from "@/utils/pushTokenManager";
+import { isTokenValid, updatePushToken } from "@/utils/pushTokenManager";
 import {
   deleteUser,
   getPushSetting,
@@ -18,7 +18,6 @@ import {
   updatePushSetting,
 } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -42,7 +41,6 @@ const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
 
 export default function Setting() {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
@@ -77,9 +75,7 @@ export default function Setting() {
   const handleSignOut = async () => {
     setIsLoading(true);
 
-    await updatePushSetting({
-      token: null,
-    });
+    await updatePushSetting({ token: "logout" });
     await supabase.auth.signOut();
 
     setIsLoading(false);
@@ -233,8 +229,13 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
     if (isTokenValid(setting?.token)) return true;
 
     // 권한 요청
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== "granted") {
+    const granted = await updatePushToken({
+      existingToken: setting?.token,
+      handleUpdate: () => {
+        queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+      },
+    });
+    if (!granted) {
       Alert.alert(
         "알림 권한 필요",
         "푸시알림을 받기 위해 알림 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.",
@@ -243,8 +244,8 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
           { text: "설정으로 이동", onPress: openSetting },
         ],
       );
-      return false;
     }
+    return granted;
   };
 
   // grantedNotification의 변경사항을 서버에 반영
