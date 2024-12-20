@@ -37,7 +37,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus"],
+    ["friends", "status"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
@@ -63,16 +63,16 @@ export default function Friend() {
       .channel("workoutHistory")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workoutHistory" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "workoutHistory",
+          filter: `userId=in.(${friendIds.join(",")})`,
+        },
         (payload) => {
-          if (
-            (payload.eventType === "DELETE" &&
-              payload.old.date === today &&
-              friendIds.includes(payload.old.userId)) ||
-            (payload.eventType === "INSERT" &&
-              payload.new.date === today &&
-              friendIds.includes(payload.new.userId))
-          )
+          // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
+          // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
+          if (payload.new.date === today)
             queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
         },
       )
