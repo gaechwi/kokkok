@@ -91,7 +91,12 @@ const User = () => {
   // 유저 아이디 불러오기
   useEffect(() => {
     const handleLoadId = async () => {
-      setCurrentUserId(await SecureStore.getItemAsync("userId"));
+      try {
+        setCurrentUserId(await SecureStore.getItemAsync("userId"));
+      } catch (error) {
+        console.error("userId 조회 중 오류 발생:", error);
+        setCurrentUserId(null);
+      }
     };
 
     handleLoadId();
