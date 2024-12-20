@@ -112,7 +112,7 @@ const User = () => {
         (payload) => {
           if (payload.new.from === userId)
             queryClient.invalidateQueries({
-              queryKey: ["relation", currentUserId, userId],
+              queryKey: ["relation", userId],
             });
         },
       )

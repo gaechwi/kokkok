@@ -73,7 +73,7 @@ export default function Friend() {
           // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
           // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
           if (payload.new.date === today)
-            queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
+            queryClient.invalidateQueries({ queryKey: ["friends", "status"] });
         },
       )
       .subscribe();
