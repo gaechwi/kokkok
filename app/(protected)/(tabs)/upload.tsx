@@ -4,6 +4,7 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import { formatDate } from "@/utils/formatDate";
+import optimizeImage from "@/utils/optimizeImage";
 import {
   addWorkoutHistory,
   createPost,
@@ -212,8 +213,9 @@ export default function Upload() {
     mediaTypes: ["images"],
     allowsEditing: true,
     aspect: [1, 1],
-    quality: 0.8,
+    quality: 0.5,
     exif: false,
+    legacy: true,
   };
 
   const pickImage = async () => {
@@ -247,13 +249,24 @@ export default function Upload() {
     const result = await ImagePicker.launchImageLibraryAsync(imageOptions);
 
     if (!result.canceled) {
-      const newImage: ImageItem = {
-        type: "new",
-        uri: result.assets[0].uri,
-        index: imageItems.length,
-        imagePickerAsset: result.assets[0],
-      };
-      setImageItems((prev) => [...prev, newImage]);
+      try {
+        const optimizedUri = await optimizeImage(result.assets[0].uri);
+        const newImage: ImageItem = {
+          type: "new",
+          uri: optimizedUri,
+          index: imageItems.length,
+          imagePickerAsset: {
+            ...result.assets[0],
+            uri: optimizedUri,
+            mimeType: "image/webp",
+            width: 520,
+            height: 520,
+          },
+        };
+        setImageItems((prev) => [...prev, newImage]);
+      } catch (error) {
+        showToast("fail", "이미지 최적화 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -285,13 +298,24 @@ export default function Upload() {
     const result = await ImagePicker.launchCameraAsync(imageOptions);
 
     if (!result.canceled) {
-      const newImage: ImageItem = {
-        type: "new",
-        uri: result.assets[0].uri,
-        index: imageItems.length,
-        imagePickerAsset: result.assets[0],
-      };
-      setImageItems((prev) => [...prev, newImage]);
+      try {
+        const optimizedUri = await optimizeImage(result.assets[0].uri);
+        const newImage: ImageItem = {
+          type: "new",
+          uri: optimizedUri,
+          index: imageItems.length,
+          imagePickerAsset: {
+            ...result.assets[0],
+            uri: optimizedUri,
+            mimeType: "image/webp",
+            width: 520,
+            height: 520,
+          },
+        };
+        setImageItems((prev) => [...prev, newImage]);
+      } catch (error) {
+        showToast("fail", "이미지 최적화 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -318,8 +342,10 @@ export default function Upload() {
     <ScaleDecorator>
       <TouchableOpacity
         onLongPress={drag}
+        delayLongPress={150}
         activeOpacity={0.7}
         className="relative"
+        disabled={uploadPostMutation.isPending}
       >
         <Image
           source={{ uri: item.uri }}
@@ -328,6 +354,7 @@ export default function Upload() {
         <TouchableOpacity
           className="-top-3 -right-3 absolute size-8 items-center justify-center rounded-full border-2 border-white bg-gray-25"
           onPress={() => handleDeleteImage(getIndex() as number)}
+          disabled={uploadPostMutation.isPending}
         >
           <Icons.XIcon width={16} height={16} color={colors.white} />
         </TouchableOpacity>
@@ -359,7 +386,9 @@ export default function Upload() {
           containerStyle={{ paddingHorizontal: 16 }}
           autoscrollSpeed={100}
           activationDistance={5}
+          dragHitSlop={{ top: 0, bottom: 0, left: 20, right: 20 }}
           showsHorizontalScrollIndicator={false}
+          dragItemOverflow={true}
           ListFooterComponent={useCallback(
             () =>
               imageItems.length < 5 ? (

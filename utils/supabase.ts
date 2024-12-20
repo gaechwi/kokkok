@@ -329,7 +329,7 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
   if (!file) throw new Error("파일이 제공되지 않았습니다.");
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif"];
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
   if (file.fileSize && file.fileSize > MAX_FILE_SIZE) {
     throw new Error("파일 크기는 5MB를 초과할 수 없습니다.");
