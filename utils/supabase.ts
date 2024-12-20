@@ -953,14 +953,11 @@ export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
 
 // 친구와의 관계 조회 (친구 요청 상태)
 export async function getRelationship(friendId: string): Promise<RelationType> {
-  const userId = await getUserIdFromStorage();
-
   const { data, error } = await supabase.rpc("get_friend_status", {
     friend_id: friendId,
   });
 
   if (error) throw error;
-
   if (!data) throw new Error("친구 관계를 불러올 수 없습니다.");
 
   // 서로 친구 요청 없으면 NONE
@@ -1117,11 +1114,11 @@ export async function deleteFriendRequestWithUserId(from: string, to: string) {
 
 // 친구 요청 거절
 export async function unfriend(to: string) {
-  const userId = await getUserIdFromStorage();
-  await Promise.all([
-    deleteFriendRequestWithUserId(userId, to),
-    deleteFriendRequestWithUserId(to, userId),
-  ]);
+  const { error } = await supabase.rpc("unfriend", {
+    to_id: to,
+  });
+
+  if (error) throw error;
 }
 
 // ============================================

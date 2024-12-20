@@ -528,6 +528,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      unfriend: {
+        Args: {
+          to_id: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       notificationtype:
