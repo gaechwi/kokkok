@@ -118,7 +118,7 @@ export default function Friend() {
       <SearchLayout
         data={[]}
         onChangeKeyword={handleKeywordChange}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
+        renderItem={() => <></>}
         emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
       />
     );
@@ -130,7 +130,7 @@ export default function Friend() {
       <SearchLayout
         data={[]}
         onChangeKeyword={handleKeywordChange}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
+        renderItem={() => <></>}
         emptyComponent={<LoadingScreen />}
       />
     );
