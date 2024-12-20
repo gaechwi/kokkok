@@ -955,46 +955,29 @@ export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
 export async function getRelationship(friendId: string): Promise<RelationType> {
   const userId = await getUserIdFromStorage();
 
-  // 내가 보낸 요청
-  const { data: asking, error: askingError } = await supabase
-    .from("friendRequest")
-    .select("isAccepted")
-    .eq("from", userId)
-    .eq("to", friendId)
-    .limit(1);
-  if (askingError) throw askingError;
+  const { data, error } = await supabase.rpc("get_friend_status", {
+    friend_id: friendId,
+  });
 
-  // 내가 받은 요청
-  const { data: asked, error: askedError } = await supabase
-    .from("friendRequest")
-    .select("isAccepted")
-    .eq("from", friendId)
-    .eq("to", userId)
-    .limit(1);
-  if (askedError) throw askedError;
+  if (error) throw error;
 
-  if (!asked || !asking)
-    throw new Error(
-      `친구 관계를 불러올 수 없습니다.
-      asking: ${asking}, asked: ${asked}`,
-    );
+  if (!data) throw new Error("친구 관계를 불러올 수 없습니다.");
 
   // 서로 친구 요청 없으면 NONE
-  if (!asked.length && !asking.length) return RELATION_TYPE.NONE;
+  if (!data.asked && !data.asking) return RELATION_TYPE.NONE;
   // 내가 보낸 요청만 있고, 아직 수락 전이면 ASKING
-  if (!asked.length && asking[0]?.isAccepted === null)
-    return RELATION_TYPE.ASKING;
+  if (!data.asked && data.asking[0] === null) return RELATION_TYPE.ASKING;
   // 내가 받은 요청만 있고, 아직 수락 전이면 ASKED
-  if (asked[0]?.isAccepted === null && !asking.length)
-    return RELATION_TYPE.ASKED;
+  if (data.asked[0] === null && !data.asking) return RELATION_TYPE.ASKED;
   // 서로 친구요청 수락 상태면 FRIEND
-  if (asked[0]?.isAccepted && asking[0]?.isAccepted)
-    return RELATION_TYPE.FRIEND;
+  if (data.asked[0] && data.asking[0]) return RELATION_TYPE.FRIEND;
 
   // 나머지는 DB가 잘못된 상황
-  throw new Error(`친구 DB 확인 필요합니다!
-    내 요청: ${asking[0]?.isAccepted}
-    상대방 요청: ${asked[0]?.isAccepted}`);
+  console.error(`친구 DB 확인 필요합니다!
+    ${JSON.stringify(data)}
+    내 요청: ${data.asking}
+    상대방 요청: ${data.asked}`);
+  throw new Error("친구 관계 확인에 오류가 발생했습니다");
 }
 
 // 모든 친구의 운동 상태 조회

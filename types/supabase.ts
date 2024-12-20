@@ -409,6 +409,15 @@ export type Database = {
           totalReplies: number;
         }[];
       };
+      get_friend_status: {
+        Args: {
+          friend_id: string;
+        };
+        Returns: {
+          asking: (boolean | null)[];
+          asked: (boolean | null)[];
+        };
+      };
       get_non_friends: {
         Args: {
           user_id: string;
