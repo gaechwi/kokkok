@@ -69,9 +69,7 @@ export async function updatePushToken({
       return true;
     }
   } catch (error) {
-    console.error(error);
-    await resetPushSetting();
-    handleUpdate();
+    console.error("토큰 업데이트 중 오류 발생:", error);
   }
 
   return false;
