@@ -397,6 +397,34 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
   }
 };
 
+// 유저 게시물 조회
+export async function getUserPosts(userId: string) {
+  try {
+    const { data: posts, error: postsError } = await supabase
+      .from("post")
+      .select(`
+        id,
+        images
+      `)
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false });
+
+    if (postsError) throw postsError;
+
+    return posts;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "프로필 조회에 실패했습니다";
+    throw new Error(errorMessage);
+  }
+}
+
+// 내 게시물 조회
+export async function getMyPosts() {
+  const userId = await getUserIdFromStorage();
+  return await getUserPosts(userId);
+}
+
 // 게시글 상세 조회
 export async function getPost(postId: number) {
   try {
@@ -875,34 +903,6 @@ export async function deleteComment(commentId: number) {
   }
 }
 
-// 유저 게시물 조회
-export async function getUserPosts(userId: string) {
-  try {
-    const { data: posts, error: postsError } = await supabase
-      .from("post")
-      .select(`
-        id,
-        images
-      `)
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false });
-
-    if (postsError) throw postsError;
-
-    return posts;
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "프로필 조회에 실패했습니다";
-    throw new Error(errorMessage);
-  }
-}
-
-// 내 게시물 조회
-export async function getMyPosts() {
-  const userId = await getUserIdFromStorage();
-  return await getUserPosts(userId);
-}
-
 // ============================================
 //
 //                    friend
@@ -952,7 +952,7 @@ export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
 }
 
 // 친구와의 관계 조회 (친구 요청 상태)
-export async function getFriendStatus(friendId: string): Promise<RelationType> {
+export async function getRelationship(friendId: string): Promise<RelationType> {
   const userId = await getUserIdFromStorage();
 
   // 내가 보낸 요청

@@ -6,7 +6,7 @@ import useFetchData from "@/hooks/useFetchData";
 import useManageFriend from "@/hooks/useManageFriend";
 import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
 import {
-  getFriendStatus,
+  getRelationship,
   getUser,
   getUserPosts,
   supabase,
@@ -84,7 +84,7 @@ const User = () => {
 
   const { data: relation, isPending: isRelationPending } = useFetchData(
     ["relation", userId],
-    () => getFriendStatus(userId as string),
+    () => getRelationship(userId as string),
     "친구 정보를 불러올 수 없습니다.",
   );
 
