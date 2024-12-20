@@ -153,18 +153,18 @@ function CalendarSkeleton() {
   return (
     <View className="mt-[24px] w-full animate-pulse gap-[10px] px-[3px]">
       <View className="h-[15px] rounded-[5px] bg-gray-20" />
-      {[...Array(5)].map((_, index) => (
+      {Array.from({ length: 5 }, (_, rowIndex) => (
         <View
           className="gap-[12px]"
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          key={`skeleton-row-${index}`}
+          key={`calendar-skeleton-row-${rowIndex}`}
         >
           <View className="h-[10px] rounded-[5px] bg-gray-20" />
           <View className="flex-row justify-between">
-            {[...Array(7)].map((_, index) => (
+            {Array.from({ length: 7 }, (_, colIndex) => (
               <View
                 // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                key={`skeleton-item-${index}`}
+                key={`calendar-skeleton-cell-${rowIndex}-${colIndex}`}
                 className="h-[30px] w-[30px] rounded-full bg-gray-20"
               />
             ))}
