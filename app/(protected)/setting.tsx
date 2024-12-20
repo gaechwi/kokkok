@@ -34,6 +34,7 @@ const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
 
 export default function Setting() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
@@ -54,6 +55,7 @@ export default function Setting() {
 
     try {
       await deleteUser();
+      await supabase.auth.signOut();
       showToast("success", "탈퇴가 완료되었습니다!");
     } catch (error) {
       showToast("error", "탈퇴에 실패했습니다.");
