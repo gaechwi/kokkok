@@ -438,20 +438,15 @@ export async function getPostLikes(postId: number) {
 // 게시글 좋아요 토글
 export async function toggleLikePost(postId: number) {
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) throw userError;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // postLike 테이블에서 좋아요 여부 확인
     const { data: likeData, error: likeError } = await supabase
       .from("postLike")
       .select("id")
       .eq("postId", postId)
-      .eq("userId", user.id)
+      .eq("userId", userId)
       .single();
 
     if (likeError && likeError.code !== "PGRST116") {
@@ -463,7 +458,7 @@ export async function toggleLikePost(postId: number) {
       await supabase.from("postLike").delete().eq("id", likeData.id);
     } else {
       // 좋아요
-      await supabase.from("postLike").insert({ postId, userId: user.id });
+      await supabase.from("postLike").insert({ postId, userId });
     }
   } catch (error) {
     const errorMessage =
@@ -478,13 +473,9 @@ export async function createPost({
   images,
 }: { contents?: string; images: ImagePicker.ImagePickerAsset[] }) {
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const userId = await getUserIdFromStorage();
 
-    if (userError) throw userError;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // 내용이 빈 문자열이면 undefined로 설정
     const postContents = contents === "" ? undefined : contents;
@@ -504,7 +495,7 @@ export async function createPost({
       .from("post")
       .insert([
         {
-          userId: user.id,
+          userId: userId,
           images: validImageUrls,
           contents: postContents || "",
         },
@@ -538,8 +529,8 @@ export async function updatePost({
   contents: string;
 }) {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // 기존 게시글 조회
     const { data: existingPost, error: postError } = await supabase
@@ -552,7 +543,7 @@ export async function updatePost({
     if (!existingPost) throw new Error("게시글을 찾을 수 없습니다.");
 
     // 작성자 권한 체크
-    if (user.id !== existingPost.userId) {
+    if (userId !== existingPost.userId) {
       throw new Error("게시글 작성자만 수정할 수 있습니다.");
     }
 
@@ -605,9 +596,8 @@ export async function updatePost({
 // 게시글 삭제
 export async function deletePost(postId: number) {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // 게시글 작성자인지 확인
     const { data: post, error: postError } = await supabase
@@ -619,7 +609,7 @@ export async function deletePost(postId: number) {
     if (postError) throw postError;
     if (!post) throw new Error("게시글을 찾을 수 없습니다.");
 
-    if (user.id !== post.userId) {
+    if (userId !== post.userId) {
       throw new Error("게시글 작성자만 삭제할 수 있습니다.");
     }
 
@@ -748,20 +738,15 @@ export async function getCommentLikes(commentId: number) {
 // 댓글 좋아요 토글
 export async function toggleLikeComment(commentId: number) {
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) throw userError;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // commentLike 테이블에서 좋아요 여부 확인
     const { data: likeData, error: likeError } = await supabase
       .from("commentLike")
       .select("id")
       .eq("commentId", commentId)
-      .eq("userId", user.id)
+      .eq("userId", userId)
       .single();
 
     if (likeError && likeError.code !== "PGRST116") {
@@ -795,7 +780,7 @@ export async function toggleLikeComment(commentId: number) {
 
       const { error: likeInsertError } = await supabase
         .from("commentLike")
-        .insert({ commentId, userId: user.id });
+        .insert({ commentId, userId });
       if (likeInsertError) throw likeInsertError;
     }
   } catch (error) {
@@ -820,19 +805,14 @@ export async function createComment({
   replyCommentId?: number;
 }) {
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) throw userError;
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     const { data: newComment, error: commentError } = await supabase
       .from("comment")
       .insert({
         postId,
-        userId: user.id,
+        userId,
         contents,
         parentsCommentId: parentId || null,
         replyCommentId: replyCommentId || null,
@@ -862,9 +842,8 @@ export async function createComment({
 // 댓글 삭제
 export async function deleteComment(commentId: number) {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
-
-    if (!user) throw new Error("유저 정보를 찾을 수 없습니다.");
+    const userId = await getUserIdFromStorage();
+    if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
     // 댓글 작성자인지 확인
     const { data: comment, error: commentError } = await supabase
@@ -876,7 +855,7 @@ export async function deleteComment(commentId: number) {
     if (commentError) throw commentError;
     if (!comment) throw new Error("댓글을 찾을 수 없습니다.");
 
-    if (user.id !== comment.userId) {
+    if (userId !== comment.userId) {
       throw new Error("댓글 작성자만 삭제할 수 있습니다.");
     }
 
