@@ -217,6 +217,7 @@ export default function Upload() {
   };
 
   const pickImage = async () => {
+    setIsModalVisible(false);
     if (uploadPostMutation.isPending) return;
 
     if (imageItems.length >= 5) {
@@ -258,6 +259,7 @@ export default function Upload() {
   };
 
   const takePhoto = async () => {
+    setIsModalVisible(false);
     if (uploadPostMutation.isPending) return;
 
     if (imageItems.length >= 5) {
@@ -417,7 +419,6 @@ export default function Upload() {
               <TouchableOpacity
                 className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
                 onPress={async () => {
-                  setIsModalVisible(false);
                   await takePhoto();
                 }}
               >
@@ -427,7 +428,6 @@ export default function Upload() {
               <TouchableOpacity
                 className="h-[82px] w-full items-center justify-center"
                 onPress={async () => {
-                  setIsModalVisible(false);
                   await pickImage();
                 }}
               >
