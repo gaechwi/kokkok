@@ -217,7 +217,6 @@ export default function Upload() {
   };
 
   const pickImage = async () => {
-    setIsModalVisible(false);
     if (uploadPostMutation.isPending) return;
 
     if (imageItems.length >= 5) {
@@ -259,7 +258,6 @@ export default function Upload() {
   };
 
   const takePhoto = async () => {
-    setIsModalVisible(false);
     if (uploadPostMutation.isPending) return;
 
     if (imageItems.length >= 5) {
@@ -420,6 +418,7 @@ export default function Upload() {
                 className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
                 onPress={async () => {
                   await takePhoto();
+                  setIsModalVisible(false);
                 }}
               >
                 <Text className="title-2 text-gray-90">카메라</Text>
@@ -429,6 +428,7 @@ export default function Upload() {
                 className="h-[82px] w-full items-center justify-center"
                 onPress={async () => {
                   await pickImage();
+                  setIsModalVisible(false);
                 }}
               >
                 <Text className="title-2 text-gray-90">갤러리</Text>
