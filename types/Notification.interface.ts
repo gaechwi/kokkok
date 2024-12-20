@@ -21,7 +21,6 @@ export interface NotificationData {
 }
 
 export interface Notification {
-  from: UserProfile;
   to: string;
   type: NotificationType;
   data?: NotificationData;
@@ -39,12 +38,6 @@ export interface PushSetting {
   userId: string;
   token: string | null;
   grantedNotifications: NotificationType[];
-}
-
-export interface PushSettingUpdateData {
-  userId: string;
-  token?: string | null;
-  grantedNotifications?: NotificationType[];
 }
 
 export interface PushMessage {

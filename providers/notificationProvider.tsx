@@ -1,12 +1,8 @@
+import { useAuthSession } from "@/hooks/useAuthSession";
 import useFetchData from "@/hooks/useFetchData";
 import type { PushSetting } from "@/types/Notification.interface";
 import { addPushToken, updatePushToken } from "@/utils/pushTokenManager";
-import {
-  getCurrentSession,
-  getPushSetting,
-  resetPushSetting,
-} from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getPushSetting, resetPushSetting } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
@@ -27,34 +23,28 @@ interface Props {
 
 export default function NotificationProvider({ children }: Props) {
   const queryClient = useQueryClient();
+
+  const { isLoggedIn } = useAuthSession(queryClient);
   const [isInit, setIsInit] = useState(true);
   const [pushPermission, setPushPermission] = useState("");
-
-  // 로그인한 유저 정보 조회
-  const { data: session } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
 
   // 기존 푸시 알림 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
     useFetchData<PushSetting | null>(
-      ["pushToken", session?.user.id],
-      () => getPushSetting(session?.user.id || ""),
+      ["pushToken"],
+      () => getPushSetting(),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
-      !!session,
     );
 
   // 세션 바뀔 때마다 isInit true로 바꿈
   useEffect(() => {
-    if (!session) return;
+    if (!isLoggedIn) return;
     setIsInit(true);
-  }, [session]);
+  }, [isLoggedIn]);
 
   // 로그인 한 첫회에만 푸시 토큰 업데이트
   useEffect(() => {
-    if (!session || isTokenPending || !isInit) return;
+    if (!isLoggedIn || isTokenPending || !isInit) return;
 
     // 푸시알람 관련 정보 업데이트 시 캐시된 데이터 삭제, 더이상 첫 업데이트 아님을 마킹
     const handleUpdate = () => {
@@ -62,18 +52,16 @@ export default function NotificationProvider({ children }: Props) {
       setIsInit(false);
     };
 
-    const userId = session.user.id;
     if (pushSetting?.userId) {
       updatePushToken({
-        userId,
         existingToken: pushSetting.token,
         handleUpdate,
       });
     } else {
-      addPushToken({ userId, handleUpdate });
+      addPushToken({ handleUpdate });
     }
   }, [
-    session,
+    isLoggedIn,
     isTokenPending,
     pushSetting?.userId,
     pushSetting?.token,
@@ -117,14 +105,13 @@ export default function NotificationProvider({ children }: Props) {
     // 권한 설정 정보 저장
     const handlePermissionChange = async () => {
       const { status } = await Notifications.getPermissionsAsync();
-      if (status === pushPermission || !session) return;
+      if (status === pushPermission || !isLoggedIn) return;
       setPushPermission(status);
 
-      const userId = session.user.id;
       if (status === "granted") {
-        await updatePushToken({ userId, existingToken: null, handleUpdate });
+        await updatePushToken({ existingToken: null, handleUpdate });
       } else {
-        await resetPushSetting(userId);
+        await resetPushSetting();
         handleUpdate();
       }
     };
@@ -137,7 +124,7 @@ export default function NotificationProvider({ children }: Props) {
     });
 
     return () => subscription.remove();
-  }, [pushPermission, session, queryClient]);
+  }, [pushPermission, isLoggedIn, queryClient]);
 
   return children;
 }

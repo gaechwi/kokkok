@@ -8,15 +8,11 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import {
-  deletePost,
-  getCurrentUser,
-  getPost,
-  getPostLikes,
-} from "@/utils/supabase";
+import { deletePost, getPost, getPostLikes } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, Image, Text, TouchableOpacity } from "react-native";
 import { Dimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +21,7 @@ const { height: deviceHeight } = Dimensions.get("window");
 
 export default function PostDetail() {
   const { postId } = useLocalSearchParams();
+  const [userId, setUserId] = useState<string | null>(null);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [isNotFoundModalVisible, setIsNotFoundModalVisible] = useState(false);
@@ -32,12 +29,6 @@ export default function PostDetail() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const { data: user } = useFetchData(
-    ["currentUser"],
-    getCurrentUser,
-    "현재 사용자를 불러올 수 없습니다.",
-  );
 
   const {
     data: post,
@@ -86,6 +77,20 @@ export default function PostDetail() {
       showToast("fail", "게시글 삭제에 실패했어요.");
     },
   });
+
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      try {
+        setUserId(await SecureStore.getItemAsync("userId"));
+      } catch (error) {
+        console.error("userId 조회 중 오류 발생:", error);
+        setUserId(null);
+      }
+    };
+
+    handleLoadId();
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-white">
@@ -154,7 +159,7 @@ export default function PostDetail() {
                   <TouchableOpacity
                     onPress={() => {
                       setIsLikedModalVisible(false);
-                      if (user?.id === item.author?.id) router.push("/mypage");
+                      if (userId === item.author?.id) router.push("/mypage");
                       else router.push(`/user/${item.author?.id}`);
                     }}
                     className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"

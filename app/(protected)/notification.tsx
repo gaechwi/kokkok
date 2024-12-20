@@ -1,4 +1,3 @@
-import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { FlatList, View } from "react-native";
@@ -10,48 +9,39 @@ import useFetchData from "@/hooks/useFetchData";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { NotificationResponse } from "@/types/Notification.interface";
-import {
-  getCurrentSession,
-  getNotifications,
-  updateNotificationCheck,
-} from "@/utils/supabase";
+import { getNotifications, updateNotificationCheck } from "@/utils/supabase";
 
 export default function Notification() {
   const queryClient = useQueryClient();
 
-  const { data: session, error: userError } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   const {
     data: notifications,
     isLoading,
-    error: notificationError,
+    error,
   } = useFetchData<NotificationResponse[]>(
-    ["notification", session?.user.id],
-    () => getNotifications(session?.user.id || ""),
+    ["notification"],
+    () => getNotifications(),
     "알림 조회에 실패했습니다.",
-    !!session?.user,
   );
 
   useFocusEffect(() => {
-    if (!session) return;
-
     // 알림 페이지 방문 시간 업데이트하고, 그에 따라 유저 알림 정보 다시 가져오도록 함
-    updateNotificationCheck(session.user.id);
-    queryClient.invalidateQueries({
-      queryKey: ["user", "notificationCheckedAt"],
-    });
+    const handleUpdate = async () => {
+      try {
+        await updateNotificationCheck();
+        queryClient.invalidateQueries({
+          queryKey: ["notificationCheckedAt"],
+        });
+      } catch (error) {
+        console.error("알림 체크 업데이트 실패:", error);
+      }
+    };
+
+    handleUpdate();
   });
 
-  if (userError || notificationError) {
-    const errorMessage =
-      userError?.message ||
-      notificationError?.message ||
-      "알림 조회에 실패했습니다.";
-    return <ErrorScreen errorMessage={errorMessage} />;
+  if (error) {
+    return <ErrorScreen errorMessage={error.message} />;
   }
 
   if (isLoading || !notifications) {

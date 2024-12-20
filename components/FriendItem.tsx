@@ -8,9 +8,9 @@ import { POKE_TIME } from "@/constants/time";
 import useFetchData from "@/hooks/useFetchData";
 import useManageFriend from "@/hooks/useManageFriend";
 import { useTimerWithStartAndDuration } from "@/hooks/useTimer";
-import type { User, UserProfile } from "@/types/User.interface";
+import type { UserProfile } from "@/types/User.interface";
 import { formatTime } from "@/utils/formatTime";
-import { getCurrentUser, getLatestStabForFriend } from "@/utils/supabase";
+import { getLatestStabForFriend } from "@/utils/supabase";
 
 /* Interfaces */
 
@@ -59,22 +59,14 @@ const FriendProfile = ({
 /* Components */
 
 export function FriendItem({ friend }: FriendItemProps) {
-  // 로그인한 유저 정보 조회
-  const { data: user } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   const { data: lastPokeCreatedAt } = useFetchData<string>(
-    ["poke", user?.id, friend.id],
-    () => getLatestStabForFriend(user?.id || "", friend.id),
+    ["poke", friend.id],
+    () => getLatestStabForFriend(friend.id),
     "찌르기 정보 조회에 실패했습니다.",
-    !!user,
   );
 
   const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();
-  const isPokeDisable = !user || !!friend.status || !!timeLeft;
+  const isPokeDisable = !!friend.status || !!timeLeft;
 
   const { usePoke } = useManageFriend();
   const { mutate: handlePoke } = usePoke();
@@ -92,7 +84,7 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => user && handlePoke({ user, friend })}
+        onPress={() => handlePoke({ friend })}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
@@ -115,12 +107,6 @@ export function FriendItem({ friend }: FriendItemProps) {
 }
 
 export function NonFriendItem({ user }: NonFriendItemProps) {
-  const { data: currentUser } = useFetchData<User>(
-    ["currentUser"],
-    getCurrentUser,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   const { useCreateRequest } = useManageFriend();
   const { mutate: handleCreateRequest, isPending: isCreatePending } =
     useCreateRequest();
@@ -134,10 +120,7 @@ export function NonFriendItem({ user }: NonFriendItemProps) {
         disabled={isCreatePending}
         accessibilityLabel="친구 요청"
         accessibilityHint="이 버튼을 누르면 친구 요청을 보냅니다"
-        onPress={() =>
-          currentUser &&
-          handleCreateRequest({ fromUser: currentUser, toUserId: user.id })
-        }
+        onPress={() => handleCreateRequest({ toUserId: user.id })}
       >
         <Text className="body-5 text-white">친구 요청</Text>
       </TouchableOpacity>
@@ -164,9 +147,7 @@ export function FriendRequest({
       <View className="flex-row gap-[11px]">
         <TouchableOpacity
           className="bg-primary px-[12px] py-[11px] rounded-[10px]"
-          onPress={() =>
-            handleAccept({ requestId, fromUserId: fromUser.id, toUser })
-          }
+          onPress={() => handleAccept({ requestId, fromUserId: fromUser.id })}
           disabled={isAcceptPending || isRefusePending || isLoading}
           accessibilityLabel="친구 요청 수락"
           accessibilityHint="이 버튼을 누르면 친구 요청을 수락합니다"
@@ -180,7 +161,6 @@ export function FriendRequest({
             handleRefuse({
               requestId,
               fromUserId: fromUser.id,
-              toUserId: toUser.id,
             })
           }
           disabled={isAcceptPending || isRefusePending || isLoading}

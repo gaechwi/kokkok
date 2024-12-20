@@ -6,10 +6,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const AuthLayout = () => {
   const queryClient = useQueryClient();
-  const { session, isLoading } = useAuthSession(queryClient);
+  const { isLoggedIn, isLoading } = useAuthSession(queryClient);
 
   if (isLoading) return null;
-  if (session) return <Redirect href="/home" />;
+  if (isLoggedIn) return <Redirect href="/home" />;
 
   return (
     <>
