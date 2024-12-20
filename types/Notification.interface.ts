@@ -36,7 +36,7 @@ export interface NotificationResponse {
 
 export interface PushSetting {
   userId: string;
-  token: string | null;
+  token: string; // 실제 토큰 or "logout"
   grantedNotifications: NotificationType[];
 }
 

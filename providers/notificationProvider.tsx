@@ -1,8 +1,8 @@
 import { useAuthSession } from "@/hooks/useAuthSession";
 import useFetchData from "@/hooks/useFetchData";
 import type { PushSetting } from "@/types/Notification.interface";
-import { addPushToken, updatePushToken } from "@/utils/pushTokenManager";
-import { getPushSetting, resetPushSetting } from "@/utils/supabase";
+import { updatePushToken } from "@/utils/pushTokenManager";
+import { deletePushSetting, getPushSetting } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
@@ -29,22 +29,22 @@ export default function NotificationProvider({ children }: Props) {
   const [pushPermission, setPushPermission] = useState("");
 
   // 기존 푸시 알림 정보 조회
-  const { data: pushSetting, isPending: isTokenPending } =
-    useFetchData<PushSetting | null>(
-      ["pushToken"],
-      () => getPushSetting(),
-      "푸시 알림 설정 정보 로드에 실패했습니다.",
-    );
+  const { data: pushSetting } = useFetchData<PushSetting | null>(
+    ["pushToken"],
+    () => getPushSetting(),
+    "푸시 알림 설정 정보 로드에 실패했습니다.",
+    isLoggedIn,
+  );
 
   // 세션 바뀔 때마다 isInit true로 바꿈
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!isLoggedIn) return;
     setIsInit(true);
   }, [isLoggedIn]);
 
   // 로그인 한 첫회에만 푸시 토큰 업데이트
   useEffect(() => {
-    if (!isLoggedIn || isTokenPending || !isInit) return;
+    if (!isLoggedIn || !isInit) return;
 
     // 푸시알람 관련 정보 업데이트 시 캐시된 데이터 삭제, 더이상 첫 업데이트 아님을 마킹
     const handleUpdate = () => {
@@ -52,22 +52,11 @@ export default function NotificationProvider({ children }: Props) {
       setIsInit(false);
     };
 
-    if (pushSetting?.userId) {
-      updatePushToken({
-        existingToken: pushSetting.token,
-        handleUpdate,
-      });
-    } else {
-      addPushToken({ handleUpdate });
-    }
-  }, [
-    isLoggedIn,
-    isTokenPending,
-    pushSetting?.userId,
-    pushSetting?.token,
-    isInit,
-    queryClient,
-  ]);
+    updatePushToken({
+      existingToken: pushSetting?.token,
+      handleUpdate,
+    });
+  }, [isLoggedIn, pushSetting?.token, isInit, queryClient]);
 
   // 푸시 알림 관련 포스트 페이지로 바로 이동
   useEffect(() => {
@@ -106,12 +95,13 @@ export default function NotificationProvider({ children }: Props) {
     const handlePermissionChange = async () => {
       const { status } = await Notifications.getPermissionsAsync();
       if (status === pushPermission || !isLoggedIn) return;
+
       setPushPermission(status);
 
       if (status === "granted") {
-        await updatePushToken({ existingToken: null, handleUpdate });
+        await updatePushToken({ handleUpdate });
       } else {
-        await resetPushSetting();
+        await deletePushSetting();
         handleUpdate();
       }
     };
