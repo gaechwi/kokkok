@@ -10,13 +10,7 @@ import type { StatusInfo } from "@/types/Friend.interface";
 import type { UserProfile } from "@/types/User.interface";
 import { debounce } from "@/utils/DelayManager";
 import { formatDate } from "@/utils/formatDate";
-import {
-  getCurrentSession,
-  getFriends,
-  getFriendsStatus,
-  supabase,
-} from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getFriends, getFriendsStatus, supabase } from "@/utils/supabase";
 import { useFocusEffect } from "expo-router";
 
 export default function Friend() {
@@ -24,23 +18,15 @@ export default function Friend() {
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [keyword, setKeyword] = useState("");
 
-  // 로그인한 유저 정보 조회
-  const { data: session, error: userError } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   // 유저의 친구 정보 조회
   const {
     data: friendsData,
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends", session?.user.id, keyword],
-    () => getFriends(session?.user.id || "", keyword),
+    ["friends", keyword],
+    () => getFriends(keyword),
     "친구 조회에 실패했습니다.",
-    !!session?.user.id,
   );
 
   const friendIds = friendsData?.map((friend) => friend.id);
@@ -51,7 +37,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus", session?.user.id],
+    ["friends", "status"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
@@ -77,17 +63,17 @@ export default function Friend() {
       .channel("workoutHistory")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workoutHistory" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "workoutHistory",
+          filter: `userId=in.(${friendIds.join(",")})`,
+        },
         (payload) => {
-          if (
-            (payload.eventType === "DELETE" &&
-              payload.old.date === today &&
-              friendIds.includes(payload.old.userId)) ||
-            (payload.eventType === "INSERT" &&
-              payload.new.date === today &&
-              friendIds.includes(payload.new.userId))
-          )
-            queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
+          // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
+          // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
+          if (payload.new.date === today)
+            queryClient.invalidateQueries({ queryKey: ["friends", "status"] });
         },
       )
       .subscribe();
@@ -123,9 +109,8 @@ export default function Friend() {
   }, [friendsData, statusData]);
 
   // 에러 스크린
-  if (userError || friendError || statusError) {
+  if (friendError || statusError) {
     const errorMessage =
-      userError?.message ||
       friendError?.message ||
       statusError?.message ||
       "친구 조회에 실패했습니다.";
@@ -133,7 +118,7 @@ export default function Friend() {
       <SearchLayout
         data={[]}
         onChangeKeyword={handleKeywordChange}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
+        renderItem={() => <></>}
         emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
       />
     );
@@ -145,7 +130,7 @@ export default function Friend() {
       <SearchLayout
         data={[]}
         onChangeKeyword={handleKeywordChange}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
+        renderItem={() => <></>}
         emptyComponent={<LoadingScreen />}
       />
     );

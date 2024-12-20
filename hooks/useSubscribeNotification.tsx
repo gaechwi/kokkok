@@ -1,20 +1,28 @@
-import { getCurrentSession, supabase } from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import useFetchData from "./useFetchData";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 
 const useSubscribeNotification = () => {
   const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const { data: session } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      try {
+        setUserId(await SecureStore.getItemAsync("userId"));
+      } catch (error) {
+        console.error("userId 조회 중 오류 발생:", error);
+        setUserId(null);
+      }
+    };
+
+    handleLoadId();
+  }, []);
 
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
 
     // 나에게 오는 알림 구독
     const notificationChannel = supabase
@@ -25,7 +33,7 @@ const useSubscribeNotification = () => {
           event: "INSERT",
           schema: "public",
           table: "notification",
-          filter: `to=eq.${session.user.id}`,
+          filter: `to=eq.${userId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["notification"] });
@@ -37,7 +45,7 @@ const useSubscribeNotification = () => {
     return () => {
       supabase.removeChannel(notificationChannel);
     };
-  }, [session, queryClient.invalidateQueries]);
+  }, [userId, queryClient.invalidateQueries]);
 };
 
 export default useSubscribeNotification;
