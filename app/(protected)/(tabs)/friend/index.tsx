@@ -10,13 +10,7 @@ import type { StatusInfo } from "@/types/Friend.interface";
 import type { UserProfile } from "@/types/User.interface";
 import { debounce } from "@/utils/DelayManager";
 import { formatDate } from "@/utils/formatDate";
-import {
-  getCurrentSession,
-  getFriends,
-  getFriendsStatus,
-  supabase,
-} from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getFriends, getFriendsStatus, supabase } from "@/utils/supabase";
 import { useFocusEffect } from "expo-router";
 
 export default function Friend() {
@@ -24,23 +18,15 @@ export default function Friend() {
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [keyword, setKeyword] = useState("");
 
-  // 로그인한 유저 정보 조회
-  const { data: session, error: userError } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   // 유저의 친구 정보 조회
   const {
     data: friendsData,
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends", session?.user.id, keyword],
-    () => getFriends(session?.user.id || "", keyword),
+    ["friends", keyword],
+    () => getFriends(keyword),
     "친구 조회에 실패했습니다.",
-    !!session?.user.id,
   );
 
   const friendIds = friendsData?.map((friend) => friend.id);
@@ -51,7 +37,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus", session?.user.id],
+    ["friendsStatus"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
@@ -123,9 +109,8 @@ export default function Friend() {
   }, [friendsData, statusData]);
 
   // 에러 스크린
-  if (userError || friendError || statusError) {
+  if (friendError || statusError) {
     const errorMessage =
-      userError?.message ||
       friendError?.message ||
       statusError?.message ||
       "친구 조회에 실패했습니다.";

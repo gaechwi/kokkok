@@ -2,7 +2,6 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import type { UserProfile } from "@/types/User.interface";
 import {
   createComment,
   createNotification,
@@ -19,7 +18,8 @@ import {
 } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -53,6 +53,7 @@ export default function CommentsSection({
   postId,
   authorId,
 }: CommentsSectionProps) {
+  const [userId, setUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
@@ -83,7 +84,7 @@ export default function CommentsSection({
   );
 
   // 유저 정보 가져오기
-  const user = useFetchData(
+  const { data: currentUser } = useFetchData(
     ["currentUser"],
     getCurrentUser,
     "사용자 정보를 불러오는데 실패했습니다.",
@@ -145,24 +146,22 @@ export default function CommentsSection({
     onSuccess: (data) => {
       showToast("success", "댓글이 작성되었어요!");
 
-      const isAuthor = authorId === user.data?.id; // 게시글 작성자가 본인인지 확인
-      const isReplyToOthers = replyTo?.userId !== user.data?.id; // 답글 대상자가 본인인지 확인
+      const isAuthor = authorId === userId; // 게시글 작성자가 본인인지 확인
+      const isReplyToOthers = replyTo?.userId !== userId; // 답글 대상자가 본인인지 확인
       const isReply = replyTo !== null; // 답글 여부 확인
 
       if (isReply) {
         // 답글 대상자가 본인이 아닌 경우 알림 전송
-        if (user.data && isReplyToOthers) {
+        if (isReplyToOthers) {
           sendNotificationMutation.mutate({
-            from: user.data,
             commentId: data.id,
             type: "mention",
           });
         }
       } else {
         // 댓글 작성자가 게시글 작성자가 아닌 경우 알림 전송
-        if (user.data && !isAuthor) {
+        if (!isAuthor) {
           sendNotificationMutation.mutate({
-            from: user.data,
             commentId: data.id,
             type: "comment",
           });
@@ -183,16 +182,13 @@ export default function CommentsSection({
 
   const sendNotificationMutation = useMutation({
     mutationFn: ({
-      from,
       commentId,
       type = "comment",
     }: {
-      from: UserProfile;
       commentId: number;
       type?: "comment" | "mention";
     }) =>
       createNotification({
-        from,
         to: replyTo?.userId || authorId || "",
         type: type,
         data: {
@@ -231,6 +227,15 @@ export default function CommentsSection({
     queryClient.removeQueries({ queryKey: ["comments", postId] });
     queryClient.removeQueries({ queryKey: ["replies"] });
   }, [onClose, postId, queryClient]);
+
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      setUserId(await SecureStore.getItemAsync("userId"));
+    };
+
+    handleLoadId();
+  }, []);
 
   return (
     <MotionModal
@@ -366,8 +371,7 @@ export default function CommentsSection({
                   onPress={() => {
                     setIsLikedModalVisible(false);
                     onClose();
-                    if (user.data?.id === item.author?.id)
-                      router.push("/mypage");
+                    if (userId === item.author?.id) router.push("/mypage");
                     else router.push(`/user/${item.author?.id}`);
                   }}
                   className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"
@@ -447,8 +451,8 @@ export default function CommentsSection({
         >
           <Image
             source={
-              user.data?.avatarUrl
-                ? { uri: user.data.avatarUrl }
+              currentUser?.avatarUrl
+                ? { uri: currentUser.avatarUrl }
                 : images.AvaTarDefault
             }
             resizeMode="cover"

@@ -10,20 +10,17 @@ import {
 } from "./supabase";
 
 interface AddPushTokenProps {
-  userId: string;
   retry?: boolean;
   handleUpdate: () => void;
 }
 
 interface UpdatePushTokenProps {
-  userId: string;
   existingToken: string | null;
   retry?: boolean;
   handleUpdate: () => void;
 }
 
 interface ReRequestTokenProps {
-  userId: string;
   token?: string | null;
   handleUpdate: () => void;
 }
@@ -33,7 +30,6 @@ export const isTokenValid = (token?: string | null) =>
 
 // 기존에 토큰이 없던 유저에게 새로운 토큰을 받아서 추가
 export async function addPushToken({
-  userId,
   retry = false,
   handleUpdate,
 }: AddPushTokenProps): Promise<boolean> {
@@ -42,7 +38,6 @@ export async function addPushToken({
     if (!isTokenValid(token)) return false;
 
     await createPushSetting({
-      userId,
       token,
       grantedNotifications: Object.values(NOTIFICATION_TYPE),
     });
@@ -57,7 +52,6 @@ export async function addPushToken({
 
 // 기존 설정 값이 있는 유저의 경우 토큰 값만 변경
 export async function updatePushToken({
-  userId,
   existingToken,
   retry = false,
   handleUpdate,
@@ -65,18 +59,18 @@ export async function updatePushToken({
   try {
     const token = await registerForPushNotificationsAsync(retry);
     if (!isTokenValid(token)) {
-      await resetPushSetting(userId);
+      await resetPushSetting();
       handleUpdate();
       return false;
     }
     if (token !== existingToken) {
-      await updatePushSetting({ userId, token });
+      await updatePushSetting({ token });
       handleUpdate();
       return true;
     }
   } catch (error) {
     console.error(error);
-    await resetPushSetting(userId);
+    await resetPushSetting();
     handleUpdate();
   }
 
@@ -84,14 +78,12 @@ export async function updatePushToken({
 }
 
 export async function reRequestToken({
-  userId,
   token,
   handleUpdate,
 }: ReRequestTokenProps) {
   if (token !== undefined) {
     // 설정이 있었다면 토큰만 업데이트
     const isSuccess = await updatePushToken({
-      userId,
       existingToken: token,
       retry: true,
       handleUpdate,
@@ -100,7 +92,6 @@ export async function reRequestToken({
   } else {
     // 없다면 기본값 []로 새 알림 정보 생성
     const isSuccess = await addPushToken({
-      userId,
       retry: true,
       handleUpdate,
     });

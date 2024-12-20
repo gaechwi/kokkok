@@ -1,13 +1,10 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
-import useFetchData from "@/hooks/useFetchData";
 import { useTruncateText } from "@/hooks/useTruncateText";
-import type { UserProfile } from "@/types/User.interface";
 import { diffDate } from "@/utils/formatDate";
 import {
   createNotification,
-  getCurrentUser,
   getReplies,
   toggleLikeComment,
 } from "@/utils/supabase";
@@ -18,7 +15,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -78,6 +76,7 @@ export default function CommentItem({
   onLikedAuthorPress,
   onDeletedPress,
 }: CommentItemProps) {
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(liked);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
@@ -129,8 +128,8 @@ export default function CommentItem({
       setIsLiked((prev) => !prev);
     },
     onSuccess: () => {
-      if (user.data && isLiked && user.data?.id !== author?.id) {
-        sendNotificationMutation.mutate(user.data);
+      if (isLiked && userId !== author?.id) {
+        sendNotificationMutation.mutate();
       }
 
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -142,10 +141,9 @@ export default function CommentItem({
   });
 
   // 좋아요 알림
-  const sendNotificationMutation = useMutation<void, Error, UserProfile>({
-    mutationFn: (from) =>
+  const sendNotificationMutation = useMutation({
+    mutationFn: () =>
       createNotification({
-        from,
         to: author?.id || "",
         type: "commentLike",
         data: {
@@ -157,17 +155,19 @@ export default function CommentItem({
       }),
   });
 
-  // 현재 사용자 정보
-  const user = useFetchData(
-    ["currentUser"],
-    getCurrentUser,
-    "사용자 정보를 불러오는데 실패했습니다.",
-  );
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      setUserId(await SecureStore.getItemAsync("userId"));
+    };
+
+    handleLoadId();
+  }, []);
 
   return (
     <Pressable
       onLongPress={() => {
-        if (author?.id === user.data?.id) {
+        if (author?.id === userId) {
           handleOpenModal();
         }
       }}
@@ -178,7 +178,7 @@ export default function CommentItem({
         <TouchableOpacity
           onPress={() => {
             onCommentsClose();
-            if (author?.id === user.data?.id) router.push("/mypage");
+            if (author?.id === userId) router.push("/mypage");
             else router.push(`/user/${author?.id}`);
           }}
           className="flex-1"
@@ -250,7 +250,7 @@ export default function CommentItem({
           )}
 
           {/* kebab button */}
-          {author?.id === user.data?.id && (
+          {author?.id === userId && (
             <TouchableOpacity onPress={handleOpenModal} className="ml-2">
               <Icons.KebabMenuIcon
                 width={24}
@@ -286,7 +286,7 @@ export default function CommentItem({
             contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
           }
           onLongPress={() => {
-            if (author?.id === user.data?.id) {
+            if (author?.id === userId) {
               handleOpenModal();
             }
           }}

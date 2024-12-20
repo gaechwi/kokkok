@@ -1,10 +1,11 @@
 import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type Session, createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
+import * as SecureStore from "expo-secure-store";
 
 import {
   RELATION_TYPE,
@@ -14,15 +15,17 @@ import {
 } from "@/types/Friend.interface";
 import type {
   NotificationResponse,
+  NotificationType,
   PushMessage,
   PushSetting,
-  PushSettingUpdateData,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
 import { formatDate } from "./formatDate";
+
+class AuthError extends Error {}
 
 const expoPushToken = Constants.expoConfig?.extra?.EXPO_PUSH_TOKEN;
 const supabaseUrl = Constants.expoConfig?.extra?.SUPABASE_URL;
@@ -40,6 +43,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+// 로그인한 유저 정보 불러오기
+async function getUserIdFromStorage() {
+  const userId = await SecureStore.getItemAsync("userId");
+  if (!userId) throw new AuthError("로그인한 유저 정보가 없습니다.");
+
+  return userId;
+}
 
 // ============================================
 //
@@ -223,32 +234,20 @@ export async function getUser(userId: string) {
   }
 }
 
-// 로그인한 유저 세션 정보 조회
-export async function getCurrentSession(): Promise<Session> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) throw new Error("세션 정보를 찾을 수 없습니다");
-
-  return session;
-}
-
 // 로그인한 유저 정보 조회
 export async function getCurrentUser(): Promise<User> {
-  const { user } = await getCurrentSession();
-  return (await getUser(user.id)) as User;
+  const userId = await getUserIdFromStorage();
+  return (await getUser(userId)) as User;
 }
 
 // 프로필 업데이트
-export async function updateMyProfile(
-  userId: string,
-  profile: {
-    username: string;
-    description: string;
-    avatarUrl?: ImagePicker.ImagePickerAsset;
-  },
-) {
+export async function updateMyProfile(profile: {
+  username: string;
+  description: string;
+  avatarUrl?: ImagePicker.ImagePickerAsset;
+}) {
+  const userId = await getUserIdFromStorage();
+
   try {
     let newAvatarUrl: string | undefined;
 
@@ -276,7 +275,10 @@ export async function updateMyProfile(
   }
 }
 
-export async function updateNotificationCheck(userId: string) {
+// 마지막 알림 시간 업데이트
+export async function updateNotificationCheck() {
+  const userId = await getUserIdFromStorage();
+
   const { error } = await supabase
     .from("user")
     .update({ notificationCheckedAt: new Date().toISOString() })
@@ -286,7 +288,9 @@ export async function updateNotificationCheck(userId: string) {
 }
 
 // 유저 데이터베이스 삭제 (Edge function)
-export async function deleteUser(userId: string) {
+export async function deleteUser() {
+  const userId = await getUserIdFromStorage();
+
   try {
     const { error: dbError } = await supabase.rpc("delete_user_data", {
       user_id: userId,
@@ -892,8 +896,8 @@ export async function deleteComment(commentId: number) {
   }
 }
 
-// 내 게시물 조회
-export async function getMyPosts(userId: string) {
+// 유저 게시물 조회
+export async function getUserPosts(userId: string) {
   try {
     const { data: posts, error: postsError } = await supabase
       .from("post")
@@ -914,6 +918,12 @@ export async function getMyPosts(userId: string) {
   }
 }
 
+// 내 게시물 조회
+export async function getMyPosts() {
+  const userId = await getUserIdFromStorage();
+  return await getUserPosts(userId);
+}
+
 // ============================================
 //
 //                    friend
@@ -921,10 +931,9 @@ export async function getMyPosts(userId: string) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(
-  userId: string,
-  keyword = "",
-): Promise<UserProfile[]> {
+export async function getFriends(keyword = ""): Promise<UserProfile[]> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error } = await supabase
     .from("friendRequest")
     .select(
@@ -942,10 +951,10 @@ export async function getFriends(
 
 // keyword 기반해 나와 친구 요청 없는 유저 검색
 export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const { data, error } = await supabase.rpc("get_non_friends", {
-    user_id: user.id,
+    user_id: userId,
     keyword,
     start_idx: offset,
     num: limit,
@@ -964,10 +973,9 @@ export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
 }
 
 // 친구와의 관계 조회 (친구 요청 상태)
-export async function getFriendStatus(
-  userId: string,
-  friendId: string,
-): Promise<RelationType> {
+export async function getFriendStatus(friendId: string): Promise<RelationType> {
+  const userId = await getUserIdFromStorage();
+
   // 내가 보낸 요청
   const { data: asking, error: askingError } = await supabase
     .from("friendRequest")
@@ -1030,10 +1038,11 @@ export async function getFriendsStatus(
 
 // 친구요청 조회
 export async function getFriendRequests(
-  userId: string,
   offset = 0,
   limit = 12,
 ): Promise<RequestResponse> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error, count } = await supabase
     .from("friendRequest")
     .select(
@@ -1076,15 +1085,17 @@ export async function checkFriendRequest(requestId: string): Promise<boolean> {
   return !!data.length;
 }
 
+// 친구요청 있는지 상대방 아이디로 조회
 export async function checkFriendRequestWithUserId(
   from: string,
-  to: string,
 ): Promise<boolean> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error } = await supabase
     .from("friendRequest")
     .select("id")
     .eq("from", from)
-    .eq("to", to);
+    .eq("to", userId);
 
   if (error) throw error;
   if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
@@ -1094,26 +1105,28 @@ export async function checkFriendRequestWithUserId(
 
 // 친구요청 생성
 export async function createFriendRequest(
-  from: string,
   to: string,
   isAccepted: boolean | null,
 ) {
+  const userId = await getUserIdFromStorage();
   const { error } = await supabase
     .from("friendRequest")
-    .insert({ from, to, isAccepted });
+    .insert({ from: userId, to, isAccepted });
 
   if (error) throw error;
 }
 
+// 친구요청 수락
 export async function acceptFriendRequest(
   fromUserId: string,
-  toUserId: string,
   requestId: number | null = null,
 ) {
-  const { data, error } = await supabase.rpc("accept_friend_request", {
+  const userId = await getUserIdFromStorage();
+
+  const { error } = await supabase.rpc("accept_friend_request", {
     from_user_id: fromUserId,
     request_id: requestId,
-    to_user_id: toUserId,
+    to_user_id: userId,
   });
 
   if (error) throw error;
@@ -1140,6 +1153,15 @@ export async function deleteFriendRequestWithUserId(from: string, to: string) {
   if (error) throw error;
 }
 
+// 친구 요청 거절
+export async function unfriend(to: string) {
+  const userId = await getUserIdFromStorage();
+  await Promise.all([
+    deleteFriendRequestWithUserId(userId, to),
+    deleteFriendRequestWithUserId(to, userId),
+  ]);
+}
+
 // ============================================
 //
 //                    history
@@ -1151,7 +1173,7 @@ export async function getHistories(
   year: number,
   month: number,
 ): Promise<History[]> {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const startDateString = `${year}-${String(month).padStart(2, "0")}-01`;
   const endDate = new Date(year, month, 0); // month+1의 0번째 날짜는 해당 월의 마지막 날
@@ -1162,7 +1184,7 @@ export async function getHistories(
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date, status")
-    .eq("userId", user.id)
+    .eq("userId", userId)
     .gte("date", startDateString)
     .lte("date", endDateString)
     .order("date", { ascending: true });
@@ -1174,7 +1196,7 @@ export async function getHistories(
 
 // 쉬는 날 조회
 export async function getRestDays(): Promise<Pick<History, "date">[]> {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const currentDate = new Date();
   const startOfMonth = `${currentDate.getFullYear()}-${String(
@@ -1184,7 +1206,7 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
   const { data, error } = await supabase
     .from("workoutHistory")
     .select("date")
-    .eq("userId", user.id)
+    .eq("userId", userId)
     .eq("status", "rest")
     .gte("date", startOfMonth)
     .order("date", { ascending: true });
@@ -1198,10 +1220,10 @@ export async function getRestDays(): Promise<Pick<History, "date">[]> {
 export async function addRestDay(
   dates: Pick<History, "date">[],
 ): Promise<void> {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const records = dates.map(({ date }) => ({
-    userId: user.id,
+    userId: userId,
     date,
     status: "rest" as const,
   }));
@@ -1222,14 +1244,14 @@ export async function addRestDay(
 export async function deleteRestDay(
   dates: Pick<History, "date">[],
 ): Promise<void> {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const days = dates.map((item) => item.date);
 
   const { data, error } = await supabase
     .from("workoutHistory")
     .delete()
-    .eq("userId", user.id)
+    .eq("userId", userId)
     .eq("status", "rest")
     .in("date", days);
 
@@ -1240,12 +1262,12 @@ export async function deleteRestDay(
 
 // 운동 기록 추가
 export async function addWorkoutHistory({ date }: { date: string }) {
-  const { user } = await getCurrentSession();
+  const userId = await getUserIdFromStorage();
 
   const { data: todayHistory, error: selectError } = await supabase
     .from("workoutHistory")
     .select("date")
-    .eq("userId", user.id)
+    .eq("userId", userId)
     .eq("date", date)
     .single();
 
@@ -1261,7 +1283,7 @@ export async function addWorkoutHistory({ date }: { date: string }) {
     .from("workoutHistory")
     .insert([
       {
-        userId: user.id,
+        userId,
         date,
         status: "done",
       },
@@ -1280,9 +1302,9 @@ export async function addWorkoutHistory({ date }: { date: string }) {
 //
 // ============================================
 
-export async function getNotifications(
-  userId: string,
-): Promise<NotificationResponse[]> {
+export async function getNotifications(): Promise<NotificationResponse[]> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error } = await supabase
     .from("notification")
     .select(
@@ -1308,7 +1330,9 @@ export async function getNotifications(
   }));
 }
 
-export async function getLatestNotification(userId: string): Promise<string> {
+export async function getLatestNotification(): Promise<string> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error } = await supabase
     .from("notification")
     .select("createdAt")
@@ -1325,13 +1349,14 @@ export async function getLatestNotification(userId: string): Promise<string> {
 
 // 가장 최근 특정 친구를 찌른 기록 조회
 export async function getLatestStabForFriend(
-  myId: string,
   friendId: string,
 ): Promise<string> {
+  const userId = await getUserIdFromStorage();
+
   const { data, error } = await supabase
     .from("notification")
     .select("createdAt")
-    .eq("from", myId)
+    .eq("from", userId)
     .eq("to", friendId)
     .eq("type", "poke")
     .order("createdAt", { ascending: false })
@@ -1346,21 +1371,23 @@ export async function getLatestStabForFriend(
 
 // 알림 생성
 export async function createNotification(notification: Notification) {
+  const user = await getCurrentUser();
+
   const { error } = await supabase
     .from("notification")
-    .insert({ ...notification, from: notification.from.id });
+    .insert({ ...notification, from: user.id });
   if (error) throw error;
 
   // 푸시 알림 생성
   try {
-    const data = await getPushSetting(notification.to);
+    const data = await getUserPushSetting(notification.to);
     // 푸시 알림 수신 동의하지 않은 경우
     if (!data || !data.token) return;
     if (!data.grantedNotifications.includes(notification.type)) return;
 
     const message = formMessage({
       type: notification.type,
-      username: notification.from.username,
+      username: user.username,
       comment: notification.data?.commentInfo?.content,
       isAccepted: notification.data?.isAccepted,
     });
@@ -1404,8 +1431,8 @@ async function sendPushNotification(message: PushMessage) {
 //
 // ============================================
 
-// 푸시 알림 설정 불러오기
-export async function getPushSetting(
+// 유저의 푸시 알림 설정 불러오기
+export async function getUserPushSetting(
   userId: string,
 ): Promise<PushSetting | null> {
   const { data, error } = await supabase
@@ -1419,9 +1446,24 @@ export async function getPushSetting(
   return data.length ? data[0] : null;
 }
 
+// 내 푸시 알림 설정 가져오기
+export async function getPushSetting() {
+  const userId = await getUserIdFromStorage();
+  return await getUserPushSetting(userId);
+}
+
 // 푸시 알림 설정 추가
-export async function createPushSetting(pushTokenData: PushSetting) {
-  const { error } = await supabase.from("pushToken").upsert(pushTokenData);
+export async function createPushSetting({
+  token,
+  grantedNotifications,
+}: {
+  token: string | null;
+  grantedNotifications: NotificationType[];
+}) {
+  const userId = await getUserIdFromStorage();
+  const { error } = await supabase
+    .from("pushToken")
+    .upsert({ userId, token, grantedNotifications });
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
@@ -1430,10 +1472,11 @@ export async function createPushSetting(pushTokenData: PushSetting) {
 
 // 푸시 알림 설정 업데이트
 export async function updatePushSetting({
-  userId,
   token,
   grantedNotifications,
-}: PushSettingUpdateData) {
+}: { token?: string | null; grantedNotifications?: NotificationType[] }) {
+  const userId = await getUserIdFromStorage();
+
   const { error } = await supabase
     .from("pushToken")
     .update({
@@ -1448,8 +1491,8 @@ export async function updatePushSetting({
   }
 }
 
-export async function resetPushSetting(userId: string) {
-  await updatePushSetting({ userId, token: null, grantedNotifications: [] });
+export async function resetPushSetting() {
+  await updatePushSetting({ token: null, grantedNotifications: [] });
 }
 
 // ============================================

@@ -7,12 +7,7 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import {
-  deletePost,
-  getCurrentUser,
-  getPostLikes,
-  getPosts,
-} from "@/utils/supabase";
+import { deletePost, getPostLikes, getPosts } from "@/utils/supabase";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -20,7 +15,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -36,6 +32,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { height: deviceHeight } = Dimensions.get("window");
 
 export default function Home() {
+  const [userId, setUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -45,12 +42,6 @@ export default function Home() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const user = useFetchData(
-    ["currentUser"],
-    getCurrentUser,
-    "사용자 정보를 불러오는데 실패했습니다.",
-  );
 
   const { data: likedAuthorData } = useFetchData(
     ["likedAuthorAvatar", selectedPostId],
@@ -122,6 +113,15 @@ export default function Home() {
       showToast("fail", "게시글 삭제에 실패했어요.");
     },
   });
+
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      setUserId(await SecureStore.getItemAsync("userId"));
+    };
+
+    handleLoadId();
+  }, []);
 
   return (
     <SafeAreaView edges={[]} className="flex-1 items-center justify-center">
@@ -224,8 +224,7 @@ export default function Home() {
                   <TouchableOpacity
                     onPress={() => {
                       setIsLikedModalVisible(false);
-                      if (user.data?.id === item.author?.id)
-                        router.push("/mypage");
+                      if (userId === item.author?.id) router.push("/mypage");
                       else router.push(`/user/${item.author?.id}`);
                     }}
                     className="w-full flex-1 flex-row items-center gap-2 px-2 py-4"

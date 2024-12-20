@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,27 +7,17 @@ import { FriendRequest } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import useFetchData from "@/hooks/useFetchData";
 import type { RequestResponse } from "@/types/Friend.interface";
-import {
-  getCurrentSession,
-  getFriendRequests,
-  supabase,
-} from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getFriendRequests, supabase } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 const OFFSET = 0;
 const LIMIT = 12;
 
 export default function Request() {
   const queryClient = useQueryClient();
-
-  // 로그인한 유저 정보 조회
-  const { data: session, error: userError } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
+  const [userId, setUserId] = useState<string | null>(null);
 
   // 유저의 친구 요청 정보 조회
   const {
@@ -35,10 +25,9 @@ export default function Request() {
     isLoading,
     error,
   } = useFetchData<RequestResponse>(
-    ["friendRequests", session?.user.id, OFFSET],
-    () => getFriendRequests(session?.user.id || ""),
+    ["friendRequests", OFFSET],
+    () => getFriendRequests(),
     "친구 요청 조회에 실패했습니다.",
-    !!session?.user,
   );
 
   // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침
@@ -46,9 +35,18 @@ export default function Request() {
     queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
   });
 
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      setUserId(await SecureStore.getItemAsync("userId"));
+    };
+
+    handleLoadId();
+  }, []);
+
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
 
     const requestChannel = supabase
       .channel("friendRequest")
@@ -58,7 +56,7 @@ export default function Request() {
           event: "INSERT",
           schema: "public",
           table: "friendRequest",
-          filter: `to=eq.${session.user.id}`,
+          filter: `to=eq.${userId}`,
         },
         (payload) => {
           if (!payload.new.isAccepted)
@@ -70,17 +68,11 @@ export default function Request() {
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [session, queryClient.invalidateQueries]);
+  }, [userId, queryClient.invalidateQueries]);
 
   // 에러 스크린
-  if (error || userError) {
-    return (
-      <ErrorScreen
-        errorMessage={
-          error?.message || userError?.message || "친구 조회에 실패했습니다."
-        }
-      />
-    );
+  if (error) {
+    return <ErrorScreen errorMessage={error.message} />;
   }
 
   // 로딩 스크린

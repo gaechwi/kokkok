@@ -5,33 +5,26 @@ import ProfileSection from "@/components/ProfileSection";
 import useFetchData from "@/hooks/useFetchData";
 import useManageFriend from "@/hooks/useManageFriend";
 import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
-import type { UserProfile } from "@/types/User.interface";
 import {
-  getCurrentUser,
   getFriendStatus,
-  getMyPosts,
   getUser,
+  getUserPosts,
   supabase,
 } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface RequestButtonProps {
-  currentUser: UserProfile;
   userId: string;
   relation: RelationType;
   onPress: () => void;
 }
 
-function RequestButton({
-  currentUser,
-  userId,
-  relation,
-  onPress,
-}: RequestButtonProps) {
+function RequestButton({ userId, relation, onPress }: RequestButtonProps) {
   const { useUnfriend, useAcceptRequest, useCreateRequest } = useManageFriend();
   const { mutate: handleUnfriend } = useUnfriend();
   const { mutate: handleAccept } = useAcceptRequest();
@@ -40,21 +33,19 @@ function RequestButton({
   const BUTTON_CONFIG = {
     [RELATION_TYPE.FRIEND]: {
       message: "친구 끊기",
-      onPress: () =>
-        handleUnfriend({ fromUserId: currentUser.id, toUserId: userId }),
+      onPress: () => handleUnfriend({ toUserId: userId }),
     },
     [RELATION_TYPE.ASKING]: {
       message: "친구 요청 취소",
-      onPress: () =>
-        handleUnfriend({ fromUserId: currentUser.id, toUserId: userId }),
+      onPress: () => handleUnfriend({ toUserId: userId }),
     },
     [RELATION_TYPE.ASKED]: {
       message: "친구 요청 수락",
-      onPress: () => handleAccept({ fromUserId: userId, toUser: currentUser }),
+      onPress: () => handleAccept({ fromUserId: userId }),
     },
     [RELATION_TYPE.NONE]: {
       message: "친구 요청",
-      onPress: () => handleCreate({ fromUser: currentUser, toUserId: userId }),
+      onPress: () => handleCreate({ toUserId: userId }),
     },
   };
 
@@ -76,14 +67,8 @@ function RequestButton({
 const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { userId } = useLocalSearchParams();
-  const router = useRouter();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
-
-  const { data: currentUser } = useFetchData(
-    ["currentUser"],
-    getCurrentUser,
-    "유저를 불러올 수 없습니다.",
-  );
 
   const { data: user } = useFetchData(
     ["user", userId],
@@ -93,21 +78,27 @@ const User = () => {
 
   const { data: posts, isError: isPostsError } = useFetchData(
     ["posts", userId],
-    () => getMyPosts(userId as string),
+    () => getUserPosts(userId as string),
     "게시물을 불러올 수 없습니다.",
   );
 
   const { data: relation, isPending: isRelationPending } = useFetchData(
-    ["relation", currentUser?.id, userId],
-    () => getFriendStatus(currentUser?.id || "", userId as string),
+    ["relation", userId],
+    () => getFriendStatus(userId as string),
     "친구 정보를 불러올 수 없습니다.",
-    !!currentUser,
   );
+
+  // 유저 아이디 불러오기
+  useEffect(() => {
+    const handleLoadId = async () => {
+      setCurrentUserId(await SecureStore.getItemAsync("userId"));
+    };
+
+    handleLoadId();
+  }, []);
 
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    if (!currentUser) return;
-
     const requestChannel = supabase
       .channel("friendRequest")
       .on(
@@ -116,12 +107,12 @@ const User = () => {
           event: "INSERT",
           schema: "public",
           table: "friendRequest",
-          filter: `to=eq.${currentUser.id}`,
+          filter: `to=eq.${currentUserId}`,
         },
         (payload) => {
           if (payload.new.from === userId)
             queryClient.invalidateQueries({
-              queryKey: ["relation", currentUser.id, userId],
+              queryKey: ["relation", currentUserId, userId],
             });
         },
       )
@@ -130,7 +121,7 @@ const User = () => {
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [currentUser, userId, queryClient.invalidateQueries]);
+  }, [currentUserId, userId, queryClient.invalidateQueries]);
 
   return (
     <>
@@ -159,9 +150,8 @@ const User = () => {
         position="bottom"
       >
         <View className="items-center">
-          {relation && currentUser && !isRelationPending && (
+          {relation && !isRelationPending && (
             <RequestButton
-              currentUser={currentUser}
               userId={userId as string}
               relation={relation}
               onPress={() => setIsModalVisible(false)}

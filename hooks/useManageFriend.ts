@@ -9,45 +9,38 @@ import {
   createFriendRequest,
   createNotification,
   deleteFriendRequest,
-  deleteFriendRequestWithUserId,
+  unfriend,
 } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface CreateProps {
-  fromUser: UserProfile;
   toUserId: string;
 }
 
 interface AcceptProps {
   requestId?: number;
   fromUserId: string;
-  toUser: UserProfile;
 }
 
 interface RefuseProps {
   requestId: number;
   fromUserId: string;
-  toUserId: string;
 }
 
 interface UnfriendProps {
-  fromUserId: string;
   toUserId: string;
 }
 
 interface PokeProps {
-  user: UserProfile;
   friend: UserProfile;
 }
 
 class NoRequestError extends Error {
   from: string;
-  to: string;
 
-  constructor(message: string, from: string, to: string) {
+  constructor(message: string, from: string) {
     super(message);
     this.from = from;
-    this.to = to;
   }
 }
 
@@ -57,23 +50,21 @@ const useManageFriend = () => {
   // 친구 요청 생성
   const useCreateRequest = () => {
     const { mutate, isPending } = useMutation<CreateProps, Error, CreateProps>({
-      mutationFn: async ({ fromUser, toUserId }) => {
-        const fromUserId = fromUser.id;
-        await createFriendRequest(fromUserId, toUserId, null);
+      mutationFn: async ({ toUserId }) => {
+        await createFriendRequest(toUserId, null);
         await createNotification({
-          from: fromUser,
           to: toUserId,
           type: NOTIFICATION_TYPE.FRIEND,
           data: { isAccepted: false },
         });
-        return { fromUser, toUserId };
+        return { toUserId };
       },
-      onSuccess: ({ fromUser, toUserId }) => {
+      onSuccess: ({ toUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({ queryKey: ["search", "users"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", fromUser.id, toUserId],
+          queryKey: ["relation", toUserId],
         });
       },
       onError: (error) => {
@@ -87,35 +78,31 @@ const useManageFriend = () => {
   // 친구 요청 수락
   const useAcceptRequest = () => {
     const { mutate, isPending } = useMutation<AcceptProps, Error, AcceptProps>({
-      mutationFn: async ({ requestId, fromUserId, toUser }) => {
-        const toUserId = toUser.id;
-
+      mutationFn: async ({ requestId, fromUserId }) => {
         // 친구 요청이 그사이 취소되었는지 확인
         const hasFriendRequest = requestId
           ? await checkFriendRequest(String(requestId))
-          : await checkFriendRequestWithUserId(fromUserId, toUserId);
+          : await checkFriendRequestWithUserId(fromUserId);
         if (!hasFriendRequest) {
           throw new NoRequestError(
             "친구 요청이 유효하지 않습니다.",
             fromUserId,
-            toUserId,
           );
         }
 
-        await acceptFriendRequest(fromUserId, toUserId, requestId);
+        await acceptFriendRequest(fromUserId, requestId);
         await createNotification({
-          from: toUser,
           to: fromUserId,
           type: NOTIFICATION_TYPE.FRIEND,
           data: { isAccepted: true },
         });
-        return { fromUserId, toUser };
+        return { fromUserId };
       },
-      onSuccess: ({ fromUserId, toUser }) => {
+      onSuccess: ({ fromUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", toUser.id, fromUserId],
+          queryKey: ["relation", fromUserId],
         });
       },
       onError: (error) => {
@@ -123,7 +110,7 @@ const useManageFriend = () => {
           // 친구 요청이 취소되어 발생한 에러라면 관련된 값 다시 불러오도록
           queryClient.invalidateQueries({ queryKey: ["friendRequest"] });
           queryClient.invalidateQueries({
-            queryKey: ["relation", error.to, error.from],
+            queryKey: ["relation", error.from],
           });
         }
         console.error("친구 요청 수락 실패:", error);
@@ -137,14 +124,14 @@ const useManageFriend = () => {
   // 친구 요청 거절
   const useRefuseRequest = () => {
     const { mutate, isPending } = useMutation<RefuseProps, Error, RefuseProps>({
-      mutationFn: async ({ requestId, fromUserId, toUserId }) => {
+      mutationFn: async ({ requestId, fromUserId }) => {
         await deleteFriendRequest(requestId);
-        return { requestId, fromUserId, toUserId };
+        return { requestId, fromUserId };
       },
-      onSuccess: ({ fromUserId, toUserId }) => {
+      onSuccess: ({ fromUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", fromUserId, toUserId],
+          queryKey: ["relation", fromUserId],
         });
       },
       onError: (error) => {
@@ -162,18 +149,15 @@ const useManageFriend = () => {
       Error,
       UnfriendProps
     >({
-      mutationFn: async ({ fromUserId, toUserId }) => {
-        await Promise.all([
-          deleteFriendRequestWithUserId(fromUserId, toUserId),
-          deleteFriendRequestWithUserId(toUserId, fromUserId),
-        ]);
-        return { fromUserId, toUserId };
+      mutationFn: async ({ toUserId }) => {
+        await unfriend(toUserId);
+        return { toUserId };
       },
-      onSuccess: ({ fromUserId, toUserId }) => {
+      onSuccess: ({ toUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({
-          queryKey: ["relation", fromUserId, toUserId],
+          queryKey: ["relation", toUserId],
         });
       },
       onError: (error) => {
@@ -187,22 +171,17 @@ const useManageFriend = () => {
   // 친구 콕 찌르기
   const usePoke = () => {
     const { mutate } = useMutation<PokeProps, Error, PokeProps>({
-      mutationFn: async ({ user, friend }) => {
-        if (!user) throw new Error("계정 정보가 없습니다.");
-
+      mutationFn: async ({ friend }) => {
         await createNotification({
-          from: user,
           to: friend.id,
           type: NOTIFICATION_TYPE.POKE,
         });
 
-        return { user, friend };
+        return { friend };
       },
-      onSuccess: ({ user, friend }) => {
-        if (!user) return;
-
+      onSuccess: ({ friend }) => {
         queryClient.invalidateQueries({
-          queryKey: ["poke", user.id, friend.id],
+          queryKey: ["poke", friend.id],
         });
         showToast(
           "success",

@@ -24,10 +24,9 @@ export default function MyPage() {
     isLoading: isPostsLoading,
     isError: isPostsError,
   } = useFetchData(
-    ["userPosts", currentUser?.id],
-    () => getMyPosts(currentUser?.id!),
+    ["userPosts"],
+    () => getMyPosts(),
     "게시물을 불러올 수 없습니다.",
-    !!currentUser?.id,
   );
 
   if (isUserLoading || isPostsLoading) {

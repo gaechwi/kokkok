@@ -53,7 +53,7 @@ const Profile = () => {
       return;
     }
 
-    await updateMyProfile(currentUser?.id!, {
+    await updateMyProfile({
       ...profileInput,
       avatarUrl: profileInput.avatarUrl
         ? { uri: profileInput.avatarUrl, width: 500, height: 500 }
