@@ -27,10 +27,14 @@ export default function Notification() {
   useFocusEffect(() => {
     // 알림 페이지 방문 시간 업데이트하고, 그에 따라 유저 알림 정보 다시 가져오도록 함
     const handleUpdate = async () => {
-      await updateNotificationCheck();
-      queryClient.invalidateQueries({
-        queryKey: ["notificationCheckedAt"],
-      });
+      try {
+        await updateNotificationCheck();
+        queryClient.invalidateQueries({
+          queryKey: ["notificationCheckedAt"],
+        });
+      } catch (error) {
+        console.error("알림 체크 업데이트 실패:", error);
+      }
     };
 
     handleUpdate();
