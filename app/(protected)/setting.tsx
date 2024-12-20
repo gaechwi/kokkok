@@ -91,11 +91,8 @@ export default function Setting() {
 
       setIsLoading(false);
     }
-    queryClient.clear();
 
     setIsSignOutModalVisible(false);
-    // 아마 세션 여부에 따른 리다이렉트 되면 자동 이동 될지도
-    router.replace("/sign-in");
     showToast("success", "로그아웃이 완료되었습니다!");
   };
 
