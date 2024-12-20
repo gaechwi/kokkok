@@ -9,7 +9,6 @@ import {
 } from "react-native";
 
 import CalendarNavigator from "@/components/CalendarNavigator";
-import LoadingScreen from "@/components/LoadingScreen";
 import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
@@ -100,7 +99,7 @@ export default function History() {
         />
 
         {isUserLoading || isHistoriesLoading ? (
-          <LoadingScreen />
+          <CalendarSkeleton />
         ) : (
           <WorkoutCalendar
             startingDate={userCreatedDate}
@@ -146,6 +145,32 @@ function FaceExplanation() {
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+function CalendarSkeleton() {
+  return (
+    <View className="mt-[24px] w-full animate-pulse gap-[10px] px-[3px]">
+      <View className="h-[15px] rounded-[5px] bg-gray-20" />
+      {[...Array(5)].map((_, index) => (
+        <View
+          className="gap-[12px]"
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+          key={`skeleton-row-${index}`}
+        >
+          <View className="h-[10px] rounded-[5px] bg-gray-20" />
+          <View className="flex-row justify-between">
+            {[...Array(7)].map((_, index) => (
+              <View
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                key={`skeleton-item-${index}`}
+                className="h-[30px] w-[30px] rounded-full bg-gray-20"
+              />
+            ))}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
