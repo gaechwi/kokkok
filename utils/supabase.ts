@@ -593,7 +593,7 @@ export async function deletePost(postId: number) {
     // 게시글 작성자인지 확인
     const { data: post, error: postError } = await supabase
       .from("post")
-      .select("userId")
+      .select("userId, images")
       .eq("id", postId)
       .single();
 
@@ -604,8 +604,28 @@ export async function deletePost(postId: number) {
       throw new Error("게시글 작성자만 삭제할 수 있습니다.");
     }
 
+    // 이미지 삭제
+    if (post.images && post.images.length > 0) {
+      // URL에서 파일 경로 추출
+      const filePaths = post.images.map((imageUrl: string) => {
+        const url = new URL(imageUrl);
+        return url.pathname.split("/").pop(); // 파일명 추출
+      });
+
+      // 스토리지에서 이미지 삭제
+      const { error: storageError } = await supabase.storage
+        .from("images")
+        .remove(filePaths.filter((path): path is string => path !== undefined));
+
+      if (storageError) {
+        console.error("이미지 삭제 중 오류 발생:", storageError);
+      }
+    }
+
+    // 게시글 삭제
     await supabase.from("post").delete().eq("id", postId);
 
+    // 관련 알림 삭제
     await supabase
       .from("notification")
       .delete()
