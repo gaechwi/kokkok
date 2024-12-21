@@ -19,6 +19,7 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -215,7 +216,7 @@ export default function Upload() {
     aspect: [1, 1],
     quality: 0.5,
     exif: false,
-    legacy: true,
+    legacy: Platform.OS === "android",
   };
 
   const pickImage = async () => {
