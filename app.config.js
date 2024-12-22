@@ -9,9 +9,9 @@ module.exports = {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      image: "./assets/splash.png",
+      resizeMode: "cover",
+      backgroundColor: "#885FF1",
     },
     ios: {
       supportsTablet: true,
@@ -27,7 +27,6 @@ module.exports = {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff",
       },
       googleServicesFile: "./google-services.json",
       package: "com.epilogue.kokkok",
