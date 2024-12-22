@@ -28,6 +28,35 @@ import {
 import { FlatList } from "react-native";
 import CustomModal from "../Modal";
 
+const ReplySkeleton = () => (
+  <View className="mb-4 animate-pulse">
+    {/* header */}
+    <View className="flex-row items-center justify-between pb-[13px]">
+      <View className="flex-1 flex-row items-center gap-2">
+        <View className="size-12 rounded-full bg-gray-25" />
+        <View className="max-w-[80%] gap-1">
+          <View className="h-[16px] w-20 rounded-md bg-gray-25" />
+          <View className="h-[10px] w-12 rounded-md bg-gray-25" />
+        </View>
+      </View>
+      <View className="flex-row items-center gap-1">
+        <View className="size-6 rounded-full bg-gray-25" />
+        <View className="size-6 rounded-full bg-gray-25" />
+      </View>
+    </View>
+
+    {/* contents */}
+    <View className="pb-[13px]">
+      <View className="h-[18px] w-[90%] rounded-md bg-gray-25" />
+    </View>
+
+    {/* reply button */}
+    <View className="pb-[5px]">
+      <View className="h-[14px] w-16 rounded-md bg-gray-25" />
+    </View>
+  </View>
+);
+
 interface CommentItemProps {
   id: number;
   postId: number;
@@ -93,6 +122,7 @@ export default function CommentItem({
     fetchNextPage: replyFetchNextPage,
     hasNextPage: replyHasNextPage,
     isFetchingNextPage: isReplyFetchingNextPage,
+    isFetching: isReplyFetching,
   } = useInfiniteQuery({
     queryKey: ["replies", id],
     queryFn: ({ pageParam = 0 }) =>
@@ -324,64 +354,70 @@ export default function CommentItem({
       {/* reply */}
       {!!totalReplies && totalReplies > 0 && (
         <View className="pl-4">
-          {!!replyData && (
-            <FlatList
-              className="gap-2"
-              data={replyData.pages.flatMap((page) => page.replies)}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item, index }) => (
-                <CommentItem
-                  id={item.id}
-                  postId={postId}
-                  contents={item.contents}
-                  author={{
-                    id: item.userData.id,
-                    username: item.userData.username,
-                    avatarUrl: item.userData.avatarUrl,
-                  }}
-                  liked={item.isLiked}
-                  likedAvatars={item.likedAvatars}
-                  createdAt={item.createdAt}
-                  parentsCommentId={item.parentsCommentId}
-                  replyTo={item.replyTo}
-                  onReply={onReply}
-                  isReply={true}
-                  onCommentsClose={onCommentsClose}
-                  onLikedAuthorPress={onLikedAuthorPress}
-                  onDeletedPress={onDeletedPress}
+          {isReplyFetching ? (
+            <ReplySkeleton />
+          ) : (
+            <>
+              {!!replyData && (
+                <FlatList
+                  className="gap-2"
+                  data={replyData.pages.flatMap((page) => page.replies)}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item, index }) => (
+                    <CommentItem
+                      id={item.id}
+                      postId={postId}
+                      contents={item.contents}
+                      author={{
+                        id: item.userData.id,
+                        username: item.userData.username,
+                        avatarUrl: item.userData.avatarUrl,
+                      }}
+                      liked={item.isLiked}
+                      likedAvatars={item.likedAvatars}
+                      createdAt={item.createdAt}
+                      parentsCommentId={item.parentsCommentId}
+                      replyTo={item.replyTo}
+                      onReply={onReply}
+                      isReply={true}
+                      onCommentsClose={onCommentsClose}
+                      onLikedAuthorPress={onLikedAuthorPress}
+                      onDeletedPress={onDeletedPress}
+                    />
+                  )}
+                  ListFooterComponent={() =>
+                    isReplyFetchingNextPage ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : null
+                  }
                 />
               )}
-              ListFooterComponent={() =>
-                isReplyFetchingNextPage ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : null
-              }
-            />
-          )}
 
-          {(totalReplies > 1 || replyHasNextPage) &&
-            !!(
-              totalReplies -
-              (replyData?.pages.reduce(
-                (acc, page) => acc + page.replies.length,
-                0,
-              ) ?? 0)
-            ) && (
-              <TouchableOpacity
-                onPress={loadMoreReply}
-                className="w-full flex-1 items-center justify-center"
-              >
-                <Text className="font-pregular text-[11px] text-gray-60">
-                  + 답글{" "}
-                  {totalReplies -
-                    (replyData?.pages.reduce(
-                      (acc, page) => acc + page.replies.length,
-                      0,
-                    ) ?? 0)}
-                  개 더보기
-                </Text>
-              </TouchableOpacity>
-            )}
+              {(totalReplies > 1 || replyHasNextPage) &&
+                !!(
+                  totalReplies -
+                  (replyData?.pages.reduce(
+                    (acc, page) => acc + page.replies.length,
+                    0,
+                  ) ?? 0)
+                ) && (
+                  <TouchableOpacity
+                    onPress={loadMoreReply}
+                    className="w-full flex-1 items-center justify-center"
+                  >
+                    <Text className="font-pregular text-[11px] text-gray-60">
+                      + 답글{" "}
+                      {totalReplies -
+                        (replyData?.pages.reduce(
+                          (acc, page) => acc + page.replies.length,
+                          0,
+                        ) ?? 0)}
+                      개 더보기
+                    </Text>
+                  </TouchableOpacity>
+                )}
+            </>
+          )}
         </View>
       )}
 
