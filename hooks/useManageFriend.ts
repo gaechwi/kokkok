@@ -169,7 +169,7 @@ const useManageFriend = () => {
   };
 
   // 친구 콕 찌르기
-  const usePoke = () => {
+  const usePoke = ({ onError }: { onError?: () => void }) => {
     const { mutate } = useMutation<PokeProps, Error, PokeProps>({
       mutationFn: async ({ friend }) => {
         await createNotification({
@@ -191,6 +191,7 @@ const useManageFriend = () => {
       onError: (error) => {
         console.error("콕 찌르기 실패:", error);
         showToast("fail", "콕 찌르기에 실패했어요!");
+        onError?.();
       },
     });
 

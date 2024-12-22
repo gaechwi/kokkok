@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import icons from "@/constants/icons";
@@ -59,6 +59,8 @@ const FriendProfile = ({
 /* Components */
 
 export function FriendItem({ friend }: FriendItemProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const { data: lastPokeCreatedAt } = useFetchData<string>(
     ["poke", friend.id],
     () => getLatestStabForFriend(friend.id),
@@ -66,13 +68,18 @@ export function FriendItem({ friend }: FriendItemProps) {
   );
 
   const { timeLeft, start: timerStart } = useTimerWithStartAndDuration();
-  const isPokeDisable = !!friend.status || !!timeLeft;
+  const isPokeDisable = !!friend.status || !!timeLeft || isProcessing;
 
   const { usePoke } = useManageFriend();
-  const { mutate: handlePoke } = usePoke();
+  const { mutate: handlePoke } = usePoke({
+    onError: () => setIsProcessing(false),
+  });
 
   useEffect(() => {
-    if (lastPokeCreatedAt) timerStart(Date.parse(lastPokeCreatedAt), POKE_TIME);
+    if (lastPokeCreatedAt) {
+      timerStart(Date.parse(lastPokeCreatedAt), POKE_TIME);
+      setIsProcessing(false);
+    }
   }, [lastPokeCreatedAt, timerStart]);
 
   return (
@@ -84,7 +91,10 @@ export function FriendItem({ friend }: FriendItemProps) {
         disabled={isPokeDisable}
         accessibilityLabel="친구 찌르기"
         accessibilityHint="이 버튼을 누르면 친구에게 찌르기 알람을 보냅니다"
-        onPress={() => handlePoke({ friend })}
+        onPress={() => {
+          setIsProcessing(true);
+          handlePoke({ friend });
+        }}
       >
         {friend.status === "done" ? (
           <View className="flex-row items-center justify-center">
