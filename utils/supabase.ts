@@ -12,7 +12,6 @@ import {
   RELATION_TYPE,
   type RelationType,
   type RequestInfo,
-  type StatusInfo,
 } from "@/types/Friend.interface";
 import type {
   NotificationResponse,
@@ -24,7 +23,6 @@ import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
-import { formatDate } from "./formatDate";
 
 class AuthError extends Error {}
 
@@ -911,44 +909,54 @@ export async function deleteComment(commentId: number) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(keyword = ""): Promise<UserProfile[]> {
-  const userId = await getUserIdFromStorage();
+export function getFriends(keyword = "") {
+  return async ({
+    page = 0,
+    limit = 12,
+  }): Promise<InfiniteResponse<UserProfile>> => {
+    const { data, error } = await supabase.rpc("get_friend_sort_by_status", {
+      keyword,
+      start_idx: page * limit,
+      num: limit,
+    });
 
-  const { data, error } = await supabase
-    .from("friendRequest")
-    .select(
-      "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
-    )
-    .eq("from", userId)
-    .ilike("to.username", `%${keyword}%`)
-    .eq("isAccepted", true);
+    if (error) throw error;
+    if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  if (error) throw error;
-  if (!data) throw new Error("친구를 불러올 수 없습니다.");
+    const count = data?.[0]?.totalCount || 0;
 
-  return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
+    return {
+      data,
+      total: count ?? data.length,
+      hasNext: count ? (page + 1) * limit < count : false,
+      nextPage: page + 1,
+    };
+  };
 }
 
 // keyword 기반해 나와 친구 요청 없는 유저 검색
-export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
-  const userId = await getUserIdFromStorage();
+export function getNonFriends(keyword: string) {
+  return async ({ page = 0, limit = 12 }) => {
+    const userId = await getUserIdFromStorage();
 
-  const { data, error } = await supabase.rpc("get_non_friends", {
-    user_id: userId,
-    keyword,
-    start_idx: offset,
-    num: limit,
-  });
+    const { data, error } = await supabase.rpc("get_non_friends", {
+      user_id: userId,
+      keyword,
+      start_idx: page * limit,
+      num: limit,
+    });
 
-  if (error) throw error;
-  if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
+    if (error) throw error;
+    if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
 
-  const count = data?.[0]?.totalCount || 0;
+    const count = data?.[0]?.totalCount || 0;
 
-  return {
-    data,
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
+    return {
+      data,
+      total: count ?? data.length,
+      hasNext: count ? (page + 1) * limit < count : false,
+      nextPage: page + 1,
+    };
   };
 }
 
@@ -976,24 +984,6 @@ export async function getRelationship(friendId: string): Promise<RelationType> {
     내 요청: ${data.asking}
     상대방 요청: ${data.asked}`);
   throw new Error("친구 관계 확인에 오류가 발생했습니다");
-}
-
-// 모든 친구의 운동 상태 조회
-export async function getFriendsStatus(
-  friendIds: string[],
-): Promise<StatusInfo[]> {
-  if (!friendIds.length) return [];
-
-  const { data, error } = await supabase
-    .from("workoutHistory")
-    .select("userId, status")
-    .in("userId", friendIds)
-    .eq("date", formatDate(new Date()));
-
-  if (error) throw error;
-  if (!data) return [];
-
-  return data;
 }
 
 // 친구요청 조회

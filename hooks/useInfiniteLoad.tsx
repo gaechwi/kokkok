@@ -25,7 +25,7 @@ export default function useInfiniteLoad<T>(
     refetch,
   } = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam = 0 }) => queryFn({ page: pageParam, limit: limit }),
+    queryFn: ({ pageParam = 0 }) => queryFn({ page: pageParam, limit }),
     getNextPageParam: (lastPage) =>
       lastPage.hasNext ? lastPage.nextPage : undefined,
     refetchOnWindowFocus: false,

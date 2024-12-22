@@ -20,13 +20,13 @@ export default function Request() {
 
   // 유저의 친구 요청 정보 조회
   const {
-    data: requests,
+    data: requestData,
     isLoading,
     isFetchingNextPage,
     error,
     loadMore,
   } = useInfiniteLoad(getFriendRequests, ["friendRequests"], LIMIT);
-  const hasRequests = !!requests?.pages[0].total;
+  const hasRequests = !!requestData?.pages[0].total;
 
   // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침
   useFocusEffect(() => {
@@ -89,7 +89,7 @@ export default function Request() {
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
         className="w-full grow px-8"
-        data={hasRequests ? requests.pages.flatMap((page) => page.data) : []}
+        data={hasRequests ? requestData.pages.flatMap((page) => page.data) : []}
         keyExtractor={(request) => String(request.requestId)}
         renderItem={({ item: request }) => (
           <FriendRequest {...request} isLoading={isLoading} />

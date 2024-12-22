@@ -2,25 +2,29 @@ import ErrorScreen from "@/components/ErrorScreen";
 import { NonFriendItem } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import { SearchLayout } from "@/components/SearchLayout";
-import useFetchData from "@/hooks/useFetchData";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { debounce } from "@/utils/DelayManager";
 import { getNonFriends } from "@/utils/supabase";
 import { useState } from "react";
 
+const LIMIT = 12;
+
 export default function UserSearch() {
   const [keyword, setKeyword] = useState("");
 
-  // 친구가 아닌 유저들 검색 키워드로 정보 조회
+  // 유저의 친구 요청 정보 조회
   const {
     data: userData,
     isLoading,
+    isFetchingNextPage,
     error,
-  } = useFetchData(
+    loadMore,
+  } = useInfiniteLoad(
+    getNonFriends(keyword),
     ["search", "users", keyword],
-    () => getNonFriends(keyword),
-    "검색한 유저 조회에 실패했습니다.",
-    !!keyword,
+    LIMIT,
   );
+  const hasData = !!userData?.pages[0].total;
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
@@ -54,8 +58,10 @@ export default function UserSearch() {
 
   return (
     <SearchLayout
-      data={userData?.data || []}
+      data={hasData ? userData.pages.flatMap((page) => page.data) : []}
       onChangeKeyword={handleKeywordChange}
+      loadMore={loadMore}
+      isFetchingNextPage={isFetchingNextPage}
       renderItem={({ item: user }) => <NonFriendItem user={user} />}
       emptyComponent={
         keyword ? (
