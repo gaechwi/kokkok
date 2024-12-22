@@ -183,32 +183,26 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
 
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
-  const isAllSwitchInit = useSharedValue(true);
   const SWITCH_CONFIG = {
     like: {
       title: "좋아요 알림",
       value: useSharedValue(granted.includes("like")),
-      isInit: useSharedValue(true),
     },
     comment: {
       title: "댓글 알림",
       value: useSharedValue(granted.includes("comment")),
-      isInit: useSharedValue(true),
     },
     mention: {
       title: "멘션 알림",
       value: useSharedValue(granted.includes("mention")),
-      isInit: useSharedValue(true),
     },
     poke: {
       title: "콕찌르기 알림",
       value: useSharedValue(granted.includes("poke")),
-      isInit: useSharedValue(true),
     },
     friend: {
       title: "친구요청 알림",
       value: useSharedValue(granted.includes("friend")),
-      isInit: useSharedValue(true),
     },
   } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
@@ -244,14 +238,11 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
     if (!(await checkPermission())) return;
 
     const prevAllSwitch = allSwitch.value;
-    for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
-      // 개별 스위치 업데이트
+    // 스위치 업데이트
+    for (const { value } of Object.values(SWITCH_CONFIG)) {
       value.value = !prevAllSwitch;
-      isInit.value = false;
     }
-    // 최상단 스위치 업데이트
     allSwitch.value = !prevAllSwitch;
-    isAllSwitchInit.value = false;
 
     // DB에 변경사항 반영
     const newGranted = prevAllSwitch
@@ -265,25 +256,17 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
     if (!(await checkPermission())) return;
 
     const prevValue = SWITCH_CONFIG[type].value.value;
-
-    // 최상단 스위치 업데이트
+    // 스위치 업데이트
     if (!prevValue) {
-      // 하나라도 true면 allSwitch도 true
       allSwitch.value = true;
-      isAllSwitchInit.value = false;
     } else if (
       Object.entries(SWITCH_CONFIG).every(
         ([key, { value }]) => key === type || !value.value,
       )
     ) {
-      // 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
       allSwitch.value = false;
-      isAllSwitchInit.value = false;
     }
-
-    // 개별 스위치 업데이트
     SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
-    SWITCH_CONFIG[type].isInit.value = false;
 
     // DB에 변경사항 반영
     const typesToUpdate = NOTIFICATION_TYPE_GROUPS[type];
@@ -297,11 +280,7 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
     <View className="gap-5 bg-white px-6 py-[22px]">
       <View className="flex-row items-center justify-between ">
         <Text className="heading-2 text-gray-80">알림 설정</Text>
-        <CustomSwitch
-          value={allSwitch}
-          isInit={isAllSwitchInit}
-          onPress={handleAllSwitchPress}
-        />
+        <CustomSwitch value={allSwitch} onPress={handleAllSwitchPress} />
       </View>
       {/* 개별 스위치 리스트 */}
       <View className="gap-5 pl-2">
@@ -312,7 +291,6 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
             </Text>
             <CustomSwitch
               value={SWITCH_CONFIG[type as SwitchType].value}
-              isInit={SWITCH_CONFIG[type as SwitchType].isInit}
               onPress={() => handleSwitchPress(type as SwitchType)}
             />
           </View>
