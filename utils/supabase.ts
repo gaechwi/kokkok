@@ -13,11 +13,12 @@ import {
   type RequestResponse,
   type StatusInfo,
 } from "@/types/Friend.interface";
-import type {
-  NotificationResponse,
-  NotificationType,
-  PushMessage,
-  PushSetting,
+import {
+  NOTIFICATION_TYPE,
+  type NotificationResponse,
+  type NotificationType,
+  type PushMessage,
+  type PushSetting,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
 import type { User, UserProfile } from "@/types/User.interface";
@@ -1404,25 +1405,29 @@ export async function getUserPushSetting(
 
 // 내 푸시 알림 설정 가져오기
 export async function getPushSetting() {
-  const userId = await getUserIdFromStorage();
-  return await getUserPushSetting(userId);
+  try {
+    const userId = await getUserIdFromStorage();
+    if (!userId) return null;
+
+    return await getUserPushSetting(userId);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }
 
-// 푸시 알림 설정 추가
-export async function createPushSetting({
-  token,
-  grantedNotifications,
-}: {
-  token: string | null;
-  grantedNotifications: NotificationType[];
-}) {
+// 푸시 알림 설정 추가 (새로 권한설정 on -> 모든 권한 포함)
+export async function createPushSetting({ token }: { token: string }) {
   const userId = await getUserIdFromStorage();
-  const { error } = await supabase
-    .from("pushToken")
-    .upsert({ userId, token, grantedNotifications });
+
+  const { error } = await supabase.from("pushToken").insert({
+    userId,
+    token,
+    grantedNotifications: Object.values(NOTIFICATION_TYPE),
+  });
 
   if (error) {
-    console.error("푸시 알림 정보 저장 실패:", error);
+    console.error("푸시 알림 정보 생성 실패:", error);
   }
 }
 
@@ -1430,8 +1435,21 @@ export async function createPushSetting({
 export async function updatePushSetting({
   token,
   grantedNotifications,
-}: { token?: string | null; grantedNotifications?: NotificationType[] }) {
+}: { token?: string; grantedNotifications?: NotificationType[] }) {
+  if (!token && !grantedNotifications)
+    throw new Error("업데이트하려는 인자를 입력해주세요");
+
   const userId = await getUserIdFromStorage();
+
+  // 토큰만 업데이트 하려고 할 때
+  if (token && !grantedNotifications) {
+    const existingSetting = await getPushSetting();
+    // 기존에 저장된 것 없으면 새로 추가
+    if (!existingSetting) {
+      await createPushSetting({ token });
+      return;
+    }
+  }
 
   const { error } = await supabase
     .from("pushToken")
@@ -1443,12 +1461,21 @@ export async function updatePushSetting({
 
   if (error) {
     console.error("푸시 알림 정보 저장 실패:", error);
-    throw new Error("푸시 알림 정보 저장에 실패했습니다.");
   }
 }
 
-export async function resetPushSetting() {
-  await updatePushSetting({ token: null, grantedNotifications: [] });
+// 푸시 알림 설정 삭제
+export async function deletePushSetting() {
+  const userId = await getUserIdFromStorage();
+
+  const { error } = await supabase
+    .from("pushToken")
+    .delete()
+    .eq("userId", userId);
+
+  if (error) {
+    console.error("푸시 알림 정보 삭제 실패:", error);
+  }
 }
 
 // ============================================

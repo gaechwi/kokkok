@@ -266,21 +266,21 @@ export type Database = {
           createdAt: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id: number;
-          token: string | null;
+          token: string;
           userId: string;
         };
         Insert: {
           createdAt?: string;
           grantedNotifications: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          token: string | null;
+          token: string;
           userId: string;
         };
         Update: {
           createdAt?: string;
           grantedNotifications?: Database["public"]["Enums"]["notificationtype"][];
           id?: number;
-          token?: string | null;
+          token?: string;
           userId?: string;
         };
         Relationships: [

@@ -1,6 +1,6 @@
 import CustomSwitch from "@/components/CustomSwitch";
 import LoadingScreen from "@/components/LoadingScreen";
-import { OneButtonModal, TwoButtonModal } from "@/components/Modal";
+import { TwoButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -10,7 +10,7 @@ import {
   type NotificationType,
   type PushSetting,
 } from "@/types/Notification.interface";
-import { isTokenValid } from "@/utils/pushTokenManager";
+import { isTokenValid, updatePushToken } from "@/utils/pushTokenManager";
 import {
   deleteUser,
   getPushSetting,
@@ -20,7 +20,14 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,7 +41,6 @@ const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
 
 export default function Setting() {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
@@ -69,9 +75,7 @@ export default function Setting() {
   const handleSignOut = async () => {
     setIsLoading(true);
 
-    await updatePushSetting({
-      token: null,
-    });
+    await updatePushSetting({ token: "logout" });
     await supabase.auth.signOut();
 
     setIsLoading(false);
@@ -179,7 +183,6 @@ export default function Setting() {
 
 function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
-  const [isSettingModalVisible, setIsSettingModalVisible] = useState(false);
 
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
@@ -216,9 +219,27 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
   };
 
   // 기존 토큰이 유효하지 않으면 권한 설정 이동 모달 띄우기
-  const checkPermission = () => {
+  const checkPermission = async () => {
     if (isTokenValid(setting?.token)) return true;
-    setIsSettingModalVisible(true);
+
+    // 권한 요청
+    const granted = await updatePushToken({
+      existingToken: setting?.token,
+      handleUpdate: () => {
+        queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+      },
+    });
+    if (!granted) {
+      Alert.alert(
+        "알림 권한 필요",
+        "푸시알림을 받기 위해 알림 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "설정으로 이동", onPress: openSetting },
+        ],
+      );
+    }
+    return granted;
   };
 
   // grantedNotification의 변경사항을 서버에 반영
@@ -295,18 +316,6 @@ function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
             />
           </View>
         ))}
-      </View>
-
-      <View className="flex-1">
-        <OneButtonModal
-          buttonText="설정으로 이동"
-          contents={"알림 권한을 허용해주세요"}
-          isVisible={isSettingModalVisible}
-          onClose={() => setIsSettingModalVisible(false)}
-          onPress={openSetting}
-          emoji="sad"
-          key="upload-info-modal"
-        />
       </View>
     </View>
   );
