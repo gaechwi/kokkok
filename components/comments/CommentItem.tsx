@@ -17,14 +17,7 @@ import {
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native";
 import CustomModal from "../Modal";
 
@@ -354,70 +347,64 @@ export default function CommentItem({
       {/* reply */}
       {!!totalReplies && totalReplies > 0 && (
         <View className="pl-4">
-          {isReplyFetching ? (
-            <ReplySkeleton />
-          ) : (
-            <>
-              {!!replyData && (
-                <FlatList
-                  className="gap-2"
-                  data={replyData.pages.flatMap((page) => page.replies)}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item, index }) => (
-                    <CommentItem
-                      id={item.id}
-                      postId={postId}
-                      contents={item.contents}
-                      author={{
-                        id: item.userData.id,
-                        username: item.userData.username,
-                        avatarUrl: item.userData.avatarUrl,
-                      }}
-                      liked={item.isLiked}
-                      likedAvatars={item.likedAvatars}
-                      createdAt={item.createdAt}
-                      parentsCommentId={item.parentsCommentId}
-                      replyTo={item.replyTo}
-                      onReply={onReply}
-                      isReply={true}
-                      onCommentsClose={onCommentsClose}
-                      onLikedAuthorPress={onLikedAuthorPress}
-                      onDeletedPress={onDeletedPress}
-                    />
-                  )}
-                  ListFooterComponent={() =>
-                    isReplyFetchingNextPage ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : null
-                  }
+          {!!replyData && (
+            <FlatList
+              className="gap-2"
+              data={replyData.pages.flatMap((page) => page.replies)}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <CommentItem
+                  id={item.id}
+                  postId={postId}
+                  contents={item.contents}
+                  author={{
+                    id: item.userData.id,
+                    username: item.userData.username,
+                    avatarUrl: item.userData.avatarUrl,
+                  }}
+                  liked={item.isLiked}
+                  likedAvatars={item.likedAvatars}
+                  createdAt={item.createdAt}
+                  parentsCommentId={item.parentsCommentId}
+                  replyTo={item.replyTo}
+                  onReply={onReply}
+                  isReply={true}
+                  onCommentsClose={onCommentsClose}
+                  onLikedAuthorPress={onLikedAuthorPress}
+                  onDeletedPress={onDeletedPress}
                 />
               )}
-
-              {(totalReplies > 1 || replyHasNextPage) &&
-                !!(
-                  totalReplies -
-                  (replyData?.pages.reduce(
-                    (acc, page) => acc + page.replies.length,
-                    0,
-                  ) ?? 0)
-                ) && (
-                  <TouchableOpacity
-                    onPress={loadMoreReply}
-                    className="w-full flex-1 items-center justify-center"
-                  >
-                    <Text className="font-pregular text-[11px] text-gray-60">
-                      + 답글{" "}
-                      {totalReplies -
-                        (replyData?.pages.reduce(
-                          (acc, page) => acc + page.replies.length,
-                          0,
-                        ) ?? 0)}
-                      개 더보기
-                    </Text>
-                  </TouchableOpacity>
-                )}
-            </>
+              ListFooterComponent={() =>
+                isReplyFetchingNextPage ? <ReplySkeleton /> : null
+              }
+            />
           )}
+
+          {!replyData && isReplyFetching && <ReplySkeleton />}
+
+          {(totalReplies > 1 || replyHasNextPage) &&
+            !!(
+              totalReplies -
+              (replyData?.pages.reduce(
+                (acc, page) => acc + page.replies.length,
+                0,
+              ) ?? 0)
+            ) && (
+              <TouchableOpacity
+                onPress={loadMoreReply}
+                className="w-full flex-1 items-center justify-center"
+              >
+                <Text className="font-pregular text-[11px] text-gray-60">
+                  + 답글{" "}
+                  {totalReplies -
+                    (replyData?.pages.reduce(
+                      (acc, page) => acc + page.replies.length,
+                      0,
+                    ) ?? 0)}
+                  개 더보기
+                </Text>
+              </TouchableOpacity>
+            )}
         </View>
       )}
 
