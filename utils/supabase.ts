@@ -7,10 +7,11 @@ import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 
+import type { InfiniteResponse } from "@/hooks/useInfiniteLoad";
 import {
   RELATION_TYPE,
   type RelationType,
-  type RequestResponse,
+  type RequestInfo,
   type StatusInfo,
 } from "@/types/Friend.interface";
 import type {
@@ -996,10 +997,10 @@ export async function getFriendsStatus(
 }
 
 // 친구요청 조회
-export async function getFriendRequests(
-  offset = 0,
+export async function getFriendRequests({
+  page = 0,
   limit = 12,
-): Promise<RequestResponse> {
+}): Promise<InfiniteResponse<RequestInfo>> {
   const userId = await getUserIdFromStorage();
 
   const { data, error, count } = await supabase
@@ -1015,7 +1016,7 @@ export async function getFriendRequests(
     .eq("to", userId)
     .is("isAccepted", null)
     .order("createdAt", { ascending: false })
-    .range(offset, offset + limit - 1);
+    .range(page * limit, (page + 1) * limit - 1);
 
   if (error) throw error;
   if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
@@ -1026,8 +1027,9 @@ export async function getFriendRequests(
       toUser: request.to as UserProfile,
       fromUser: request.from as UserProfile,
     })),
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
+    total: count ?? data.length,
+    hasNext: count ? (page + 1) * limit < count : false,
+    nextPage: page + 1,
   };
 }
 

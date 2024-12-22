@@ -108,7 +108,7 @@ const useManageFriend = () => {
       onError: (error) => {
         if (error instanceof NoRequestError) {
           // 친구 요청이 취소되어 발생한 에러라면 관련된 값 다시 불러오도록
-          queryClient.invalidateQueries({ queryKey: ["friendRequest"] });
+          queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
           queryClient.invalidateQueries({
             queryKey: ["relation", error.from],
           });

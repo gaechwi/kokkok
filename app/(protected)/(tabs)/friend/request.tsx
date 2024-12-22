@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import { FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import ErrorScreen from "@/components/ErrorScreen";
 import { FriendRequest } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
-import useFetchData from "@/hooks/useFetchData";
-import type { RequestResponse } from "@/types/Friend.interface";
+import colors from "@/constants/colors";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { getFriendRequests, supabase } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
-const OFFSET = 0;
 const LIMIT = 12;
 
 export default function Request() {
@@ -23,16 +22,17 @@ export default function Request() {
   const {
     data: requests,
     isLoading,
+    isFetchingNextPage,
     error,
-  } = useFetchData<RequestResponse>(
-    ["friendRequests", OFFSET],
-    () => getFriendRequests(),
-    "친구 요청 조회에 실패했습니다.",
-  );
+    loadMore,
+  } = useInfiniteLoad(getFriendRequests, ["friendRequests"], LIMIT);
+  const hasRequests = !!requests?.pages[0].total;
 
   // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침
   useFocusEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    if (!isFetchingNextPage) {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    }
   });
 
   // 유저 아이디 불러오기
@@ -81,22 +81,33 @@ export default function Request() {
   }
 
   // 로딩 스크린
-  if (isLoading || !requests) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
-        data={requests.data}
+        className="w-full grow px-8"
+        data={hasRequests ? requests.pages.flatMap((page) => page.data) : []}
         keyExtractor={(request) => String(request.requestId)}
         renderItem={({ item: request }) => (
           <FriendRequest {...request} isLoading={isLoading} />
         )}
-        className="w-full grow px-8"
-        contentContainerStyle={requests.data.length ? {} : { flex: 1 }}
+        onEndReached={loadMore}
+        contentContainerStyle={hasRequests ? {} : { flex: 1 }}
         ListHeaderComponent={<View className="h-2" />}
-        ListFooterComponent={<View className="h-4" />}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator
+              size="large"
+              className="py-4"
+              color={colors.primary}
+            />
+          ) : (
+            <View className="h-4" />
+          )
+        }
         ListEmptyComponent={
           <ErrorScreen errorMessage="친구 요청이 없습니다." />
         }
