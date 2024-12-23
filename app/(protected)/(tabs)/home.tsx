@@ -7,13 +7,10 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import useRefresh from "@/hooks/useRefresh";
 import { deletePost, getPostLikes, getPosts } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
@@ -29,11 +26,11 @@ import {
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const LIMIT = 10;
 const { height: deviceHeight } = Dimensions.get("window");
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -74,32 +71,14 @@ export default function Home() {
     setSelectedAuthorId(null);
   }, []);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: ["posts"],
-      queryFn: ({ pageParam = 0 }) => getPosts({ page: pageParam, limit: 10 }),
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNext ? lastPage.nextPage : undefined,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      placeholderData: keepPreviousData,
-      initialPageParam: 0,
-    });
+  // post 조회
+  const { data, isFetchingNextPage, refetch, loadMore } = useInfiniteLoad({
+    queryFn: getPosts,
+    queryKey: ["posts"],
+    limit: LIMIT,
+  });
 
-  const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh } = useRefresh({ refetch });
 
   const deletePostMutation = useMutation({
     mutationFn: async () => {
@@ -131,7 +110,7 @@ export default function Home() {
   return (
     <SafeAreaView edges={[]} className="flex-1 items-center justify-center">
       <FlatList
-        data={data?.pages.flatMap((page) => page.posts) ?? []}
+        data={data?.pages.flatMap((page) => page.data) ?? []}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ gap: 10 }}
         renderItem={({ item: post }) => (

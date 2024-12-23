@@ -14,12 +14,6 @@ export interface RequestInfo {
   fromUser: UserProfile;
 }
 
-export interface RequestResponse {
-  data: RequestInfo[];
-  total: number;
-  hasMore: boolean;
-}
-
 export interface FriendResponse {
   friends: UserProfile[];
   friendIds: string[];

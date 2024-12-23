@@ -44,6 +44,7 @@ export default function FriendLayout() {
         options={{
           tabBarLabel: ({ focused }) => TabBarLabel("친구 요청", focused),
           tabBarAccessibilityLabel: "친구 요청 탭",
+          lazy: true,
         }}
       />
     </Tab.Navigator>

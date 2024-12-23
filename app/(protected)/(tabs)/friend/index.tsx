@@ -5,43 +5,31 @@ import ErrorScreen from "@/components/ErrorScreen";
 import { FriendItem } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import { SearchLayout } from "@/components/SearchLayout";
-import useFetchData from "@/hooks/useFetchData";
-import type { StatusInfo } from "@/types/Friend.interface";
-import type { UserProfile } from "@/types/User.interface";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { debounce } from "@/utils/DelayManager";
 import { formatDate } from "@/utils/formatDate";
-import { getFriends, getFriendsStatus, supabase } from "@/utils/supabase";
+import { getFriends, supabase } from "@/utils/supabase";
 import { useFocusEffect } from "expo-router";
+
+const LIMIT = 12;
 
 export default function Friend() {
   const queryClient = useQueryClient();
-  const [friends, setFriends] = useState<UserProfile[]>([]);
   const [keyword, setKeyword] = useState("");
 
   // 유저의 친구 정보 조회
   const {
-    data: friendsData,
-    isLoading: isFriendLoading,
-    error: friendError,
-  } = useFetchData<UserProfile[]>(
-    ["friends", keyword],
-    () => getFriends(keyword),
-    "친구 조회에 실패했습니다.",
-  );
-
-  const friendIds = friendsData?.map((friend) => friend.id);
-
-  // 친구의 운동 상태 정보 조회
-  const {
-    data: statusData,
-    isLoading: isStatusLoading,
-    error: statusError,
-  } = useFetchData<StatusInfo[]>(
-    ["friends", "status"],
-    () => getFriendsStatus(friendIds || []),
-    "친구 조회에 실패했습니다.",
-    !!friendIds?.length,
-  );
+    data: friendData,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    loadMore,
+  } = useInfiniteLoad({
+    queryFn: getFriends(keyword),
+    queryKey: ["friends", keyword],
+    limit: LIMIT,
+  });
+  const friends = friendData?.pages.flatMap((page) => page.data) || [];
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
@@ -49,16 +37,16 @@ export default function Friend() {
 
   // 친구창에 focus 들어올 때마다 친구목록 새로고침 (검색중일 때 제외)
   useFocusEffect(() => {
-    if (!keyword) {
+    if (!keyword && !isFetchingNextPage) {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
     }
   });
 
   // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    if (!friendIds?.length) return;
-
     const today = formatDate(new Date());
+    const friendIds = friends?.map(({ id }) => id);
+
     const statusChannel = supabase
       .channel("workoutHistory")
       .on(
@@ -73,7 +61,7 @@ export default function Friend() {
           // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
           // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
           if (payload.new.date === today)
-            queryClient.invalidateQueries({ queryKey: ["friends", "status"] });
+            queryClient.invalidateQueries({ queryKey: ["friends"] });
         },
       )
       .subscribe();
@@ -81,51 +69,22 @@ export default function Friend() {
     return () => {
       supabase.removeChannel(statusChannel);
     };
-  }, [friendIds, queryClient.invalidateQueries]);
-
-  // 친구 목록이나 친구 운동 기록이 바뀔때마다 데이터 가공
-  useEffect(() => {
-    if (!friendsData) return;
-    if (!statusData?.length) {
-      setFriends(friendsData);
-      return;
-    }
-
-    const getStatus = (friendId: string) =>
-      statusData?.find(({ userId }) => friendId === userId)?.status;
-
-    setFriends(
-      friendsData
-        .map((friend) => {
-          const status = getStatus(friend.id);
-          return status ? { ...friend, status } : friend;
-        })
-        .sort((a, b) => {
-          if (a.status && !b.status) return 1;
-          if (!a.status && b.status) return -1;
-          return 0;
-        }),
-    );
-  }, [friendsData, statusData]);
+  }, [friends, queryClient.invalidateQueries]);
 
   // 에러 스크린
-  if (friendError || statusError) {
-    const errorMessage =
-      friendError?.message ||
-      statusError?.message ||
-      "친구 조회에 실패했습니다.";
+  if (error) {
     return (
       <SearchLayout
         data={[]}
         onChangeKeyword={handleKeywordChange}
         renderItem={() => <></>}
-        emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
+        emptyComponent={<ErrorScreen errorMessage={error.message} />}
       />
     );
   }
 
   // 로딩 스크린
-  if (isFriendLoading || isStatusLoading || !friendsData) {
+  if (isLoading) {
     return (
       <SearchLayout
         data={[]}
@@ -140,6 +99,8 @@ export default function Friend() {
     <SearchLayout
       data={friends}
       onChangeKeyword={handleKeywordChange}
+      loadMore={loadMore}
+      isFetchingNextPage={isFetchingNextPage}
       renderItem={({ item: friend }) => <FriendItem friend={friend} />}
       emptyComponent={
         <ErrorScreen
