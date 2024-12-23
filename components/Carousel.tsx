@@ -113,7 +113,7 @@ export default function Carousel({
       />
 
       <PageIndicator
-        className="py-[10px]"
+        className="pt-[10px]"
         total={images.length}
         current={activeIndex}
       />

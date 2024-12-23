@@ -17,13 +17,15 @@ export default function PageIndicator({
   total,
   current,
 }: PageIndicatorProps) {
+  if (total <= 1) return null;
+
   const currentIndex = Math.max(0, Math.min(current, total - 1));
 
   return (
     <View className={`flex-row justify-center ${className}`}>
       {Array.from({ length: total }, (_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-        <Dot key={`carousel-dot-${index}`} isActive={index === currentIndex} />
+        <Dot key={`page-${index}`} isActive={index === currentIndex} />
       ))}
     </View>
   );
