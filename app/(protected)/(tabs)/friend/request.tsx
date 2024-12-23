@@ -25,7 +25,11 @@ export default function Request() {
     isFetchingNextPage,
     error,
     loadMore,
-  } = useInfiniteLoad(getFriendRequests, ["friendRequests"], LIMIT);
+  } = useInfiniteLoad({
+    queryFn: getFriendRequests,
+    queryKey: ["friendRequests"],
+    limit: LIMIT,
+  });
   const hasRequests = !!requestData?.pages[0].total;
 
   // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침

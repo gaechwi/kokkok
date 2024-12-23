@@ -20,7 +20,7 @@ import type {
   PushSetting,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
-import type { Comment, Post } from "@/types/Post.interface";
+import type { Comment, Post, Reply } from "@/types/Post.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
@@ -706,47 +706,49 @@ export function getComments(postId: number) {
 }
 
 // 답글 조회
-export async function getReplies(parentId: number, page = 0, limit = 10) {
-  try {
-    const start = page === 0 ? 0 : (page - 1) * limit + 1;
-    const end = page === 0 ? 1 : start + limit;
+export function getReplies(parentId: number) {
+  return async ({ page = 0, limit = 10 }): Promise<InfiniteResponse<Reply>> => {
+    try {
+      const start = page === 0 ? 0 : (page - 1) * limit + 1;
+      const end = page === 0 ? 1 : start + limit;
 
-    const { count } = await supabase
-      .from("comment")
-      .select("*", { count: "exact", head: true })
-      .eq("parentsCommentId", parentId);
+      const { count } = await supabase
+        .from("comment")
+        .select("*", { count: "exact", head: true })
+        .eq("parentsCommentId", parentId);
 
-    if (!count) {
+      if (!count) {
+        return {
+          data: [],
+          total: 0,
+          hasNext: false,
+          nextPage: 0,
+        };
+      }
+
+      const { data, error } = await supabase.rpc("get_replies_with_likes", {
+        parentid: parentId,
+        startindex: start,
+        endindex: end,
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error("답글을 가져올 수 없습니다.");
+
+      const hasNext = page === 0 ? count > 1 : data.length === limit;
+
       return {
-        replies: [],
-        total: 0,
-        hasNext: false,
-        nextPage: 0,
+        data,
+        total: count ?? data.length,
+        hasNext,
+        nextPage: page + 1,
       };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "답글 조회에 실패했습니다",
+      );
     }
-
-    const { data, error } = await supabase.rpc("get_replies_with_likes", {
-      parentid: parentId,
-      startindex: start,
-      endindex: end,
-    });
-
-    if (error) throw error;
-    if (!data) throw new Error("답글을 가져올 수 없습니다.");
-
-    const hasNext = page === 0 ? count > 1 : data.length === limit;
-
-    return {
-      replies: data,
-      total: count ?? data.length,
-      hasNext,
-      nextPage: page + 1,
-    };
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : "답글 조회에 실패했습니다",
-    );
-  }
+  };
 }
 
 // 댓글 좋아요 조회

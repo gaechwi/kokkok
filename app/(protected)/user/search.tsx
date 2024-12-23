@@ -19,11 +19,11 @@ export default function UserSearch() {
     isFetchingNextPage,
     error,
     loadMore,
-  } = useInfiniteLoad(
-    getNonFriends(keyword),
-    ["search", "users", keyword],
-    LIMIT,
-  );
+  } = useInfiniteLoad({
+    queryFn: getNonFriends(keyword),
+    queryKey: ["search", "users", keyword],
+    limit: LIMIT,
+  });
   const hasData = !!userData?.pages[0].total;
 
   const handleKeywordChange = debounce((newKeyword: string) => {

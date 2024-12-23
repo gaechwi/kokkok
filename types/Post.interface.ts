@@ -25,7 +25,7 @@ export interface Post {
   isLikedByUser: boolean;
 }
 
-export interface Comment {
+interface CommentBase {
   id: number;
   contents: string;
   userId: string;
@@ -35,5 +35,13 @@ export interface Comment {
   isLiked: boolean;
   likedAvatars: string[];
   parentsCommentId: number;
+}
+
+export interface Comment extends CommentBase {
   totalReplies: number;
+}
+
+export interface Reply extends CommentBase {
+  replyCommentId: number;
+  replyTo: UserData;
 }

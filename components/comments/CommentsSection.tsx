@@ -89,7 +89,11 @@ export default function CommentsSection({
 
   // 댓글 가져오기
   const { data, isFetching, isFetchingNextPage, refetch, loadMore } =
-    useInfiniteLoad(getComments(postId), ["comments", postId], LIMIT);
+    useInfiniteLoad({
+      queryFn: getComments(postId),
+      queryKey: ["comments", postId],
+      limit: LIMIT,
+    });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

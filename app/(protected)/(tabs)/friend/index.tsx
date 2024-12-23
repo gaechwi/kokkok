@@ -24,7 +24,11 @@ export default function Friend() {
     isFetchingNextPage,
     error,
     loadMore,
-  } = useInfiniteLoad(getFriends(keyword), ["friends", keyword], LIMIT);
+  } = useInfiniteLoad({
+    queryFn: getFriends(keyword),
+    queryKey: ["friends", keyword],
+    limit: LIMIT,
+  });
   const friends = friendData?.pages.flatMap((page) => page.data) || [];
 
   const handleKeywordChange = debounce((newKeyword: string) => {

@@ -7,15 +7,20 @@ export interface InfiniteResponse<T> {
   nextPage: number;
 }
 
-export default function useInfiniteLoad<T>(
+export default function useInfiniteLoad<T>({
+  queryFn,
+  queryKey,
+  limit,
+  genLimit,
+}: {
   queryFn: ({
     page,
     limit,
-  }: { page: number; limit: number }) => Promise<InfiniteResponse<T>>,
-  queryKey: (string | number)[],
-  limit: number,
-) {
-  console.log(limit);
+  }: { page?: number; limit?: number }) => Promise<InfiniteResponse<T>>;
+  queryKey: (string | number)[];
+  limit?: number;
+  genLimit?: (pageParams: number) => number;
+}) {
   const {
     data,
     error,
@@ -27,7 +32,8 @@ export default function useInfiniteLoad<T>(
     refetch,
   } = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam = 0 }) => queryFn({ page: pageParam, limit }),
+    queryFn: ({ pageParam = 0 }) =>
+      queryFn({ page: pageParam, limit: genLimit?.(pageParam) || limit }),
     getNextPageParam: (lastPage) =>
       lastPage.hasNext ? lastPage.nextPage : undefined,
     refetchOnWindowFocus: false,
@@ -48,6 +54,7 @@ export default function useInfiniteLoad<T>(
     isFetching,
     isLoading,
     isFetchingNextPage,
+    hasNextPage,
     loadMore,
     refetch,
   };

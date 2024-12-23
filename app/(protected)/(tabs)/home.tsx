@@ -72,11 +72,11 @@ export default function Home() {
   }, []);
 
   // post 조회
-  const { data, isFetchingNextPage, refetch, loadMore } = useInfiniteLoad(
-    getPosts,
-    ["posts"],
-    LIMIT,
-  );
+  const { data, isFetchingNextPage, refetch, loadMore } = useInfiniteLoad({
+    queryFn: getPosts,
+    queryKey: ["posts"],
+    limit: LIMIT,
+  });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
