@@ -48,14 +48,17 @@ export function useTimerWithStartAndDuration(onTimeout?: () => void) {
     return () => clearInterval(timer);
   }, [timeLeft, onTimeout, calculateTimeLeft]);
 
-  const start = (start: number, duration: number) => {
-    // expiration이 유효하지 않거나 현재보다 작으면 실행 X
-    const expiration = start + duration;
-    if (!expiration || expiration <= Date.now()) return;
+  const start = useCallback(
+    (start: number, duration: number) => {
+      // expiration이 유효하지 않거나 현재보다 작으면 실행 X
+      const expiration = start + duration;
+      if (!expiration || expiration <= Date.now()) return;
 
-    setExpiration(expiration);
-    setTimeLeft(calculateTimeLeft());
-  };
+      setExpiration(expiration);
+      setTimeLeft(calculateTimeLeft());
+    },
+    [calculateTimeLeft],
+  );
 
   return { timeLeft, start };
 }
