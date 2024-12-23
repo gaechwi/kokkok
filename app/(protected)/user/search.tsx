@@ -24,7 +24,7 @@ export default function UserSearch() {
     queryKey: ["search", "users", keyword],
     limit: LIMIT,
   });
-  const hasData = !!userData?.pages[0].total;
+  const showData = !!userData?.pages[0].total && !!keyword;
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
@@ -58,7 +58,7 @@ export default function UserSearch() {
 
   return (
     <SearchLayout
-      data={hasData ? userData.pages.flatMap((page) => page.data) : []}
+      data={showData ? userData.pages.flatMap((page) => page.data) : []}
       onChangeKeyword={handleKeywordChange}
       loadMore={loadMore}
       isFetchingNextPage={isFetchingNextPage}
