@@ -48,7 +48,7 @@ function Dot({
 }: DotProps) {
   const animatedStyle = useAnimatedStyle(() => ({
     width: withTiming(isActive ? activeWidth : inactiveWidth, {
-      duration: 400,
+      duration: 150,
       easing: Easing.out(Easing.quad),
     }),
     height,
