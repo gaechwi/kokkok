@@ -1,3 +1,6 @@
+import { FloatingText, FloatingView } from "@/components/Floating";
+import PageIndicator from "@/components/PageIndicator";
+import images from "@/constants/images";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -8,15 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { FloatingText, FloatingView } from "@/components/Floating";
-import images from "@/constants/images";
 
 const { width } = Dimensions.get("window");
 
@@ -75,11 +70,7 @@ export default function Onboarding() {
         />
 
         <View className="absolute bottom-[40px] w-full items-center">
-          <View className="flex-row justify-center">
-            {slides.map((slide, index) => (
-              <Dot key={slide.id} isActive={index === currentIndex} />
-            ))}
-          </View>
+          <PageIndicator total={slides.length} current={currentIndex} />
 
           <TouchableOpacity
             className="mx-[24px] mt-[32px] w-full max-w-[328px] items-center rounded-[10px] bg-primary py-[16px] text-white"
@@ -198,39 +189,3 @@ function Slide4({ isActive = false }: SlideProps) {
     </>
   );
 }
-
-interface DotProps {
-  isActive: boolean;
-  activeWidth?: number;
-  inactiveWidth?: number;
-  height?: number;
-  activeColor?: string;
-  inactiveColor?: string;
-}
-
-const COLORS = {
-  ACTIVE: "#8356F5",
-  INACTIVE: "#BEBEBE",
-};
-
-const Dot = ({
-  isActive,
-  activeWidth = 24,
-  inactiveWidth = 8,
-  height = 8,
-  activeColor = COLORS.ACTIVE,
-  inactiveColor = COLORS.INACTIVE,
-}: DotProps) => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: withTiming(isActive ? activeWidth : inactiveWidth, {
-      duration: 400,
-      easing: Easing.out(Easing.quad),
-    }),
-    height,
-    borderRadius: 4,
-    marginHorizontal: 4,
-    backgroundColor: isActive ? activeColor : inactiveColor,
-  }));
-
-  return <Animated.View style={animatedStyle} />;
-};

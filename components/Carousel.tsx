@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import PageIndicator from "./PageIndicator";
 
 interface CarouselProps {
   images: string[];
@@ -25,34 +26,6 @@ type ViewToken = {
   key: string;
   index: number | null;
   isViewable: boolean;
-};
-
-interface DotProps {
-  isActive: boolean;
-  activeWidth?: number;
-  inactiveWidth?: number;
-  height?: number;
-  activeColor?: string;
-  inactiveColor?: string;
-}
-
-const Dot = ({
-  isActive,
-  activeWidth = 24,
-  inactiveWidth = 8,
-  height = 8,
-  activeColor = colors.primary,
-  inactiveColor = colors.gray[40],
-}: DotProps) => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: withSpring(isActive ? activeWidth : inactiveWidth),
-    height,
-    borderRadius: 4,
-    marginHorizontal: 4,
-    backgroundColor: isActive ? activeColor : inactiveColor,
-  }));
-
-  return <Animated.View style={animatedStyle} />;
 };
 
 export default function Carousel({
@@ -139,14 +112,11 @@ export default function Carousel({
         windowSize={3}
       />
 
-      <View className="flex-row justify-center py-[10px]">
-        {images.map((image, index) => (
-          <Dot
-            key={`carousel-dot-${index}-${image}`}
-            isActive={index === activeIndex}
-          />
-        ))}
-      </View>
+      <PageIndicator
+        className="py-[10px]"
+        total={images.length}
+        current={activeIndex}
+      />
     </View>
   );
 }
