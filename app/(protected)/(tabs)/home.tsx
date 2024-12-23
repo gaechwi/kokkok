@@ -8,6 +8,7 @@ import Icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import useRefresh from "@/hooks/useRefresh";
 import { deletePost, getPostLikes, getPosts } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -30,7 +31,6 @@ const { height: deviceHeight } = Dimensions.get("window");
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -78,14 +78,7 @@ export default function Home() {
     limit: LIMIT,
   });
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh } = useRefresh({ refetch });
 
   const deletePostMutation = useMutation({
     mutationFn: async () => {

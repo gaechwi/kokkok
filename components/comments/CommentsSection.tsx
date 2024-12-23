@@ -3,6 +3,7 @@ import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import useRefresh from "@/hooks/useRefresh";
 import {
   createComment,
   createNotification,
@@ -51,7 +52,6 @@ export default function CommentsSection({
   authorId,
 }: CommentsSectionProps) {
   const [userId, setUserId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
     userId: string;
@@ -95,14 +95,7 @@ export default function CommentsSection({
       limit: LIMIT,
     });
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh } = useRefresh({ refetch });
 
   // 답글달기 핸들러
   const handleReply = (

@@ -4,9 +4,7 @@ import type {
   RefetchOptions,
 } from "@tanstack/react-query";
 import { useState } from "react";
-import { RefreshControl } from "react-native";
-
-export default function Refresh<T>({
+export default function useRefresh<T>({
   refetch,
 }: {
   refetch: (
@@ -24,5 +22,5 @@ export default function Refresh<T>({
     }
   };
 
-  return <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />;
+  return { refreshing, onRefresh };
 }
