@@ -12,7 +12,7 @@ const LIMIT = 12;
 export default function UserSearch() {
   const [keyword, setKeyword] = useState("");
 
-  // 유저의 친구 요청 정보 조회
+  // 친구가 아닌 유저들 검색 키워드로 정보 조회
   const {
     data: userData,
     isFetching,

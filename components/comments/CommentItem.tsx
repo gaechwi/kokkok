@@ -85,7 +85,7 @@ export default function CommentItem({
 
   const diff = diffDate(new Date(createdAt));
 
-  // 유저의 친구 정보 조회
+  // 답글 가져오기
   const {
     data: replyData,
     isFetchingNextPage,
