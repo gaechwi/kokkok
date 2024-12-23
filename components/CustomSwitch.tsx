@@ -10,7 +10,6 @@ import Animated, {
 
 interface SwitchProps {
   value: SharedValue<boolean>;
-  isInit: SharedValue<boolean>;
   onPress: () => void;
   duration?: number;
   size?: {
@@ -23,9 +22,8 @@ interface SwitchProps {
 
 export default function CustomSwitch({
   value,
-  isInit,
   onPress,
-  duration = 400,
+  duration = 250,
   size = { width: 45, height: 22, padding: 3 },
   trackColors = { on: colors.primary, off: colors.gray[25] },
 }: SwitchProps) {
@@ -37,9 +35,7 @@ export default function CustomSwitch({
       [0, 1],
       [trackColors.off, trackColors.on],
     );
-    const colorValue = withTiming(color, {
-      duration: isInit.value ? 0 : duration,
-    });
+    const colorValue = withTiming(color, { duration });
 
     return {
       backgroundColor: colorValue,
@@ -53,9 +49,7 @@ export default function CustomSwitch({
       [0, 1],
       [0, size.width - size.height],
     );
-    const translateValue = withTiming(moveValue, {
-      duration: isInit.value ? 0 : duration,
-    });
+    const translateValue = withTiming(moveValue, { duration });
 
     return {
       transform: [{ translateX: translateValue }],

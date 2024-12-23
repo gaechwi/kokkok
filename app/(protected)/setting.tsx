@@ -1,6 +1,6 @@
 import CustomSwitch from "@/components/CustomSwitch";
 import LoadingScreen from "@/components/LoadingScreen";
-import { OneButtonModal, TwoButtonModal } from "@/components/Modal";
+import { TwoButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
@@ -10,19 +10,24 @@ import {
   type NotificationType,
   type PushSetting,
 } from "@/types/Notification.interface";
-import { isTokenValid } from "@/utils/pushTokenManager";
+import { isTokenValid, updatePushToken } from "@/utils/pushTokenManager";
 import {
   deleteUser,
-  getCurrentSession,
   getPushSetting,
   supabase,
   updatePushSetting,
 } from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -36,27 +41,18 @@ const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
 
 export default function Setting() {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // 로그인한 유저 정보 조회
-  const { data: session } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
-
   // 푸시알림 설정 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
     useFetchData<PushSetting | null>(
-      ["pushToken", session?.user.id],
-      () => getPushSetting(session?.user.id || ""),
+      ["pushToken"],
+      () => getPushSetting(),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
-      !!session,
     );
 
   // 계정 탈퇴 핸들러
@@ -64,9 +60,8 @@ export default function Setting() {
     setIsLoading(true);
 
     try {
-      await deleteUser(session?.user.id ?? "");
-
-      router.replace("/sign-in");
+      await deleteUser();
+      await supabase.auth.signOut();
       showToast("success", "탈퇴가 완료되었습니다!");
     } catch (error) {
       showToast("error", "탈퇴에 실패했습니다.");
@@ -78,22 +73,14 @@ export default function Setting() {
 
   // 로그아웃 핸들러
   const handleSignOut = async () => {
-    if (session) {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      await updatePushSetting({
-        userId: session.user.id,
-        token: null,
-      });
-      await supabase.auth.signOut();
+    await updatePushSetting({ token: "logout" });
+    await supabase.auth.signOut();
 
-      setIsLoading(false);
-    }
-    queryClient.clear();
+    setIsLoading(false);
 
     setIsSignOutModalVisible(false);
-    // 아마 세션 여부에 따른 리다이렉트 되면 자동 이동 될지도
-    router.replace("/sign-in");
     showToast("success", "로그아웃이 완료되었습니다!");
   };
 
@@ -101,12 +88,12 @@ export default function Setting() {
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="gap-2 bg-gray-5 pb-2">
         {/* 알림 설정 */}
-        {!session || isTokenPending ? (
+        {isTokenPending ? (
           <View className="h-[324px] items-center justify-center">
             <LoadingScreen />
           </View>
         ) : (
-          <NotificationSetting userId={session.user.id} setting={pushSetting} />
+          <NotificationSetting setting={pushSetting} />
         )}
 
         {/* 계정 설정 */}
@@ -194,41 +181,31 @@ export default function Setting() {
   );
 }
 
-function NotificationSetting({
-  userId,
-  setting,
-}: { userId: string; setting?: PushSetting | null }) {
+function NotificationSetting({ setting }: { setting?: PushSetting | null }) {
   const queryClient = useQueryClient();
-  const [isSettingModalVisible, setIsSettingModalVisible] = useState(false);
 
   const granted = setting?.grantedNotifications || [];
   const allSwitch = useSharedValue(!!granted.length);
-  const isAllSwitchInit = useSharedValue(true);
   const SWITCH_CONFIG = {
     like: {
       title: "좋아요 알림",
       value: useSharedValue(granted.includes("like")),
-      isInit: useSharedValue(true),
     },
     comment: {
       title: "댓글 알림",
       value: useSharedValue(granted.includes("comment")),
-      isInit: useSharedValue(true),
     },
     mention: {
       title: "멘션 알림",
       value: useSharedValue(granted.includes("mention")),
-      isInit: useSharedValue(true),
     },
     poke: {
       title: "콕찌르기 알림",
       value: useSharedValue(granted.includes("poke")),
-      isInit: useSharedValue(true),
     },
     friend: {
       title: "친구요청 알림",
       value: useSharedValue(granted.includes("friend")),
-      isInit: useSharedValue(true),
     },
   } as const;
   type SwitchType = keyof typeof SWITCH_CONFIG;
@@ -242,16 +219,33 @@ function NotificationSetting({
   };
 
   // 기존 토큰이 유효하지 않으면 권한 설정 이동 모달 띄우기
-  const checkPermission = () => {
+  const checkPermission = async () => {
     if (isTokenValid(setting?.token)) return true;
-    setIsSettingModalVisible(true);
+
+    // 권한 요청
+    const granted = await updatePushToken({
+      existingToken: setting?.token,
+      handleUpdate: () => {
+        queryClient.invalidateQueries({ queryKey: ["pushToken"] });
+      },
+    });
+    if (!granted) {
+      Alert.alert(
+        "알림 권한 필요",
+        "푸시알림을 받기 위해 알림 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "설정으로 이동", onPress: openSetting },
+        ],
+      );
+    }
+    return granted;
   };
 
   // grantedNotification의 변경사항을 서버에 반영
   const updateGrantedNotifications = async (newGranted: NotificationType[]) => {
     try {
       await updatePushSetting({
-        userId,
         grantedNotifications: newGranted,
       });
       queryClient.invalidateQueries({ queryKey: ["pushToken"] });
@@ -265,14 +259,11 @@ function NotificationSetting({
     if (!(await checkPermission())) return;
 
     const prevAllSwitch = allSwitch.value;
-    for (const { value, isInit } of Object.values(SWITCH_CONFIG)) {
-      // 개별 스위치 업데이트
+    // 스위치 업데이트
+    for (const { value } of Object.values(SWITCH_CONFIG)) {
       value.value = !prevAllSwitch;
-      isInit.value = false;
     }
-    // 최상단 스위치 업데이트
     allSwitch.value = !prevAllSwitch;
-    isAllSwitchInit.value = false;
 
     // DB에 변경사항 반영
     const newGranted = prevAllSwitch
@@ -286,25 +277,17 @@ function NotificationSetting({
     if (!(await checkPermission())) return;
 
     const prevValue = SWITCH_CONFIG[type].value.value;
-
-    // 최상단 스위치 업데이트
+    // 스위치 업데이트
     if (!prevValue) {
-      // 하나라도 true면 allSwitch도 true
       allSwitch.value = true;
-      isAllSwitchInit.value = false;
     } else if (
       Object.entries(SWITCH_CONFIG).every(
         ([key, { value }]) => key === type || !value.value,
       )
     ) {
-      // 나 제외 나머지 것들도 다 false 이면 allSwitch도 false
       allSwitch.value = false;
-      isAllSwitchInit.value = false;
     }
-
-    // 개별 스위치 업데이트
     SWITCH_CONFIG[type].value.value = !SWITCH_CONFIG[type].value.value;
-    SWITCH_CONFIG[type].isInit.value = false;
 
     // DB에 변경사항 반영
     const typesToUpdate = NOTIFICATION_TYPE_GROUPS[type];
@@ -318,11 +301,7 @@ function NotificationSetting({
     <View className="gap-5 bg-white px-6 py-[22px]">
       <View className="flex-row items-center justify-between ">
         <Text className="heading-2 text-gray-80">알림 설정</Text>
-        <CustomSwitch
-          value={allSwitch}
-          isInit={isAllSwitchInit}
-          onPress={handleAllSwitchPress}
-        />
+        <CustomSwitch value={allSwitch} onPress={handleAllSwitchPress} />
       </View>
       {/* 개별 스위치 리스트 */}
       <View className="gap-5 pl-2">
@@ -333,23 +312,10 @@ function NotificationSetting({
             </Text>
             <CustomSwitch
               value={SWITCH_CONFIG[type as SwitchType].value}
-              isInit={SWITCH_CONFIG[type as SwitchType].isInit}
               onPress={() => handleSwitchPress(type as SwitchType)}
             />
           </View>
         ))}
-      </View>
-
-      <View className="flex-1">
-        <OneButtonModal
-          buttonText="설정으로 이동"
-          contents={"알림 권한을 허용해주세요"}
-          isVisible={isSettingModalVisible}
-          onClose={() => setIsSettingModalVisible(false)}
-          onPress={openSetting}
-          emoji="sad"
-          key="upload-info-modal"
-        />
       </View>
     </View>
   );

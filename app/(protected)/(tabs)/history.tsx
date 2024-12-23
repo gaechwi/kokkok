@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import {
@@ -9,16 +8,14 @@ import {
   View,
 } from "react-native";
 
-import useCalendar from "@/hooks/useCalendar";
-import useModal from "@/hooks/useModal";
-
-import { getHistories } from "@/utils/supabase";
-
 import CalendarNavigator from "@/components/CalendarNavigator";
 import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
-
 import icons from "@/constants/icons";
+import useCalendar from "@/hooks/useCalendar";
+import useFetchData from "@/hooks/useFetchData";
+import useModal from "@/hooks/useModal";
+import { getCurrentUser, getHistories } from "@/utils/supabase";
 
 type History = Awaited<ReturnType<typeof getHistories>>[number];
 
@@ -34,10 +31,25 @@ export default function History() {
   } = useCalendar();
   const { isModalVisible, openModal, closeModal } = useModal();
 
-  const { data: histories = [], refetch } = useQuery({
-    queryKey: ["histories", year, month],
-    queryFn: () => getHistories(year, month),
-  });
+  const {
+    data: histories = [],
+    isLoading: isHistoriesLoading,
+    refetch,
+  } = useFetchData(
+    ["histories", year, month],
+    () => getHistories(year, month),
+    "사용자의 기록을 불러올 수 없습니다.",
+  );
+
+  const { data: currentUser, isLoading: isUserLoading } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
+
+  const userCreatedDate = currentUser
+    ? new Date(currentUser.createdAt)
+    : new Date(2025, 0, 1, 0, 0, 0);
 
   const handlePreviousMonth = () => {
     changeMonth(-1);
@@ -70,14 +82,31 @@ export default function History() {
         <RestDayModal visible={isModalVisible} onClose={closeModal} />
       </View>
 
-      <View className="mt-[20px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
+      <View className="mt-[20px] min-h-[300px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">
         <CalendarNavigator
           date={date}
           onPrevious={handlePreviousMonth}
           onNext={handleNextMonth}
-          isNextDisabled={year === currentYear && month >= currentMonth}
+          isPreviousDisabled={
+            year < userCreatedDate.getFullYear() ||
+            (year === userCreatedDate.getFullYear() &&
+              month <= userCreatedDate.getMonth() + 1)
+          }
+          isNextDisabled={
+            year > currentYear ||
+            (year === currentYear && month >= currentMonth)
+          }
         />
-        <WorkoutCalendar date={date} workoutStatuses={histories} />
+
+        {isUserLoading || isHistoriesLoading ? (
+          <CalendarSkeleton />
+        ) : (
+          <WorkoutCalendar
+            startingDate={userCreatedDate}
+            currentDate={date}
+            workoutStatuses={histories}
+          />
+        )}
       </View>
 
       <FaceExplanation />
@@ -116,6 +145,32 @@ function FaceExplanation() {
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+function CalendarSkeleton() {
+  return (
+    <View className="mt-[24px] w-full animate-pulse gap-[10px] px-[3px]">
+      <View className="h-[15px] rounded-[5px] bg-gray-20" />
+      {Array.from({ length: 5 }, (_, rowIndex) => (
+        <View
+          className="gap-[12px]"
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+          key={`calendar-skeleton-row-${rowIndex}`}
+        >
+          <View className="h-[10px] rounded-[5px] bg-gray-20" />
+          <View className="flex-row justify-between">
+            {Array.from({ length: 7 }, (_, colIndex) => (
+              <View
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                key={`calendar-skeleton-cell-${rowIndex}-${colIndex}`}
+                className="h-[30px] w-[30px] rounded-full bg-gray-20"
+              />
+            ))}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }

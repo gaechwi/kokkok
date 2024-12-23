@@ -1,75 +1,22 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { FlatList, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import ErrorScreen from "@/components/ErrorScreen";
 import { FriendItem } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
-import SearchBar from "@/components/SearchBar";
+import { SearchLayout } from "@/components/SearchLayout";
 import useFetchData from "@/hooks/useFetchData";
 import type { StatusInfo } from "@/types/Friend.interface";
 import type { UserProfile } from "@/types/User.interface";
 import { debounce } from "@/utils/DelayManager";
 import { formatDate } from "@/utils/formatDate";
-import {
-  getCurrentSession,
-  getFriends,
-  getFriendsStatus,
-  supabase,
-} from "@/utils/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { getFriends, getFriendsStatus, supabase } from "@/utils/supabase";
 import { useFocusEffect } from "expo-router";
-
-interface FriendLayoutProps {
-  friends: UserProfile[];
-  onChangeKeyword: (newKeyword: string) => void;
-  emptyComponent: React.ReactElement;
-}
-
-function FriendLayout({
-  friends,
-  onChangeKeyword,
-  emptyComponent,
-}: FriendLayoutProps) {
-  const [keyword, setKeyword] = useState("");
-
-  return (
-    <SafeAreaView edges={[]} className="flex-1 bg-white">
-      <FlatList
-        data={friends}
-        keyExtractor={(friend) => friend.id}
-        renderItem={({ item: friend }) => <FriendItem friend={friend} />}
-        className="w-full grow px-6"
-        contentContainerStyle={friends.length ? {} : { flex: 1 }}
-        ListHeaderComponent={
-          <SearchBar
-            value={keyword}
-            customClassName="mt-6 mb-2"
-            handleChangeText={(newKeyword: string) => {
-              setKeyword(newKeyword);
-              onChangeKeyword(newKeyword);
-            }}
-          />
-        }
-        ListEmptyComponent={emptyComponent}
-        ListFooterComponent={<View className="h-4" />}
-      />
-    </SafeAreaView>
-  );
-}
 
 export default function Friend() {
   const queryClient = useQueryClient();
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [keyword, setKeyword] = useState("");
-
-  // 로그인한 유저 정보 조회
-  const { data: session, error: userError } = useFetchData<Session>(
-    ["session"],
-    getCurrentSession,
-    "로그인 정보 조회에 실패했습니다.",
-  );
 
   // 유저의 친구 정보 조회
   const {
@@ -77,10 +24,9 @@ export default function Friend() {
     isLoading: isFriendLoading,
     error: friendError,
   } = useFetchData<UserProfile[]>(
-    ["friends", session?.user.id, keyword],
-    () => getFriends(session?.user.id || "", keyword),
+    ["friends", keyword],
+    () => getFriends(keyword),
     "친구 조회에 실패했습니다.",
-    !!session?.user.id,
   );
 
   const friendIds = friendsData?.map((friend) => friend.id);
@@ -91,7 +37,7 @@ export default function Friend() {
     isLoading: isStatusLoading,
     error: statusError,
   } = useFetchData<StatusInfo[]>(
-    ["friendsStatus", session?.user.id],
+    ["friends", "status"],
     () => getFriendsStatus(friendIds || []),
     "친구 조회에 실패했습니다.",
     !!friendIds?.length,
@@ -99,7 +45,7 @@ export default function Friend() {
 
   const handleKeywordChange = debounce((newKeyword: string) => {
     setKeyword(newKeyword);
-  }, 500);
+  }, 200);
 
   // 친구창에 focus 들어올 때마다 친구목록 새로고침 (검색중일 때 제외)
   useFocusEffect(() => {
@@ -117,17 +63,17 @@ export default function Friend() {
       .channel("workoutHistory")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workoutHistory" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "workoutHistory",
+          filter: `userId=in.(${friendIds.join(",")})`,
+        },
         (payload) => {
-          if (
-            (payload.eventType === "DELETE" &&
-              payload.old.date === today &&
-              friendIds.includes(payload.old.userId)) ||
-            (payload.eventType === "INSERT" &&
-              payload.new.date === today &&
-              friendIds.includes(payload.new.userId))
-          )
-            queryClient.invalidateQueries({ queryKey: ["friendsStatus"] });
+          // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
+          // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
+          if (payload.new.date === today)
+            queryClient.invalidateQueries({ queryKey: ["friends", "status"] });
         },
       )
       .subscribe();
@@ -163,16 +109,16 @@ export default function Friend() {
   }, [friendsData, statusData]);
 
   // 에러 스크린
-  if (userError || friendError || statusError) {
+  if (friendError || statusError) {
     const errorMessage =
-      userError?.message ||
       friendError?.message ||
       statusError?.message ||
       "친구 조회에 실패했습니다.";
     return (
-      <FriendLayout
-        friends={[]}
+      <SearchLayout
+        data={[]}
         onChangeKeyword={handleKeywordChange}
+        renderItem={() => <></>}
         emptyComponent={<ErrorScreen errorMessage={errorMessage} />}
       />
     );
@@ -181,18 +127,20 @@ export default function Friend() {
   // 로딩 스크린
   if (isFriendLoading || isStatusLoading || !friendsData) {
     return (
-      <FriendLayout
-        friends={[]}
+      <SearchLayout
+        data={[]}
         onChangeKeyword={handleKeywordChange}
+        renderItem={() => <></>}
         emptyComponent={<LoadingScreen />}
       />
     );
   }
 
   return (
-    <FriendLayout
-      friends={friends}
+    <SearchLayout
+      data={friends}
       onChangeKeyword={handleKeywordChange}
+      renderItem={({ item: friend }) => <FriendItem friend={friend} />}
       emptyComponent={
         <ErrorScreen
           errorMessage={

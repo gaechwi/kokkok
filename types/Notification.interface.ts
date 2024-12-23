@@ -21,7 +21,6 @@ export interface NotificationData {
 }
 
 export interface Notification {
-  from: UserProfile;
   to: string;
   type: NotificationType;
   data?: NotificationData;
@@ -37,14 +36,8 @@ export interface NotificationResponse {
 
 export interface PushSetting {
   userId: string;
-  token: string | null;
+  token: string; // 실제 토큰 or "logout"
   grantedNotifications: NotificationType[];
-}
-
-export interface PushSettingUpdateData {
-  userId: string;
-  token?: string | null;
-  grantedNotifications?: NotificationType[];
 }
 
 export interface PushMessage {

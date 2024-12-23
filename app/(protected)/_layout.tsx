@@ -1,13 +1,15 @@
 import { HeaderWithBack } from "@/components/Header";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useQueryClient } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
 import { Stack } from "expo-router";
 
 const ProtectedLayout = () => {
-  const { session, isLoading } = useAuthSession();
+  const queryClient = useQueryClient();
+  const { isLoggedIn, isLoading } = useAuthSession(queryClient);
 
   if (isLoading) return null;
-  if (!session) return <Redirect href="/sign-in" />;
+  if (!isLoggedIn) return <Redirect href="/sign-in" />;
 
   return (
     <Stack
@@ -32,6 +34,10 @@ const ProtectedLayout = () => {
         }}
       />
       <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="user/search"
+        options={{ header: () => <HeaderWithBack name="SEARCH_FRIEND" /> }}
+      />
       <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
     </Stack>
   );
