@@ -20,6 +20,7 @@ import type {
   PushSetting,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
+import type { Post } from "@/types/Post.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
@@ -371,7 +372,10 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
 // ============================================
 
 // 게시글 조회
-export const getPosts = async ({ page = 0, limit = 10 }) => {
+export const getPosts = async ({
+  page = 0,
+  limit = 10,
+}): Promise<InfiniteResponse<Post>> => {
   try {
     const { count, error: countError } = await supabase
       .from("post")
@@ -385,7 +389,7 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
     if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 
     return {
-      posts: data,
+      data,
       total: count ?? data.length,
       hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
