@@ -2,6 +2,8 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import useRefresh from "@/hooks/useRefresh";
 import {
   createComment,
   createNotification,
@@ -10,12 +12,7 @@ import {
   getComments,
   getCurrentUser,
 } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -38,6 +35,7 @@ import { showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 
+const LIMIT = 5;
 const { height: deviceHeight, width: deviceWidth } = Dimensions.get("window");
 
 interface CommentsSectionProps {
@@ -54,7 +52,6 @@ export default function CommentsSection({
   authorId,
 }: CommentsSectionProps) {
   const [userId, setUserId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<{
     userId: string;
@@ -91,37 +88,14 @@ export default function CommentsSection({
   );
 
   // 댓글 가져오기
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-    isFetching,
-  } = useInfiniteQuery({
-    queryKey: ["comments", postId],
-    queryFn: ({ pageParam = 0 }) => getComments(postId, pageParam, 5),
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNext ? lastPage.nextPage : undefined,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: keepPreviousData,
-    initialPageParam: 0,
-  });
+  const { data, isFetching, isFetchingNextPage, refetch, loadMore } =
+    useInfiniteLoad({
+      queryFn: getComments(postId),
+      queryKey: ["comments", postId],
+      limit: LIMIT,
+    });
 
-  // 댓글 더 불러오기
-  const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh } = useRefresh({ refetch });
 
   // 답글달기 핸들러
   const handleReply = (
@@ -273,7 +247,7 @@ export default function CommentsSection({
             minIndexForVisible: 0,
           }}
           ListHeaderComponent={<View className="h-4" />}
-          data={data?.pages.flatMap((page) => page.comments) || []}
+          data={data?.pages.flatMap((page) => page.data) || []}
           keyExtractor={(item) => item.id.toString()}
           onEndReachedThreshold={0.5}
           onEndReached={() => {

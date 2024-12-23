@@ -7,11 +7,11 @@ import * as FileSystem from "expo-file-system";
 import type * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 
+import type { InfiniteResponse } from "@/hooks/useInfiniteLoad";
 import {
   RELATION_TYPE,
   type RelationType,
-  type RequestResponse,
-  type StatusInfo,
+  type RequestInfo,
 } from "@/types/Friend.interface";
 import {
   NOTIFICATION_TYPE,
@@ -21,10 +21,10 @@ import {
   type PushSetting,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
+import type { Comment, Post, Reply } from "@/types/Post.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
-import { formatDate } from "./formatDate";
 
 class AuthError extends Error {}
 
@@ -373,7 +373,10 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
 // ============================================
 
 // 게시글 조회
-export const getPosts = async ({ page = 0, limit = 10 }) => {
+export const getPosts = async ({
+  page = 0,
+  limit = 10,
+}): Promise<InfiniteResponse<Post>> => {
   try {
     const { count, error: countError } = await supabase
       .from("post")
@@ -387,7 +390,7 @@ export const getPosts = async ({ page = 0, limit = 10 }) => {
     if (error) throw new Error("게시글을 가져오는데 실패했습니다.");
 
     return {
-      posts: data,
+      data,
       total: count ?? data.length,
       hasNext: count ? (page + 1) * limit < count : false,
       nextPage: page + 1,
@@ -665,81 +668,88 @@ export async function deletePost(postId: number) {
 // ============================================
 
 // 댓글 조회
-export async function getComments(postId: number, page = 0, limit = 10) {
-  try {
-    const start = page * limit;
-    const end = start + limit - 1;
+export function getComments(postId: number) {
+  return async ({
+    page = 0,
+    limit = 10,
+  }): Promise<InfiniteResponse<Comment>> => {
+    try {
+      const start = page * limit;
+      const end = start + limit - 1;
 
-    const { count } = await supabase
-      .from("comment")
-      .select("*", { count: "exact", head: true })
-      .eq("postId", postId)
-      .is("parentsCommentId", null);
+      const { count } = await supabase
+        .from("comment")
+        .select("*", { count: "exact", head: true })
+        .eq("postId", postId)
+        .is("parentsCommentId", null);
 
-    const { data, error } = await supabase.rpc("get_comments", {
-      postid: postId,
-      startindex: start,
-      endindex: end,
-    });
+      const { data, error } = await supabase.rpc("get_comments", {
+        postid: postId,
+        startindex: start,
+        endindex: end,
+      });
 
-    if (error) throw error;
-    if (!data) throw new Error("댓글을 가져올 수 없습니다.");
+      if (error) throw error;
+      if (!data) throw new Error("댓글을 가져올 수 없습니다.");
 
-    return {
-      comments: data,
-      total: count ?? data.length,
-      hasNext: count ? (page + 1) * limit < count : false,
-      nextPage: page + 1,
-    };
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : "댓글 조회에 실패했습니다",
-    );
-  }
+      return {
+        data,
+        total: count ?? data.length,
+        hasNext: count ? (page + 1) * limit < count : false,
+        nextPage: page + 1,
+      };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "댓글 조회에 실패했습니다",
+      );
+    }
+  };
 }
 
 // 답글 조회
-export async function getReplies(parentId: number, page = 0, limit = 10) {
-  try {
-    const start = page === 0 ? 0 : (page - 1) * limit + 1;
-    const end = page === 0 ? 1 : start + limit;
+export function getReplies(parentId: number) {
+  return async ({ page = 0, limit = 10 }): Promise<InfiniteResponse<Reply>> => {
+    try {
+      const start = page === 0 ? 0 : (page - 1) * limit + 1;
+      const end = page === 0 ? 1 : start + limit;
 
-    const { count } = await supabase
-      .from("comment")
-      .select("*", { count: "exact", head: true })
-      .eq("parentsCommentId", parentId);
+      const { count } = await supabase
+        .from("comment")
+        .select("*", { count: "exact", head: true })
+        .eq("parentsCommentId", parentId);
 
-    if (!count) {
+      if (!count) {
+        return {
+          data: [],
+          total: 0,
+          hasNext: false,
+          nextPage: 0,
+        };
+      }
+
+      const { data, error } = await supabase.rpc("get_replies_with_likes", {
+        parentid: parentId,
+        startindex: start,
+        endindex: end,
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error("답글을 가져올 수 없습니다.");
+
+      const hasNext = page === 0 ? count > 1 : data.length === limit;
+
       return {
-        replies: [],
-        total: 0,
-        hasNext: false,
-        nextPage: 0,
+        data,
+        total: count ?? data.length,
+        hasNext,
+        nextPage: page + 1,
       };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "답글 조회에 실패했습니다",
+      );
     }
-
-    const { data, error } = await supabase.rpc("get_replies_with_likes", {
-      parentid: parentId,
-      startindex: start,
-      endindex: end,
-    });
-
-    if (error) throw error;
-    if (!data) throw new Error("답글을 가져올 수 없습니다.");
-
-    const hasNext = page === 0 ? count > 1 : data.length === limit;
-
-    return {
-      replies: data,
-      total: count ?? data.length,
-      hasNext,
-      nextPage: page + 1,
-    };
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : "답글 조회에 실패했습니다",
-    );
-  }
+  };
 }
 
 // 댓글 좋아요 조회
@@ -911,44 +921,54 @@ export async function deleteComment(commentId: number) {
 // ============================================
 
 // 친구 조회
-export async function getFriends(keyword = ""): Promise<UserProfile[]> {
-  const userId = await getUserIdFromStorage();
+export function getFriends(keyword = "") {
+  return async ({
+    page = 0,
+    limit = 12,
+  }): Promise<InfiniteResponse<UserProfile>> => {
+    const { data, error } = await supabase.rpc("get_friend_sort_by_status", {
+      keyword,
+      start_idx: page * limit,
+      num: limit,
+    });
 
-  const { data, error } = await supabase
-    .from("friendRequest")
-    .select(
-      "to: user!friendRequest_to_fkey (id, username, avatarUrl, description)",
-    )
-    .eq("from", userId)
-    .ilike("to.username", `%${keyword}%`)
-    .eq("isAccepted", true);
+    if (error) throw error;
+    if (!data) throw new Error("친구를 불러올 수 없습니다.");
 
-  if (error) throw error;
-  if (!data) throw new Error("친구를 불러올 수 없습니다.");
+    const count = data?.[0]?.totalCount || 0;
 
-  return data.filter(({ to }) => !!to).map(({ to }) => to as UserProfile);
+    return {
+      data,
+      total: count ?? data.length,
+      hasNext: count ? (page + 1) * limit < count : false,
+      nextPage: page + 1,
+    };
+  };
 }
 
 // keyword 기반해 나와 친구 요청 없는 유저 검색
-export async function getNonFriends(keyword: string, offset = 0, limit = 12) {
-  const userId = await getUserIdFromStorage();
+export function getNonFriends(keyword: string) {
+  return async ({ page = 0, limit = 12 }) => {
+    const userId = await getUserIdFromStorage();
 
-  const { data, error } = await supabase.rpc("get_non_friends", {
-    user_id: userId,
-    keyword,
-    start_idx: offset,
-    num: limit,
-  });
+    const { data, error } = await supabase.rpc("get_non_friends", {
+      user_id: userId,
+      keyword,
+      start_idx: page * limit,
+      num: limit,
+    });
 
-  if (error) throw error;
-  if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
+    if (error) throw error;
+    if (!data) throw new Error("검색한 유저를 불러올 수 없습니다.");
 
-  const count = data?.[0]?.totalCount || 0;
+    const count = data?.[0]?.totalCount || 0;
 
-  return {
-    data,
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
+    return {
+      data,
+      total: count ?? data.length,
+      hasNext: count ? (page + 1) * limit < count : false,
+      nextPage: page + 1,
+    };
   };
 }
 
@@ -978,29 +998,11 @@ export async function getRelationship(friendId: string): Promise<RelationType> {
   throw new Error("친구 관계 확인에 오류가 발생했습니다");
 }
 
-// 모든 친구의 운동 상태 조회
-export async function getFriendsStatus(
-  friendIds: string[],
-): Promise<StatusInfo[]> {
-  if (!friendIds.length) return [];
-
-  const { data, error } = await supabase
-    .from("workoutHistory")
-    .select("userId, status")
-    .in("userId", friendIds)
-    .eq("date", formatDate(new Date()));
-
-  if (error) throw error;
-  if (!data) return [];
-
-  return data;
-}
-
 // 친구요청 조회
-export async function getFriendRequests(
-  offset = 0,
+export async function getFriendRequests({
+  page = 0,
   limit = 12,
-): Promise<RequestResponse> {
+}): Promise<InfiniteResponse<RequestInfo>> {
   const userId = await getUserIdFromStorage();
 
   const { data, error, count } = await supabase
@@ -1016,7 +1018,7 @@ export async function getFriendRequests(
     .eq("to", userId)
     .is("isAccepted", null)
     .order("createdAt", { ascending: false })
-    .range(offset, offset + limit - 1);
+    .range(page * limit, (page + 1) * limit - 1);
 
   if (error) throw error;
   if (!data) throw new Error("친구 요청을 불러올 수 없습니다.");
@@ -1027,8 +1029,9 @@ export async function getFriendRequests(
       toUser: request.to as UserProfile,
       fromUser: request.from as UserProfile,
     })),
-    total: count || 0,
-    hasMore: count ? offset + limit < count : false,
+    total: count ?? data.length,
+    hasNext: count ? (page + 1) * limit < count : false,
+    nextPage: page + 1,
   };
 }
 
