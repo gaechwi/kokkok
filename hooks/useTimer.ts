@@ -34,6 +34,22 @@ export function useTimerWithStartAndDuration(onTimeout?: () => void) {
     return Math.max(0, Math.floor((expiration - now) / 1000));
   }, [expiration]);
 
+  // expiration만 설정
+  const start = useCallback((start: number, duration: number) => {
+    // expiration이 유효하지 않거나 현재보다 작으면 실행 X
+    const expiration = start + duration;
+    if (!expiration || expiration <= Date.now()) return;
+
+    setExpiration(expiration);
+  }, []);
+
+  // expiration 설정되면 timeLeft 계산해서 설정
+  useEffect(() => {
+    if (expiration > Date.now()) {
+      setTimeLeft(calculateTimeLeft());
+    }
+  }, [calculateTimeLeft, expiration]);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
@@ -47,18 +63,6 @@ export function useTimerWithStartAndDuration(onTimeout?: () => void) {
 
     return () => clearInterval(timer);
   }, [timeLeft, onTimeout, calculateTimeLeft]);
-
-  const start = useCallback(
-    (start: number, duration: number) => {
-      // expiration이 유효하지 않거나 현재보다 작으면 실행 X
-      const expiration = start + duration;
-      if (!expiration || expiration <= Date.now()) return;
-
-      setExpiration(expiration);
-      setTimeLeft(calculateTimeLeft());
-    },
-    [calculateTimeLeft],
-  );
 
   return { timeLeft, start };
 }
