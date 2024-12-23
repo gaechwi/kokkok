@@ -20,7 +20,7 @@ import type {
   PushSetting,
 } from "@/types/Notification.interface";
 import type { Notification } from "@/types/Notification.interface";
-import type { Post } from "@/types/Post.interface";
+import type { Comment, Post } from "@/types/Post.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
@@ -667,37 +667,42 @@ export async function deletePost(postId: number) {
 // ============================================
 
 // 댓글 조회
-export async function getComments(postId: number, page = 0, limit = 10) {
-  try {
-    const start = page * limit;
-    const end = start + limit - 1;
+export function getComments(postId: number) {
+  return async ({
+    page = 0,
+    limit = 10,
+  }): Promise<InfiniteResponse<Comment>> => {
+    try {
+      const start = page * limit;
+      const end = start + limit - 1;
 
-    const { count } = await supabase
-      .from("comment")
-      .select("*", { count: "exact", head: true })
-      .eq("postId", postId)
-      .is("parentsCommentId", null);
+      const { count } = await supabase
+        .from("comment")
+        .select("*", { count: "exact", head: true })
+        .eq("postId", postId)
+        .is("parentsCommentId", null);
 
-    const { data, error } = await supabase.rpc("get_comments", {
-      postid: postId,
-      startindex: start,
-      endindex: end,
-    });
+      const { data, error } = await supabase.rpc("get_comments", {
+        postid: postId,
+        startindex: start,
+        endindex: end,
+      });
 
-    if (error) throw error;
-    if (!data) throw new Error("댓글을 가져올 수 없습니다.");
+      if (error) throw error;
+      if (!data) throw new Error("댓글을 가져올 수 없습니다.");
 
-    return {
-      comments: data,
-      total: count ?? data.length,
-      hasNext: count ? (page + 1) * limit < count : false,
-      nextPage: page + 1,
-    };
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : "댓글 조회에 실패했습니다",
-    );
-  }
+      return {
+        data,
+        total: count ?? data.length,
+        hasNext: count ? (page + 1) * limit < count : false,
+        nextPage: page + 1,
+      };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "댓글 조회에 실패했습니다",
+      );
+    }
+  };
 }
 
 // 답글 조회

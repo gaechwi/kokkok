@@ -15,7 +15,7 @@ export default function UserSearch() {
   // 유저의 친구 요청 정보 조회
   const {
     data: userData,
-    isLoading,
+    isFetching,
     isFetchingNextPage,
     error,
     loadMore,
@@ -45,7 +45,7 @@ export default function UserSearch() {
   }
 
   // 로딩 스크린
-  if (isLoading) {
+  if (isFetching) {
     return (
       <SearchLayout
         data={[]}

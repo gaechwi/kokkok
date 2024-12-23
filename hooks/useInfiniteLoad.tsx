@@ -12,12 +12,14 @@ export default function useInfiniteLoad<T>(
     page,
     limit,
   }: { page: number; limit: number }) => Promise<InfiniteResponse<T>>,
-  queryKey: string[],
+  queryKey: (string | number)[],
   limit: number,
 ) {
+  console.log(limit);
   const {
     data,
     error,
+    isFetching,
     isLoading,
     fetchNextPage,
     hasNextPage,
@@ -40,5 +42,13 @@ export default function useInfiniteLoad<T>(
     }
   };
 
-  return { data, error, isLoading, isFetchingNextPage, loadMore, refetch };
+  return {
+    data,
+    error,
+    isFetching,
+    isLoading,
+    isFetchingNextPage,
+    loadMore,
+    refetch,
+  };
 }

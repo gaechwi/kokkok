@@ -26,11 +26,14 @@ export interface Post {
 }
 
 export interface Comment {
-  id: string;
-  content: string;
+  id: number;
+  contents: string;
   userId: string;
-  postId: number;
   createdAt: string;
-  liked: boolean;
-  likedAuthorAvatar: string[];
+  userData: UserData;
+  likes: number;
+  isLiked: boolean;
+  likedAvatars: string[];
+  parentsCommentId: number;
+  totalReplies: number;
 }
