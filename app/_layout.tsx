@@ -28,8 +28,8 @@ const queryClient = new QueryClient({
 
 Sentry.init({
   dsn: Constants.expoConfig?.extra?.SENTRY_DSN,
-  debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
-  tracesSampleRate: 1.0, // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing. Adjusting this value in production.
+  debug: __DEV__,
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
   integrations: [
     // Pass integration
     navigationIntegration,
