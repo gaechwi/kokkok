@@ -44,6 +44,14 @@ module.exports = {
           fonts: ["./assets/fonts/Pretendard-Regular.otf"],
         },
       ],
+      [
+        "@sentry/react-native/expo",
+        {
+          organization: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+          url: "https://sentry.io/",
+        },
+      ],
     ],
     extra: {
       router: {
@@ -55,6 +63,7 @@ module.exports = {
       EXPO_PUSH_TOKEN: process.env.EXPO_PUSH_TOKEN,
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      SENTRY_DSN: process.env.SENTRY_DSN,
     },
     owner: "epilogue-1",
   },

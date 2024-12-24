@@ -1,4 +1,5 @@
 import type { NotificationData } from "./Notification.interface";
+import type { StatusType } from "./User.interface";
 
 export type Json =
   | string
@@ -407,6 +408,21 @@ export type Database = {
           likedAvatars: string[];
           parentsCommentId: number;
           totalReplies: number;
+        }[];
+      };
+      get_friend_sort_by_status: {
+        Args: {
+          keyword: string;
+          start_idx: number;
+          num: number;
+        };
+        Returns: {
+          id: string;
+          username: string;
+          avatarUrl: string;
+          description: string | null;
+          status: StatusType;
+          totalCount: number;
         }[];
       };
       get_friend_status: {
