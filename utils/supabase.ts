@@ -334,7 +334,7 @@ export async function uploadImage(file: ImagePicker.ImagePickerAsset) {
   if (!file) throw new Error("파일이 제공되지 않았습니다.");
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif"];
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
   if (file.fileSize && file.fileSize > MAX_FILE_SIZE) {
     throw new Error("파일 크기는 5MB를 초과할 수 없습니다.");
@@ -556,15 +556,15 @@ export async function updatePost({
   contents,
 }: {
   postId: number;
-  images: ImagePicker.ImagePickerAsset[];
-  prevImages: string[];
+  images: { imagePickerAsset: ImagePicker.ImagePickerAsset; index: number }[];
+  prevImages: { uri: string; index: number }[];
   contents: string;
 }) {
   try {
     const userId = await getUserIdFromStorage();
     if (!userId) throw new Error("로그인한 유저 정보가 없습니다.");
 
-    // 기존 게시글 조회
+    // 기존 게시글 조회 및 권한 체크
     const { data: existingPost, error: postError } = await supabase
       .from("post")
       .select("userId, contents, images")
@@ -579,37 +579,22 @@ export async function updatePost({
       throw new Error("게시글 작성자만 수정할 수 있습니다.");
     }
 
-    // 변경사항 체크
-    const contentsChanged = contents !== existingPost.contents;
-    const hasNewImages = images.length > 0;
+    // 새로운 이미지 업로드
+    const uploadPromises = images.map(async ({ imagePickerAsset, index }) => {
+      const url = await uploadImage(imagePickerAsset);
+      return { uri: url, index };
+    });
+    const uploadedImages = await Promise.all(uploadPromises);
 
-    // 변경사항이 없으면 기존 게시글 반환
-    if (
-      !contentsChanged &&
-      !hasNewImages &&
-      prevImages.length === existingPost.images.length
-    ) {
-      return existingPost;
-    }
-
-    // 새로운 이미지만 업로드
-    let newImageUrls: string[] = [];
-    if (hasNewImages) {
-      const uploadedUrls = await Promise.all(
-        images.map((image) => uploadImage(image)),
-      );
-      newImageUrls = uploadedUrls.filter(
-        (url): url is string => url !== undefined,
-      );
-    }
-
-    // 이전 이미지와 새로운 이미지 합치기
-    const validImageUrls = [...prevImages, ...newImageUrls];
+    // 이전 이미지와 새로운 이미지를 index 기준으로 정렬하여 병합
+    const allImagesUrl = [...prevImages, ...uploadedImages]
+      .sort((a, b) => a.index - b.index)
+      .map((item) => item.uri);
 
     // 게시글 수정
     const { data: updatedPost, error: updateError } = await supabase
       .from("post")
-      .update({ contents, images: validImageUrls })
+      .update({ contents, images: allImagesUrl })
       .eq("id", postId)
       .select("*, user: userId (id, username, avatarUrl)")
       .single();
@@ -634,7 +619,7 @@ export async function deletePost(postId: number) {
     // 게시글 작성자인지 확인
     const { data: post, error: postError } = await supabase
       .from("post")
-      .select("userId")
+      .select("userId, images")
       .eq("id", postId)
       .single();
 
@@ -645,8 +630,28 @@ export async function deletePost(postId: number) {
       throw new Error("게시글 작성자만 삭제할 수 있습니다.");
     }
 
+    // 이미지 삭제
+    if (post.images && post.images.length > 0) {
+      // URL에서 파일 경로 추출
+      const filePaths = post.images.map((imageUrl: string) => {
+        const url = new URL(imageUrl);
+        return url.pathname.split("/").pop(); // 파일명 추출
+      });
+
+      // 스토리지에서 이미지 삭제
+      const { error: storageError } = await supabase.storage
+        .from("images")
+        .remove(filePaths.filter((path): path is string => path !== undefined));
+
+      if (storageError) {
+        console.error("이미지 삭제 중 오류 발생:", storageError);
+      }
+    }
+
+    // 게시글 삭제
     await supabase.from("post").delete().eq("id", postId);
 
+    // 관련 알림 삭제
     await supabase
       .from("notification")
       .delete()
