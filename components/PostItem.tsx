@@ -187,7 +187,7 @@ export default function PostItem({
       </View>
 
       {/* relation */}
-      <View className="flex-row items-center justify-between bg-white px-4 pb-6">
+      <View className="flex-row items-center justify-between bg-white px-4 pt-[10px] pb-6">
         <View className="flex-row items-center pr-[2px]">
           {/* like */}
           <TouchableOpacity
