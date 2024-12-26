@@ -9,11 +9,12 @@ import {
   getRelationship,
   getUser,
   getUserPosts,
+  subscribeFriendRequest,
   supabase,
 } from "@/utils/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -67,7 +68,6 @@ function RequestButton({ userId, relation, onPress }: RequestButtonProps) {
 const User = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { userId } = useLocalSearchParams();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: user } = useFetchData(
@@ -88,45 +88,23 @@ const User = () => {
     "친구 정보를 불러올 수 없습니다.",
   );
 
-  // 유저 아이디 불러오기
-  useEffect(() => {
-    const handleLoadId = async () => {
-      try {
-        setCurrentUserId(await SecureStore.getItemAsync("userId"));
-      } catch (error) {
-        console.error("userId 조회 중 오류 발생:", error);
-        setCurrentUserId(null);
-      }
-    };
-
-    handleLoadId();
-  }, []);
-
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    const requestChannel = supabase
-      .channel("friendRequest")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "friendRequest",
-          filter: `to=eq.${currentUserId}`,
-        },
-        (payload) => {
-          if (payload.new.from === userId)
-            queryClient.invalidateQueries({
-              queryKey: ["relation", userId],
-            });
-        },
-      )
-      .subscribe();
+    let requestChannel: RealtimeChannel;
+
+    const handleSubscribe = async () => {
+      requestChannel = await subscribeFriendRequest((payload) => {
+        if (payload.new.from === userId)
+          queryClient.invalidateQueries({ queryKey: ["relation", userId] });
+      });
+    };
+
+    handleSubscribe();
 
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [currentUserId, userId, queryClient.invalidateQueries]);
+  }, [userId, queryClient.invalidateQueries]);
 
   return (
     <>

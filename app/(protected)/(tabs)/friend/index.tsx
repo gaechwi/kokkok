@@ -7,8 +7,7 @@ import LoadingScreen from "@/components/LoadingScreen";
 import { SearchLayout } from "@/components/SearchLayout";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { debounce } from "@/utils/DelayManager";
-import { formatDate } from "@/utils/formatDate";
-import { getFriends, supabase } from "@/utils/supabase";
+import { getFriends, subscribeFriendsStatus, supabase } from "@/utils/supabase";
 import { useFocusEffect } from "expo-router";
 
 const LIMIT = 12;
@@ -44,27 +43,11 @@ export default function Friend() {
 
   // 친구의 운동 정보가 바뀌면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    const today = formatDate(new Date());
     const friendIds = friends?.map(({ id }) => id);
 
-    const statusChannel = supabase
-      .channel("workoutHistory")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "workoutHistory",
-          filter: `userId=in.(${friendIds.join(",")})`,
-        },
-        (payload) => {
-          // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
-          // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
-          if (payload.new.date === today)
-            queryClient.invalidateQueries({ queryKey: ["friends"] });
-        },
-      )
-      .subscribe();
+    const statusChannel = subscribeFriendsStatus(friendIds, () =>
+      queryClient.invalidateQueries({ queryKey: ["friends"] }),
+    );
 
     return () => {
       supabase.removeChannel(statusChannel);
