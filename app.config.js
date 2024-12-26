@@ -9,7 +9,7 @@ module.exports = {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash.png",
+      image: "./assets/splash-icon.png",
       resizeMode: "cover",
       backgroundColor: "#885FF1",
     },
