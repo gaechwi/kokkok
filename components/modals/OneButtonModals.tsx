@@ -30,7 +30,7 @@ export function OneButtonModal({
       onTouchStart={onClose}
     >
       <View
-        className="items-center rounded-xl bg-white px-7 py-6"
+        className="w-full items-center rounded-xl bg-white px-[55px] py-6"
         onTouchStart={(e) => e.stopPropagation()}
       >
         {!!emoji && Emojis[emoji]}
@@ -41,7 +41,7 @@ export function OneButtonModal({
 
         <TouchableOpacity
           onPress={onPress}
-          className="mt-5 h-[52px] w-full grow flex-row items-center justify-center rounded-[8px] bg-primary"
+          className="mt-5 h-[52px] w-full flex-row items-center justify-center rounded-[8px] bg-primary"
         >
           <Text className="text-center font-pbold text-[17px] text-white leading-[150%]">
             {buttonText}
