@@ -1,5 +1,6 @@
 import { passwordResetFormAtom } from "@/contexts/auth";
 import { resetPassword } from "@/utils/supabase";
+import { validatePasswordResetEmail } from "@/utils/validation";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
@@ -21,6 +22,15 @@ const Step1 = () => {
 
   const handleSendEmail = async () => {
     try {
+      // 이메일 유효성 검사
+      const validationError = await validatePasswordResetEmail(
+        resetEmail.email,
+      );
+      if (validationError) {
+        Alert.alert("알림", validationError.message);
+        return;
+      }
+
       await resetPassword(resetEmail.email);
       router.push("/password-reset/step2");
     } catch (error: unknown) {

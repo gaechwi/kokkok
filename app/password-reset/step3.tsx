@@ -1,10 +1,9 @@
 import { updateNewPassword } from "@/utils/supabase";
-import images from "@constants/images";
+import { validateResetPasswordForm } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,30 +14,36 @@ import {
 } from "react-native";
 
 const Step3 = () => {
+  const router = useRouter();
   const [resetPassword, setResetPassword] = useState({
     newPassword: "",
     confirmPassword: "",
   });
 
-  const router = useRouter();
-
   const handleResetPassword = async () => {
-    if (resetPassword.newPassword !== resetPassword.confirmPassword) {
-      Alert.alert("알림", "비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
     try {
-      await updateNewPassword(resetPassword.newPassword);
+      const validationError = validateResetPasswordForm(
+        resetPassword.newPassword,
+        resetPassword.confirmPassword,
+      );
 
+      if (validationError) {
+        Alert.alert("알림", validationError.message);
+        return;
+      }
+
+      await updateNewPassword(resetPassword.newPassword);
       router.replace("/home");
     } catch (error) {
-      Alert.alert(
-        "알림",
+      const errorMessage =
         error instanceof Error
-          ? error.message
-          : "비밀번호 변경에 실패했습니다.",
-      );
+          ? error.message ===
+            "New password should be different from the old password."
+            ? "새 비밀번호는 현재 비밀번호와 달라야 합니다."
+            : error.message
+          : "비밀번호 변경에 실패했습니다.";
+
+      Alert.alert("알림", errorMessage);
     }
   };
 
@@ -48,13 +53,8 @@ const Step3 = () => {
       className="h-full flex-1 bg-white"
     >
       <ScrollView>
-        <View className="mt-[58px] flex items-center justify-center px-6">
-          <Image
-            source={images.Step3}
-            className="h-[90px] w-full"
-            resizeMode="contain"
-          />
-          <View className="mt-10 flex w-full gap-10">
+        <View className="mt-[32px] flex items-center justify-center px-6">
+          <View className="flex w-full gap-[20px]">
             <TextInput
               className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
               autoCapitalize="none"

@@ -248,3 +248,70 @@ export const validateChangePasswordForm = async (
 
   return null;
 };
+
+export const validatePasswordResetEmail = async (
+  email: string,
+): Promise<SignUpValidationError | null> => {
+  // 이메일 기본 유효성 검사
+  const emailError = validateEmail(email);
+  if (emailError) return emailError;
+
+  // 이메일이 존재하는지 확인
+  const { data: userData } = await supabase
+    .from("user")
+    .select("email")
+    .eq("email", email)
+    .single();
+
+  if (!userData?.email) {
+    return {
+      message: "등록되지 않은 이메일입니다.",
+      field: "email",
+    };
+  }
+
+  return null;
+};
+
+export const validateResetPasswordFields = (
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  if (!newPassword) {
+    return {
+      message: "새 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!confirmPassword) {
+    return {
+      message: "비밀번호 확인을 입력해주세요.",
+      field: "passwordConfirm",
+    };
+  }
+
+  return null;
+};
+
+export const validateResetPasswordForm = (
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validateResetPasswordFields(newPassword, confirmPassword);
+  if (fieldsError) return fieldsError;
+
+  // 새 비밀번호 검증
+  const newPasswordError = validatePassword(newPassword);
+  if (newPasswordError) return newPasswordError;
+
+  // 비밀번호 확인 검증
+  const confirmPasswordError = validatePasswordConfirm(
+    newPassword,
+    confirmPassword,
+  );
+  if (confirmPasswordError) return confirmPasswordError;
+
+  return null;
+};
