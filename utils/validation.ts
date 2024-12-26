@@ -315,3 +315,39 @@ export const validateResetPasswordForm = (
 
   return null;
 };
+
+export const validateSignInFields = (
+  email: string,
+  password: string,
+): SignUpValidationError | null => {
+  if (!email) {
+    return {
+      message: "이메일을 입력해주세요.",
+      field: "email",
+    };
+  }
+
+  if (!password) {
+    return {
+      message: "비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  return null;
+};
+
+export const validateSignInForm = (
+  email: string,
+  password: string,
+): SignUpValidationError | null => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validateSignInFields(email, password);
+  if (fieldsError) return fieldsError;
+
+  // 이메일 형식 검증
+  const emailError = validateEmail(email);
+  if (emailError) return emailError;
+
+  return null;
+};
