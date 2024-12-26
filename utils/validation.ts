@@ -158,3 +158,93 @@ export const validateStep2Form = (
 
   return null;
 };
+
+export const validateCurrentPassword = async (
+  email: string,
+  currentPassword: string,
+): Promise<SignUpValidationError | null> => {
+  if (!currentPassword) {
+    return {
+      message: "현재 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (signInError) {
+    return {
+      message: "현재 비밀번호가 올바르지 않습니다.",
+      field: "password",
+    };
+  }
+
+  return null;
+};
+
+export const validatePasswordChangeFields = (
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  if (!currentPassword) {
+    return {
+      message: "현재 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!newPassword) {
+    return {
+      message: "새 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!confirmPassword) {
+    return {
+      message: "비밀번호 확인을 입력해주세요.",
+      field: "passwordConfirm",
+    };
+  }
+
+  return null;
+};
+
+export const validateChangePasswordForm = async (
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<SignUpValidationError | null> => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validatePasswordChangeFields(
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  );
+  if (fieldsError) return fieldsError;
+
+  // 새 비밀번호 검증
+  const newPasswordError = validatePassword(newPassword);
+  if (newPasswordError) return newPasswordError;
+
+  // 비밀번호 확인 검증
+  const confirmPasswordError = validatePasswordConfirm(
+    newPassword,
+    confirmPassword,
+  );
+  if (confirmPasswordError) return confirmPasswordError;
+
+  // 현재 비밀번호 검증
+  const currentPasswordError = await validateCurrentPassword(
+    email,
+    currentPassword,
+  );
+  if (currentPasswordError) return currentPasswordError;
+
+  return null;
+};

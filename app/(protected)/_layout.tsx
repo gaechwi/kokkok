@@ -39,6 +39,10 @@ const ProtectedLayout = () => {
         options={{ header: () => <HeaderWithBack name="SEARCH_FRIEND" /> }}
       />
       <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="change-password"
+        options={{ header: () => <HeaderWithBack name="CHANGE_PASSWORD" /> }}
+      />
     </Stack>
   );
 };

@@ -111,7 +111,7 @@ export default function Setting() {
             {!currentUser?.isOAuth && (
               <TouchableOpacity
                 className="flex-row items-center justify-between"
-                onPress={() => router.push("/password-reset/step1")}
+                onPress={() => router.push("/change-password")}
               >
                 <Text className="font-pmedium text-gray-80 text-xl">
                   비밀번호 변경
