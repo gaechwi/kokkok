@@ -1,5 +1,5 @@
+import { setModalStateAtom } from "@/contexts/modal.atom";
 import type { ModalType } from "@/types/Modal.interface";
-import { setModalStateAtom } from "@/utils/modal.atom";
 import { useAtom } from "jotai";
 
 export function useModal() {

@@ -1,5 +1,5 @@
+import { modalStateAtom } from "@/contexts/modal.atom";
 import { useModal } from "@/hooks/useModal";
-import { modalStateAtom } from "@/utils/modal.atom";
 import { useAtom } from "jotai";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Modal } from "react-native";

@@ -7,14 +7,14 @@ import useCalendar from "@/hooks/useCalendar";
 import { formatDate } from "@/utils/formatDate";
 import { addRestDay, deleteRestDay, getRestDays } from "@/utils/supabase";
 
-import CalendarNavigator from "./CalendarNavigator";
-import RestDayCalendar from "./RestDayCalendar";
+import CalendarNavigator from "../CalendarNavigator";
+import RestDayCalendar from "../RestDayCalendar";
 
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
 import { useModal } from "@/hooks/useModal";
-import { showToast } from "./ToastConfig";
+import { showToast } from "../ToastConfig";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 

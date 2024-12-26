@@ -1,7 +1,7 @@
 import { HeaderWithUsername } from "@/components/Header";
-import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
 import CommentsSection from "@/components/comments/CommentsSection";
+import MotionModal from "@/components/modals/MotionModal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";

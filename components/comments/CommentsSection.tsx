@@ -30,8 +30,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MotionModal from "../MotionModal";
 import { showToast } from "../ToastConfig";
+import MotionModal from "../modals/MotionModal";
 import CommentItem from "./CommentItem";
 import MentionInput from "./MentionInput";
 

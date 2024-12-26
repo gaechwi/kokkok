@@ -38,7 +38,9 @@ export default function MyPage() {
             username={currentUser?.username || ""}
             avatarUrl={currentUser?.avatarUrl || undefined}
             description={currentUser?.description || undefined}
-            onSettingsPress={() => openModal({ type: "SELECT_PROFILE_EDIT" })}
+            onSettingsPress={() =>
+              openModal({ type: "SELECT_PROFILE_EDIT" }, "bottom")
+            }
           />
           <PostGrid
             posts={

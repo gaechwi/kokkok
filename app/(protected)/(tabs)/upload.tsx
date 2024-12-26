@@ -47,6 +47,8 @@ export default function Upload() {
     openModal({ type: "POST_UPLOAD_FAIL" });
   };
 
+  postUploadFailModal();
+
   // 게시글 데이터를 불러오는 훅
   const { data: post, refetch } = useFetchData(
     ["post", postId],
