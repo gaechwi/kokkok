@@ -19,6 +19,7 @@ const ProtectedLayout = () => {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen
         name="notification"
         options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
