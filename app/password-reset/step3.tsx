@@ -1,3 +1,4 @@
+import images from "@/constants/images";
 import { passwordResetFormAtom } from "@/contexts/auth";
 import { updateNewPassword } from "@/utils/supabase";
 import { validateResetPasswordForm } from "@/utils/validation";
@@ -6,6 +7,7 @@ import { useAtom } from "jotai";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,6 +20,7 @@ import {
 const Step3 = () => {
   const router = useRouter();
   const [_, setResetEmail] = useAtom(passwordResetFormAtom);
+  const [isLoading, setIsLoading] = useState(false);
   const [resetPassword, setResetPassword] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -25,6 +28,7 @@ const Step3 = () => {
 
   const handleResetPassword = async () => {
     try {
+      setIsLoading(true);
       const validationError = validateResetPasswordForm(
         resetPassword.newPassword,
         resetPassword.confirmPassword,
@@ -48,6 +52,8 @@ const Step3 = () => {
           : "비밀번호 변경에 실패했습니다.";
 
       Alert.alert("알림", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,8 +63,13 @@ const Step3 = () => {
       className="h-full flex-1 bg-white"
     >
       <ScrollView>
-        <View className="mt-[32px] flex items-center justify-center px-6">
-          <View className="flex w-full gap-[20px]">
+        <View className="mt-[58px] flex items-center justify-center px-6">
+          <Image
+            source={images.Step3}
+            className="h-[90px] w-full"
+            resizeMode="contain"
+          />
+          <View className="mt-10 flex w-full gap-10">
             <TextInput
               className="placeholder:body-1 h-[58px] w-full rounded-[10px] border border-gray-20 px-4 placeholder:text-gray-40 focus:border-primary"
               autoCapitalize="none"
@@ -86,10 +97,15 @@ const Step3 = () => {
           </View>
 
           <TouchableOpacity
-            className="mt-10 h-[62px] w-full items-center justify-center rounded-[10px] bg-primary"
+            className={`mt-10 h-[62px] w-full items-center justify-center rounded-[10px] ${
+              isLoading ? "bg-gray-20" : "bg-primary"
+            }`}
             onPress={handleResetPassword}
+            disabled={isLoading}
           >
-            <Text className="heading-2 text-white">완료</Text>
+            <Text className="heading-2 text-white">
+              {isLoading ? "변경 중..." : "완료"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
