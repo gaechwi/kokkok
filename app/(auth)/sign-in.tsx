@@ -79,17 +79,17 @@ const SignIn = () => {
           .eq("id", session.user.id)
           .single();
 
-        if (!existingUser) {
+        if (!existingUser && session.user.email) {
           const { error: insertError } = await supabase.from("user").insert({
             id: session.user.id,
             email: session.user.email,
             username:
               session.user.user_metadata.full_name ||
-              session.user.email?.split("@")[0],
+              session.user.email.split("@")[0],
             avatarUrl:
               session.user.user_metadata.avatar_url ||
               `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                session.user.email || "",
+                session.user.email,
               )}`,
             isOAuth: true,
           });
