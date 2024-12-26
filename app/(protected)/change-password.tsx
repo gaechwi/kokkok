@@ -44,14 +44,19 @@ const ChangePassword = () => {
       }
 
       await updateNewPassword(resetPassword.newPassword);
+
       router.replace("/home");
     } catch (error) {
-      Alert.alert(
-        "알림",
+      // 에러메시지 한글로 변환
+      const errorMessage =
         error instanceof Error
-          ? error.message
-          : "비밀번호 변경에 실패했습니다.",
-      );
+          ? error.message ===
+            "New password should be different from the old password."
+            ? "새 비밀번호는 현재 비밀번호와 달라야 합니다."
+            : error.message
+          : "비밀번호 변경에 실패했습니다.";
+
+      Alert.alert("알림", errorMessage);
     }
   };
 
