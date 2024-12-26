@@ -181,7 +181,7 @@ const SignIn = () => {
 
           <View className="mt-10 flex flex-row justify-center gap-3">
             <Link href="/password-reset/step1">
-              <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+              <Text className="body-1 text-gray-50">비밀번호 재설정</Text>
             </Link>
             <Text className="body-1 text-gray-50">|</Text>
             <Link href="/sign-up/step1">

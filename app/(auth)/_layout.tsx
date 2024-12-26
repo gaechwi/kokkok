@@ -32,6 +32,24 @@ const AuthLayout = () => {
             header: () => <HeaderWithBack name="SIGNUP" />,
           }}
         />
+        <Stack.Screen
+          name="password-reset/step1"
+          options={{
+            header: () => <HeaderWithBack name="RESET_PASSWORD" />,
+          }}
+        />
+        <Stack.Screen
+          name="password-reset/step2"
+          options={{
+            header: () => <HeaderWithBack name="RESET_PASSWORD" />,
+          }}
+        />
+        <Stack.Screen
+          name="password-reset/step3"
+          options={{
+            header: () => <HeaderWithBack name="RESET_PASSWORD" />,
+          }}
+        />
       </Stack>
     </>
   );

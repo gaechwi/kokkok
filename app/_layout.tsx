@@ -5,7 +5,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
-import { HeaderWithBack } from "@/components/Header";
 import { ToastConfig } from "@/components/ToastConfig";
 import { useAppState } from "@/hooks/useAppState";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
@@ -86,27 +85,8 @@ function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="password-reset/step1"
-              options={{
-                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
-              }}
-            />
-            <Stack.Screen
-              name="password-reset/step2"
-              options={{
-                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
-              }}
-            />
-            <Stack.Screen
-              name="password-reset/step3"
-              options={{
-                header: () => <HeaderWithBack name="RESET_PASSWORD" />,
-              }}
-            />
             <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           </Stack>
-
           <StatusBar style="dark" />
           <Toast config={ToastConfig} />
         </NotificationProvider>

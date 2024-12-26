@@ -20,7 +20,6 @@ const HEADER_TITLE = {
   HISTORY: "기록",
   FRIEND: "친구",
   SEARCH_FRIEND: "친구 찾기",
-  CHANGE_PASSWORD: "비밀번호 변경",
   POST_DETAIL: "게시물",
 } as const;
 type HeaderType = keyof typeof HEADER_TITLE;

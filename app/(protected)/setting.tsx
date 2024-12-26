@@ -132,7 +132,15 @@ export default function Setting() {
 
         {/* 문의하기 */}
         <View className="bg-white px-6 py-[22px]">
-          <Text className="heading-2 text-gray-80">문의하기</Text>
+          <TouchableOpacity
+            onPress={() =>
+              Linking.openURL(
+                "https://docs.google.com/forms/d/e/1FAIpQLSdjdkcRV8CfAyxMutiH8xxFbzNg7wQc4bVRlNo4InST4H5Mng/viewform?usp=header",
+              )
+            }
+          >
+            <Text className="heading-2 text-gray-80">문의하기</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 깃허브 놀러가기 */}
