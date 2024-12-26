@@ -1,25 +1,19 @@
 import CustomSwitch from "@/components/CustomSwitch";
 import LoadingScreen from "@/components/LoadingScreen";
-import { TwoButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { useModal } from "@/hooks/useModal";
 import {
   NOTIFICATION_TYPE,
   type NotificationType,
   type PushSetting,
 } from "@/types/Notification.interface";
 import { isTokenValid, updatePushToken } from "@/utils/pushTokenManager";
-import {
-  deleteUser,
-  getPushSetting,
-  supabase,
-  updatePushSetting,
-} from "@/utils/supabase";
+import { getPushSetting, updatePushSetting } from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
   Alert,
   Linking,
@@ -41,11 +35,7 @@ const NOTIFICATION_TYPE_GROUPS: { [key: string]: NotificationType[] } = {
 
 export default function Setting() {
   const router = useRouter();
-
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [isSignOutModalVisible, setIsSignOutModalVisible] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { openModal } = useModal();
 
   // 푸시알림 설정 정보 조회
   const { data: pushSetting, isPending: isTokenPending } =
@@ -54,35 +44,6 @@ export default function Setting() {
       () => getPushSetting(),
       "푸시 알림 설정 정보 로드에 실패했습니다.",
     );
-
-  // 계정 탈퇴 핸들러
-  const handleDeleteAccount = async () => {
-    setIsLoading(true);
-
-    try {
-      await deleteUser();
-      await supabase.auth.signOut();
-      showToast("success", "탈퇴가 완료되었습니다!");
-    } catch (error) {
-      showToast("error", "탈퇴에 실패했습니다.");
-    }
-
-    setIsDeleteModalVisible(false);
-    setIsLoading(false);
-  };
-
-  // 로그아웃 핸들러
-  const handleSignOut = async () => {
-    setIsLoading(true);
-
-    await updatePushSetting({ token: "logout" });
-    await supabase.auth.signOut();
-
-    setIsLoading(false);
-
-    setIsSignOutModalVisible(false);
-    showToast("success", "로그아웃이 완료되었습니다!");
-  };
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
@@ -111,7 +72,7 @@ export default function Setting() {
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-row items-center justify-between"
-              onPress={() => setIsSignOutModalVisible(true)}
+              onPress={() => openModal({ type: "SIGN_OUT" })}
             >
               <Text className="font-pmedium text-gray-80 text-xl">
                 로그아웃
@@ -120,7 +81,7 @@ export default function Setting() {
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-row items-center justify-between"
-              onPress={() => setIsDeleteModalVisible(true)}
+              onPress={() => openModal({ type: "ACCOUNT_DELETE" })}
             >
               <Text className="font-pmedium text-gray-80 text-xl">
                 계정 탈퇴
@@ -147,35 +108,6 @@ export default function Setting() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      <View className="flex-1">
-        <TwoButtonModal
-          isVisible={isDeleteModalVisible}
-          onClose={() => setIsDeleteModalVisible(false)}
-          emoji="sad"
-          contents={"탈퇴하면 되돌릴 수 없어요\n그래도 탈퇴하시겠어요?"}
-          leftButtonText="취소"
-          rightButtonText="탈퇴"
-          onLeftButtonPress={() => setIsDeleteModalVisible(false)}
-          onRightButtonPress={handleDeleteAccount}
-          isLoading={isLoading}
-          variant="danger"
-        />
-      </View>
-
-      <View className="flex-1">
-        <TwoButtonModal
-          isVisible={isSignOutModalVisible}
-          onClose={() => setIsSignOutModalVisible(false)}
-          contents={"이 계정에서\n로그아웃 하시겠어요?"}
-          leftButtonText="취소"
-          rightButtonText="로그아웃"
-          onLeftButtonPress={() => setIsSignOutModalVisible(false)}
-          onRightButtonPress={handleSignOut}
-          isLoading={isLoading}
-          variant="danger"
-        />
       </View>
     </SafeAreaView>
   );

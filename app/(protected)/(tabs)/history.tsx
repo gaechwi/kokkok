@@ -9,12 +9,11 @@ import {
 } from "react-native";
 
 import CalendarNavigator from "@/components/CalendarNavigator";
-import RestDayModal from "@/components/RestDayModal";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import icons from "@/constants/icons";
 import useCalendar from "@/hooks/useCalendar";
 import useFetchData from "@/hooks/useFetchData";
-import useModal from "@/hooks/useModal";
+import { useModal } from "@/hooks/useModal";
 import { getCurrentUser, getHistories } from "@/utils/supabase";
 
 type History = Awaited<ReturnType<typeof getHistories>>[number];
@@ -29,7 +28,7 @@ export default function History() {
     changeMonth,
     resetDate,
   } = useCalendar();
-  const { isModalVisible, openModal, closeModal } = useModal();
+  const { openModal } = useModal();
 
   const {
     data: histories = [],
@@ -78,8 +77,11 @@ export default function History() {
           완료!
         </Text>
 
-        <SetRestDayButton onPress={openModal} />
-        <RestDayModal visible={isModalVisible} onClose={closeModal} />
+        <SetRestDayButton
+          onPress={() => {
+            openModal({ type: "REST_DAY" }, "bottom");
+          }}
+        />
       </View>
 
       <View className="mt-[20px] min-h-[300px] items-center rounded-[10px] border border-gray-25 px-[16px] pt-[16px] pb-[32px]">

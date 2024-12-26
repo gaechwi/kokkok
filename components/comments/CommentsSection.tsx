@@ -3,6 +3,7 @@ import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import { useModal } from "@/hooks/useModal";
 import useRefresh from "@/hooks/useRefresh";
 import {
   createComment,
@@ -29,7 +30,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { DeleteModal } from "../Modal";
 import MotionModal from "../MotionModal";
 import { showToast } from "../ToastConfig";
 import CommentItem from "./CommentItem";
@@ -59,12 +59,12 @@ export default function CommentsSection({
     parentId: number;
     replyCommentId: number;
   } | null>(null);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedCommentId, setSelectedCommentId] = useState<number | null>(
     null,
   );
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
   const [likedAuthorId, setLikedAuthorId] = useState<number | null>(null);
+  const { openModal } = useModal();
 
   const queryClient = useQueryClient();
   const inputRef = useRef<TextInput>(null);
@@ -280,7 +280,7 @@ export default function CommentsSection({
               onLikedAuthorPress={onLikedAuthorPress}
               onDeletedPress={(commentId) => {
                 setSelectedCommentId(commentId);
-                setIsDeleteModalVisible(true);
+                openModal({ type: "DELETE_COMMENT", postId, commentId });
               }}
             />
           )}
@@ -384,16 +384,6 @@ export default function CommentsSection({
           </View>
         </MotionModal>
       )}
-
-      {/* 삭제 모달 */}
-      <DeleteModal
-        isVisible={isDeleteModalVisible}
-        onClose={() => setIsDeleteModalVisible(false)}
-        onDelete={() => {
-          deleteCommentMutation.mutate();
-          setIsDeleteModalVisible(false);
-        }}
-      />
 
       {/* comment input */}
       <>

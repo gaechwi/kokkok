@@ -1,15 +1,13 @@
 import { HeaderWithUsername } from "@/components/Header";
-import { DeleteModal, TwoButtonModal } from "@/components/Modal";
 import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
-import { showToast } from "@/components/ToastConfig";
 import CommentsSection from "@/components/comments/CommentsSection";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
-import { deletePost, getPost, getPostLikes } from "@/utils/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useModal } from "@/hooks/useModal";
+import { getPost, getPostLikes } from "@/utils/supabase";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
@@ -24,17 +22,11 @@ export default function PostDetail() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
-  const [isNotFoundModalVisible, setIsNotFoundModalVisible] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const { openModal } = useModal();
 
   const router = useRouter();
-  const queryClient = useQueryClient();
 
-  const {
-    data: post,
-    isPending: isPostPending,
-    error: postError,
-  } = useFetchData(
+  const { data: post, error: postError } = useFetchData(
     ["post", postId],
     () => getPost(Number(postId)),
     "포스트를 불러오는데 실패했습니다.",
@@ -50,9 +42,13 @@ export default function PostDetail() {
     isLikedModalVisible,
   );
 
-  useFocusEffect(() => {
-    if (postError || (!isPostPending && !post)) setIsNotFoundModalVisible(true);
-  });
+  useFocusEffect(
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useCallback(() => {
+      if (!postError && post) return;
+      openModal({ type: "POST_NOT_FOUND" });
+    }, [postError, post]),
+  );
 
   const onOpenLikedAuthor = useCallback(() => {
     setIsLikedModalVisible(true);
@@ -61,22 +57,6 @@ export default function PostDetail() {
   const onCloseComments = useCallback(() => {
     setIsCommentsVisible(false);
   }, []);
-
-  const deletePostMutation = useMutation({
-    mutationFn: async () => {
-      await deletePost(Number(postId));
-    },
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["notification"] });
-      router.back();
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
-    },
-  });
 
   // 유저 아이디 불러오기
   useEffect(() => {
@@ -126,7 +106,7 @@ export default function PostDetail() {
           onCommentsPress={() => setIsCommentsVisible(true)}
           onAuthorPress={onOpenLikedAuthor}
           onDeletePress={() => {
-            setIsDeleteModalVisible(true);
+            openModal({ type: "DELETE_POST", postId: Number(postId) });
           }}
         />
       )}
@@ -192,43 +172,6 @@ export default function PostDetail() {
               />
             </View>
           </MotionModal>
-        </View>
-      )}
-
-      {isDeleteModalVisible && (
-        <View className="flex-1">
-          <DeleteModal
-            isVisible={isDeleteModalVisible}
-            onClose={() => setIsDeleteModalVisible(false)}
-            onDelete={() => {
-              deletePostMutation.mutate();
-              setIsDeleteModalVisible(false);
-            }}
-          />
-        </View>
-      )}
-
-      {isNotFoundModalVisible && (
-        <View className="flex-1">
-          <TwoButtonModal
-            isVisible={isNotFoundModalVisible}
-            onClose={() => {
-              setIsNotFoundModalVisible(false);
-              router.back();
-            }}
-            emoji="sad"
-            contents={"게시글이 삭제되었어요."}
-            leftButtonText="뒤로가기"
-            rightButtonText="홈으로"
-            onLeftButtonPress={() => {
-              setIsNotFoundModalVisible(false);
-              router.back();
-            }}
-            onRightButtonPress={() => {
-              setIsNotFoundModalVisible(false);
-              router.replace("/home");
-            }}
-          />
         </View>
       )}
     </SafeAreaView>

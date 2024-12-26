@@ -10,7 +10,6 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import Carousel from "./Carousel";
-import CustomModal from "./Modal";
 interface PostItemProps {
   author: {
     id: string;
@@ -54,7 +53,6 @@ export default function PostItem({
   const [userId, setUserId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(liked);
   const [isMore, setIsMore] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -140,39 +138,12 @@ export default function PostItem({
         </TouchableOpacity>
 
         {userId === author.id && (
-          <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+          <TouchableOpacity onPress={() => onDeletePress()}>
             <icons.MeatballIcon
               width={24}
               height={24}
               color={colors.gray[70]}
             />
-
-            <CustomModal
-              visible={isModalVisible}
-              onClose={() => setIsModalVisible(false)}
-              position="bottom"
-            >
-              <View className="items-center">
-                <TouchableOpacity
-                  onPress={() => {
-                    setIsModalVisible(false);
-                    router.push(`/upload?postId=${postId}`);
-                  }}
-                  className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-                >
-                  <Text className="title-2 text-gray-90">수정하기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    onDeletePress();
-                    setIsModalVisible(false);
-                  }}
-                  className="h-[82px] w-full items-center justify-center"
-                >
-                  <Text className="title-2 text-gray-90">삭제하기</Text>
-                </TouchableOpacity>
-              </View>
-            </CustomModal>
           </TouchableOpacity>
         )}
       </View>

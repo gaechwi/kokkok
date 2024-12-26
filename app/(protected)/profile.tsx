@@ -1,10 +1,8 @@
-import CustomModal from "@/components/Modal";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { useModal } from "@/hooks/useModal";
 import { getCurrentUser, updateMyProfile } from "@/utils/supabase";
 import images from "@constants/images";
-import * as ImagePicker from "expo-image-picker";
-import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -20,8 +18,6 @@ import {
 } from "react-native";
 
 const Profile = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
   const { data: currentUser } = useFetchData(
     ["currentUser"],
     getCurrentUser,
@@ -33,6 +29,8 @@ const Profile = () => {
     username: currentUser?.username || "",
     description: currentUser?.description || "",
   });
+
+  const { openModal } = useModal();
 
   // profile 데이터가 로드되면 input 값을 업데이트
   useEffect(() => {
@@ -63,40 +61,6 @@ const Profile = () => {
     router.replace("/mypage");
   };
 
-  const handleAvatarPress = async () => {
-    // 권한 요청
-    const { status, accessPrivileges } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted" && accessPrivileges !== "limited") {
-      Alert.alert(
-        "사진 접근 권한 필요",
-        "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
-        [
-          { text: "취소", style: "cancel" },
-          {
-            text: "설정으로 이동",
-            onPress: () => Linking.openURL("app-settings:"),
-          },
-        ],
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled) {
-      setProfileInput({
-        ...profileInput,
-        avatarUrl: result.assets[0].uri,
-      });
-    }
-  };
-
   return (
     <>
       <KeyboardAvoidingView
@@ -106,7 +70,12 @@ const Profile = () => {
         <ScrollView>
           <View className="mt-12 flex items-center justify-center px-6">
             <TouchableOpacity
-              onPress={() => setIsModalVisible(true)}
+              onPress={() => {
+                openModal({
+                  type: "SELECT_PROFILE_IMAGE_EDIT",
+                  setProfileInput: setProfileInput,
+                });
+              }}
               className="relative"
             >
               <Image
@@ -158,37 +127,6 @@ const Profile = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <CustomModal
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        position="middle"
-      >
-        <View className="w-full items-center">
-          <TouchableOpacity
-            className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-            onPress={async () => {
-              await handleAvatarPress();
-              setIsModalVisible(false);
-            }}
-          >
-            <Text className="title-2 text-gray-90">앨범 선택</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="h-[82px] w-full items-center justify-center"
-            onPress={() => {
-              setProfileInput({
-                ...profileInput,
-                avatarUrl: "",
-              });
-
-              setIsModalVisible(false);
-            }}
-          >
-            <Text className="title-2 text-gray-90">이미지 삭제</Text>
-          </TouchableOpacity>
-        </View>
-      </CustomModal>
     </>
   );
 };

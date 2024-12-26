@@ -8,22 +8,17 @@ import { formatDate } from "@/utils/formatDate";
 import { addRestDay, deleteRestDay, getRestDays } from "@/utils/supabase";
 
 import CalendarNavigator from "./CalendarNavigator";
-import CustomModal from "./Modal";
 import RestDayCalendar from "./RestDayCalendar";
 
 import colors from "@/constants/colors";
 import icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { useModal } from "@/hooks/useModal";
 import { showToast } from "./ToastConfig";
 
 type RestDay = Awaited<ReturnType<typeof getRestDays>>[number];
 
-interface RestDayModalProps {
-  visible: boolean;
-  onClose: () => void;
-}
-
-export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
+export default function RestDayModal() {
   const {
     date,
     year,
@@ -34,6 +29,7 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
     resetDate,
   } = useCalendar();
   const [restDates, setRestDates] = useState<RestDay[]>([]);
+  const { closeModal } = useModal();
 
   const { data: defaultDates = [], isSuccess } = useFetchData(
     ["restDates"],
@@ -71,7 +67,7 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   });
 
   const handleClose = () => {
-    onClose();
+    closeModal();
     setRestDates(defaultDates);
     resetDate();
   };
@@ -103,39 +99,37 @@ export default function RestDayModal({ visible, onClose }: RestDayModalProps) {
   };
 
   return (
-    <CustomModal visible={visible} onClose={handleClose} position="bottom">
-      <View className="items-center px-[39px] pt-[40px] pb-[52px]">
-        <TouchableOpacity
-          className="absolute top-[16px] right-[16px]"
-          onPress={handleClose}
-        >
-          <icons.XIcon width={24} height={24} color={colors.gray[90]} />
-        </TouchableOpacity>
+    <View className="items-center rounded-t-xl bg-white px-[39px] pt-[40px] pb-[52px]">
+      <TouchableOpacity
+        className="absolute top-[16px] right-[16px]"
+        onPress={handleClose}
+      >
+        <icons.XIcon width={24} height={24} color={colors.gray[90]} />
+      </TouchableOpacity>
 
-        <Text className="heading-1 mb-[20px]">쉬는 날을 설정하세요</Text>
+      <Text className="heading-1 mb-[20px]">쉬는 날을 설정하세요</Text>
 
-        <CalendarNavigator
-          date={date}
-          onPrevious={handlePreviousMonth}
-          onNext={handleNextMonth}
-          isPreviousDisabled={year === currentYear && month <= currentMonth}
-        />
+      <CalendarNavigator
+        date={date}
+        onPrevious={handlePreviousMonth}
+        onNext={handleNextMonth}
+        isPreviousDisabled={year === currentYear && month <= currentMonth}
+      />
 
-        <RestDayCalendar
-          date={date}
-          restDates={restDates}
-          onSelectDate={handleSelectDate}
-        />
+      <RestDayCalendar
+        date={date}
+        restDates={restDates}
+        onSelectDate={handleSelectDate}
+      />
 
-        <TouchableOpacity
-          className="mt-[16px] h-[52px] w-[256px] items-center justify-center rounded-[10px] bg-primary"
-          onPress={() => {
-            handleSubmit();
-          }}
-        >
-          <Text className="title-2 text-white">완료</Text>
-        </TouchableOpacity>
-      </View>
-    </CustomModal>
+      <TouchableOpacity
+        className="mt-[16px] h-[52px] w-[256px] items-center justify-center rounded-[10px] bg-primary"
+        onPress={() => {
+          handleSubmit();
+        }}
+      >
+        <Text className="title-2 text-white">완료</Text>
+      </TouchableOpacity>
+    </View>
   );
 }

@@ -1,10 +1,10 @@
-import CustomModal, { OneButtonModal } from "@/components/Modal";
 import { showToast } from "@/components/ToastConfig";
+import type { ImageItem } from "@/components/modals/ListModals";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import useFetchData from "@/hooks/useFetchData";
+import { useModal } from "@/hooks/useModal";
 import { formatDate } from "@/utils/formatDate";
-import optimizeImage from "@/utils/optimizeImage";
 import {
   addWorkoutHistory,
   createPost,
@@ -12,14 +12,12 @@ import {
   updatePost,
 } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
+import type * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Image,
-  Linking,
-  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -30,37 +28,24 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import type { FlatList } from "react-native-gesture-handler";
 
-// 이미지 항목의 타입 정의
-interface ImageItem {
-  type: "prev" | "new";
-  index: number;
-  uri: string;
-  imagePickerAsset?: ImagePicker.ImagePickerAsset;
-}
-
 // 이미지 최대 개수 및 옵션 설정
 const IMAGE_LIMIT = 5;
-const IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
-  mediaTypes: ["images"],
-  allowsEditing: true,
-  aspect: [1, 1],
-  quality: 0.5,
-  exif: false,
-  legacy: Platform.OS === "android",
-};
 
 export default function Upload() {
   const params = useLocalSearchParams<{ postId?: string }>();
   const postId = params.postId ? Number(params.postId) : undefined;
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { openModal } = useModal();
 
   // 상태 정의
   const [imageItems, setImageItems] = useState<ImageItem[]>([]);
   const [contents, setContents] = useState<string>("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const flatListRef = useRef<FlatList<ImageItem> | null>(null);
+
+  const postUploadFailModal = () => {
+    openModal({ type: "POST_UPLOAD_FAIL" });
+  };
 
   // 게시글 데이터를 불러오는 훅
   const { data: post, refetch } = useFetchData(
@@ -69,62 +54,6 @@ export default function Upload() {
     "게시글을 불러오는 도중 에러가 발생했습니다.",
     postId !== undefined,
   );
-
-  // 이미지 처리 함수
-  const handleImageProcess = useCallback(
-    async (result: ImagePicker.ImagePickerResult) => {
-      if (result.canceled) return;
-
-      try {
-        // 이미지 최적화
-        const optimizedUri = await optimizeImage(result.assets[0].uri);
-        const newImage: ImageItem = {
-          type: "new",
-          uri: optimizedUri,
-          index: imageItems.length,
-          imagePickerAsset: {
-            ...result.assets[0],
-            uri: optimizedUri,
-            mimeType: "image/webp",
-            width: 520,
-            height: 520,
-          },
-        };
-        setImageItems((prev) => [...prev, newImage]);
-
-        // 이미지 추가 후 자동 스크롤
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      } catch (error) {
-        showToast("fail", "이미지 처리 중 오류가 발생했습니다.");
-      }
-    },
-    [imageItems.length],
-  );
-
-  // 카메라나 갤러리 접근 권한 확인 함수
-  const checkPermission = useCallback(async (type: "camera" | "gallery") => {
-    const permissionFn =
-      type === "camera"
-        ? ImagePicker.requestCameraPermissionsAsync
-        : ImagePicker.requestMediaLibraryPermissionsAsync;
-
-    const { status } = await permissionFn();
-
-    if (status !== "granted") {
-      Alert.alert(
-        `${type === "camera" ? "카메라" : "사진"} 접근 권한 필요`,
-        `${type === "camera" ? "카메라를 사용" : "사진을 업로드"}하기 위해 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.`,
-        [
-          { text: "취소", style: "cancel" },
-          { text: "설정으로 이동", onPress: () => Linking.openSettings() },
-        ],
-      );
-      return false;
-    }
-    return true;
-  }, []);
 
   // 게시글 작성 뮤테이션
   const uploadPostMutation = useMutation({
@@ -149,7 +78,7 @@ export default function Upload() {
 
       router.back();
     },
-    onError: () => setIsInfoModalVisible(true),
+    onError: () => postUploadFailModal(),
   });
 
   // 게시글 수정 뮤테이션
@@ -196,7 +125,7 @@ export default function Upload() {
 
       router.push("/home");
     },
-    onError: () => setIsInfoModalVisible(true),
+    onError: () => postUploadFailModal(),
   });
 
   // 운동 기록 추가 뮤테이션
@@ -205,7 +134,7 @@ export default function Upload() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["histories"] });
     },
-    onError: () => setIsInfoModalVisible(true),
+    onError: () => postUploadFailModal(),
   });
 
   // 폼 초기화 함수
@@ -239,32 +168,8 @@ export default function Upload() {
         await uploadPostMutation.mutateAsync();
       }
     } catch {
-      setIsInfoModalVisible(true);
+      postUploadFailModal();
     }
-  };
-
-  // 이미지 선택 함수
-  const pickImage = async () => {
-    if (uploadPostMutation.isPending || imageItems.length >= IMAGE_LIMIT) {
-      showToast("fail", "이미지는 5개까지 선택가능해요");
-      return;
-    }
-
-    if (!(await checkPermission("gallery"))) return;
-    const result = await ImagePicker.launchImageLibraryAsync(IMAGE_OPTIONS);
-    await handleImageProcess(result);
-  };
-
-  // 카메라로 사진 촬영 함수
-  const takePhoto = async () => {
-    if (uploadPostMutation.isPending || imageItems.length >= IMAGE_LIMIT) {
-      showToast("fail", "이미지는 5개까지 선택가능해요");
-      return;
-    }
-
-    if (!(await checkPermission("camera"))) return;
-    const result = await ImagePicker.launchCameraAsync(IMAGE_OPTIONS);
-    await handleImageProcess(result);
   };
 
   // 화면이 포커스될 때 게시글 불러오기
@@ -355,7 +260,15 @@ export default function Upload() {
             imageItems.length < IMAGE_LIMIT ? (
               <TouchableOpacity
                 className="size-[152px] items-center justify-center rounded-[10px] bg-gray-20"
-                onPress={() => setIsModalVisible(true)}
+                onPress={() =>
+                  openModal({
+                    type: "SELECT_POST_UPLOAD_IMAGE",
+                    imageItems,
+                    setImageItems,
+                    flatListRef,
+                    isLoading: uploadPostMutation.isPending,
+                  })
+                }
                 disabled={uploadPostMutation.isPending}
               >
                 <Icons.PlusIcon width={24} height={24} color={colors.white} />
@@ -396,52 +309,6 @@ export default function Upload() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {isModalVisible && (
-        <View className="flex-1">
-          <CustomModal
-            visible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
-            position="middle"
-          >
-            <View className="w-full items-center">
-              <TouchableOpacity
-                className="h-[82px] w-full items-center justify-center border-gray-20 border-b"
-                onPress={async () => {
-                  await takePhoto();
-                  setIsModalVisible(false);
-                }}
-              >
-                <Text className="title-2 text-gray-90">카메라</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="h-[82px] w-full items-center justify-center"
-                onPress={async () => {
-                  await pickImage();
-                  setIsModalVisible(false);
-                }}
-              >
-                <Text className="title-2 text-gray-90">갤러리</Text>
-              </TouchableOpacity>
-            </View>
-          </CustomModal>
-        </View>
-      )}
-
-      {isInfoModalVisible && (
-        <View className="flex-1">
-          <OneButtonModal
-            buttonText="확인"
-            contents={"업로드에 실패했습니다 \n다시한번 시도해주세요"}
-            isVisible={isInfoModalVisible}
-            onClose={() => setIsInfoModalVisible(false)}
-            onPress={() => setIsInfoModalVisible(false)}
-            emoji="sad"
-            key="upload-info-modal"
-          />
-        </View>
-      )}
     </>
   );
 }
