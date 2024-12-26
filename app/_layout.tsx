@@ -20,24 +20,24 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
-// const navigationIntegration = Sentry.reactNavigationIntegration({
-//   enableTimeToInitialDisplay: !isRunningInExpoGo(),
-// });
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 0 } },
 });
 
-// Sentry.init({
-//   dsn: Constants.expoConfig?.extra?.SENTRY_DSN,
-//   debug: __DEV__,
-//   tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-//   integrations: [
-//     // Pass integration
-//     navigationIntegration,
-//   ],
-//   enableNativeFramesTracking: !isRunningInExpoGo(), // Tracks slow and frozen frames in the application
-// });
+Sentry.init({
+  dsn: Constants.expoConfig?.extra?.SENTRY_DSN,
+  debug: __DEV__,
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+  integrations: [
+    // Pass integration
+    navigationIntegration,
+  ],
+  enableNativeFramesTracking: !isRunningInExpoGo(), // Tracks slow and frozen frames in the application
+});
 
 function RootLayout() {
   const ref = useNavigationContainerRef();
@@ -66,11 +66,11 @@ function RootLayout() {
     }
   }, [loaded, error]);
 
-  // useEffect(() => {
-  //   if (ref?.current) {
-  //     navigationIntegration.registerNavigationContainer(ref);
-  //   }
-  // }, [ref]);
+  useEffect(() => {
+    if (ref?.current) {
+      navigationIntegration.registerNavigationContainer(ref);
+    }
+  }, [ref]);
 
   if (!loaded && !error) return null;
 
