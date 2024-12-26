@@ -44,7 +44,7 @@ export default function MotionModal({
   const handleClose = useCallback(() => {
     Animated.timing(heightAnim.current, {
       toValue: 0,
-      duration: 300,
+      duration: 200,
       useNativeDriver: false,
     }).start(() => {
       onClose();
@@ -141,9 +141,9 @@ export default function MotionModal({
       Animated.spring(slideAnim.current, {
         toValue: 1,
         useNativeDriver: false,
-        stiffness: 800, // 강성 (탄성력)
-        damping: 8, // 감쇠
-        mass: 0.3, // 질량
+        stiffness: 300, // 강성 (탄성력)
+        damping: 25, // 감쇠
+        mass: 0.8, // 질량
       }).start(() => {
         setShowToast(true);
       });
