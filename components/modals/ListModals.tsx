@@ -1,7 +1,7 @@
 import useManageFriend from "@/hooks/useManageFriend";
 import { useModal } from "@/hooks/useModal";
 import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
-import type { ModalPosition } from "@/types/Modal.interface";
+import type { ListButton, ModalPosition } from "@/types/Modal.interface";
 import optimizeImage from "@/utils/optimizeImage";
 import * as ImagePicker from "expo-image-picker";
 import * as Linking from "expo-linking";
@@ -11,7 +11,36 @@ import { Alert, Platform, Text, TouchableOpacity } from "react-native";
 import { View } from "react-native";
 import type { FlatList } from "react-native-gesture-handler";
 import { showToast } from "../ToastConfig";
-import { ListModal } from "./ModalProvider";
+
+export function ListModal({
+  position,
+  buttons,
+}: {
+  position: ModalPosition;
+  buttons: ListButton[];
+}) {
+  return (
+    <View className={position === "center" ? "px-[46px]" : ""}>
+      <View
+        className={`items-center bg-white ${position === "center" ? "rounded-xl" : "rounded-t-xl"}`}
+      >
+        {buttons.map((button, index) => (
+          <TouchableOpacity
+            key={button.text}
+            className={`h-[82px] w-full items-center justify-center ${
+              index !== buttons.length - 1 ? "border-gray-20 border-b" : ""
+            } ${button.className || ""}`}
+            onPress={async () => {
+              await button.onPress();
+            }}
+          >
+            <Text className="title-2 text-gray-90">{button.text}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export function SelectPostEditDeleteModal({
   position,

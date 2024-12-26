@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import { ToastConfig } from "./ToastConfig";
+import { ToastConfig } from "../ToastConfig";
 
 interface CustomModalProps {
   visible: boolean;

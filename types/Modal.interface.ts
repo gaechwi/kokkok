@@ -148,3 +148,5 @@ export interface ListButton {
   onPress: () => void | Promise<void>;
   className?: string;
 }
+
+export type EmojiType = "SAD" | "HAPPY";

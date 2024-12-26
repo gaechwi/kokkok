@@ -1,12 +1,9 @@
-import Icons from "@/constants/icons";
 import { useModal } from "@/hooks/useModal";
-import type { ListButton, ModalPosition } from "@/types/Modal.interface";
 import { modalStateAtom } from "@/utils/modal.atom";
 import { useAtom } from "jotai";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Modal, Text, TouchableOpacity } from "react-native";
+import { Animated, Easing, Modal } from "react-native";
 import { View } from "react-native";
-import RestDayModal from "../RestDayModal";
 import { DeleteCommentModal, DeletePostModal } from "./DeleteModals";
 import {
   SelectCommentDeleteModal,
@@ -17,18 +14,12 @@ import {
   SelectProfileImageEditModal,
 } from "./ListModals";
 import { EmailCheckModal, PostUploadFailModal } from "./OneButtonModals";
+import RestDayModal from "./RestDayModal";
 import {
   AccountDeleteModal,
   PostNotFoundModal,
   SignOutModal,
 } from "./TwoButtonModals";
-
-type EmojiType = "SAD" | "HAPPY";
-
-const Emojis = {
-  SAD: <Icons.FaceNotDoneIcon width={40} height={40} />,
-  HAPPY: <Icons.FaceDoneIcon width={40} height={40} />,
-};
 
 export default function ModalContainer() {
   const [modalState] = useAtom(modalStateAtom);
@@ -195,185 +186,5 @@ export default function ModalContainer() {
         </View>
       )}
     </>
-  );
-}
-
-// =============================================
-//
-//                Custom Modals
-//
-// =============================================
-
-export function DeleteModal({
-  onClose,
-  onDelete,
-}: { onClose: () => void; onDelete: () => void }) {
-  return (
-    <View className="px-7">
-      <View className="items-center rounded-xl bg-white p-6 ">
-        <Icons.TrashCanIcon width={30} height={38} />
-
-        <Text className="title-3 mt-4 text-center text-gray-90">
-          삭제하면 되돌릴 수 없어요{"\n"}그래도 삭제하시겠어요?
-        </Text>
-
-        <View className="mt-5 h-[52px] flex-row items-center gap-5">
-          <TouchableOpacity
-            onPress={onClose}
-            className="h-full grow items-center justify-center rounded-[8px] bg-gray-40"
-          >
-            <Text className="title-3 text-white">취소</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={onDelete}
-            className="h-full grow items-center justify-center rounded-[8px] bg-primary"
-          >
-            <Text className="title-3 text-white">삭제</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-export function OneButtonModal({
-  onClose,
-  emoji,
-  contents,
-  buttonText,
-  onPress,
-}: {
-  onClose: () => void;
-  emoji?: EmojiType;
-  contents: string;
-  buttonText: string;
-  onPress: () => void;
-}) {
-  return (
-    <View
-      className="h-full items-center justify-center px-7"
-      onTouchStart={onClose}
-    >
-      <View
-        className="items-center rounded-xl bg-white px-7 py-6"
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        {!!emoji && Emojis[emoji]}
-
-        <Text className="title-3 mt-4 text-center text-gray-90">
-          {contents}
-        </Text>
-
-        <TouchableOpacity
-          onPress={onPress}
-          className="mt-5 h-[52px] w-full grow flex-row items-center justify-center rounded-[8px] bg-primary"
-        >
-          <Text className="text-center font-pbold text-[17px] text-white leading-[150%]">
-            {buttonText}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-export function TwoButtonModal({
-  onClose,
-  emoji,
-  contents,
-  leftButtonText,
-  rightButtonText,
-  onLeftButtonPress,
-  onRightButtonPress,
-  isLoading,
-  variant = "default",
-}: {
-  onClose: () => void;
-  emoji?: EmojiType;
-  contents: string;
-  leftButtonText: string;
-  rightButtonText: string;
-  onLeftButtonPress: () => void;
-  onRightButtonPress: () => void;
-  isLoading?: boolean;
-  variant?: "default" | "danger";
-}) {
-  const leftButtonStyle =
-    variant === "danger"
-      ? "h-full flex-1 items-center justify-center rounded-[8px] bg-gray-40"
-      : "h-full flex-1 items-center justify-center rounded-[8px] border-2 border-primary bg-white";
-
-  const leftButtonTextStyle =
-    variant === "danger"
-      ? "font-pbold text-[17px] text-white leading-[150%]"
-      : "font-pbold text-[17px] text-primary leading-[150%]";
-
-  return (
-    <View
-      className="h-full items-center justify-center px-7"
-      onTouchStart={onClose}
-    >
-      <View
-        className="items-center rounded-xl bg-white px-7 py-6 "
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        {!!emoji && Emojis[emoji]}
-
-        <Text className="title-3 mt-4 text-center text-gray-90">
-          {contents}
-        </Text>
-
-        <View className="mt-5 h-[52px] w-full flex-row items-center gap-5">
-          <TouchableOpacity
-            onPress={onLeftButtonPress}
-            className={leftButtonStyle}
-            disabled={isLoading}
-          >
-            <Text className={leftButtonTextStyle}>{leftButtonText}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={onRightButtonPress}
-            className="h-full flex-1 items-center justify-center rounded-[8px] bg-primary"
-            disabled={isLoading}
-          >
-            <Text className="font-pbold text-[17px] text-white leading-[150%]">
-              {rightButtonText}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-export function ListModal({
-  position,
-  buttons,
-}: {
-  position: ModalPosition;
-  buttons: ListButton[];
-}) {
-  return (
-    <View className={position === "center" ? "px-[46px]" : ""}>
-      <View
-        className={`items-center bg-white ${position === "center" ? "rounded-xl" : "rounded-t-xl"}`}
-      >
-        {buttons.map((button, index) => (
-          <TouchableOpacity
-            key={button.text}
-            className={`h-[82px] w-full items-center justify-center ${
-              index !== buttons.length - 1 ? "border-gray-20 border-b" : ""
-            } ${button.className || ""}`}
-            onPress={async () => {
-              await button.onPress();
-            }}
-          >
-            <Text className="title-2 text-gray-90">{button.text}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
   );
 }
