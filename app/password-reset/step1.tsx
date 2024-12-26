@@ -4,6 +4,7 @@ import { validatePasswordResetEmail } from "@/utils/validation";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
+import { useEffect } from "react";
 import {
   Alert,
   Image,
@@ -19,6 +20,12 @@ import {
 const Step1 = () => {
   const router = useRouter();
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
+
+  useEffect(() => {
+    return () => {
+      setResetEmail({ email: "" });
+    };
+  }, [setResetEmail]);
 
   const handleSendEmail = async () => {
     try {

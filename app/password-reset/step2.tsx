@@ -9,7 +9,7 @@ import { verifyResetToken } from "@/utils/supabase";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -27,6 +27,12 @@ const Step2 = () => {
   const [token, setToken] = useState("");
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
   const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
+
+  useEffect(() => {
+    return () => {
+      setResetEmail({ email: "" });
+    };
+  }, [setResetEmail]);
 
   const handleVerifyToken = async () => {
     try {

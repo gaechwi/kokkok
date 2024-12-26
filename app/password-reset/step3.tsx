@@ -1,6 +1,8 @@
+import { passwordResetFormAtom } from "@/contexts/auth";
 import { updateNewPassword } from "@/utils/supabase";
 import { validateResetPasswordForm } from "@/utils/validation";
 import { useRouter } from "expo-router";
+import { useAtom } from "jotai";
 import { useState } from "react";
 import {
   Alert,
@@ -15,6 +17,7 @@ import {
 
 const Step3 = () => {
   const router = useRouter();
+  const [_, setResetEmail] = useAtom(passwordResetFormAtom);
   const [resetPassword, setResetPassword] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -33,6 +36,7 @@ const Step3 = () => {
       }
 
       await updateNewPassword(resetPassword.newPassword);
+      setResetEmail({ email: "" });
       router.replace("/home");
     } catch (error) {
       const errorMessage =
