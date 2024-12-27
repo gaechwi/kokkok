@@ -63,9 +63,7 @@ const useManageFriend = () => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({ queryKey: ["search", "users"] });
-        queryClient.invalidateQueries({
-          queryKey: ["relation", toUserId],
-        });
+        queryClient.invalidateQueries({ queryKey: ["relation", toUserId] });
       },
       onError: (error) => {
         console.error("친구 요청 생성 실패:", error);
@@ -101,17 +99,13 @@ const useManageFriend = () => {
       onSuccess: ({ fromUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["friends"] });
-        queryClient.invalidateQueries({
-          queryKey: ["relation", fromUserId],
-        });
+        queryClient.invalidateQueries({ queryKey: ["relation", fromUserId] });
       },
       onError: (error) => {
         if (error instanceof NoRequestError) {
           // 친구 요청이 취소되어 발생한 에러라면 관련된 값 다시 불러오도록
-          queryClient.invalidateQueries({ queryKey: ["friendRequest"] });
-          queryClient.invalidateQueries({
-            queryKey: ["relation", error.from],
-          });
+          queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+          queryClient.invalidateQueries({ queryKey: ["relation", error.from] });
         }
         console.error("친구 요청 수락 실패:", error);
         showToast("fail", "요청 수락에 실패했어요!");
@@ -130,9 +124,7 @@ const useManageFriend = () => {
       },
       onSuccess: ({ fromUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-        queryClient.invalidateQueries({
-          queryKey: ["relation", fromUserId],
-        });
+        queryClient.invalidateQueries({ queryKey: ["relation", fromUserId] });
       },
       onError: (error) => {
         console.error("친구 요청 거절 실패:", error);
@@ -156,9 +148,7 @@ const useManageFriend = () => {
       onSuccess: ({ toUserId }) => {
         queryClient.invalidateQueries({ queryKey: ["friends"] });
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-        queryClient.invalidateQueries({
-          queryKey: ["relation", toUserId],
-        });
+        queryClient.invalidateQueries({ queryKey: ["relation", toUserId] });
       },
       onError: (error) => {
         console.error("친구 끊기 실패:", error);
@@ -169,7 +159,7 @@ const useManageFriend = () => {
   };
 
   // 친구 콕 찌르기
-  const usePoke = () => {
+  const usePoke = ({ onError }: { onError?: () => void }) => {
     const { mutate } = useMutation<PokeProps, Error, PokeProps>({
       mutationFn: async ({ friend }) => {
         await createNotification({
@@ -180,9 +170,7 @@ const useManageFriend = () => {
         return { friend };
       },
       onSuccess: ({ friend }) => {
-        queryClient.invalidateQueries({
-          queryKey: ["poke", friend.id],
-        });
+        queryClient.invalidateQueries({ queryKey: ["poke", friend.id] });
         showToast(
           "success",
           `👈 ${shorten_comment(friend.username, 10)}님을 콕! 찔렀어요`,
@@ -191,6 +179,7 @@ const useManageFriend = () => {
       onError: (error) => {
         console.error("콕 찌르기 실패:", error);
         showToast("fail", "콕 찌르기에 실패했어요!");
+        onError?.();
       },
     });
 

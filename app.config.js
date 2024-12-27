@@ -10,8 +10,8 @@ module.exports = {
     newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      resizeMode: "cover",
+      backgroundColor: "#885FF1",
     },
     ios: {
       supportsTablet: true,
@@ -27,7 +27,6 @@ module.exports = {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff",
       },
       googleServicesFile: "./google-services.json",
       package: "com.epilogue.kokkok",
@@ -44,6 +43,14 @@ module.exports = {
           fonts: ["./assets/fonts/Pretendard-Regular.otf"],
         },
       ],
+      [
+        "@sentry/react-native/expo",
+        {
+          organization: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+          url: "https://sentry.io/",
+        },
+      ],
     ],
     extra: {
       router: {
@@ -55,6 +62,7 @@ module.exports = {
       EXPO_PUSH_TOKEN: process.env.EXPO_PUSH_TOKEN,
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      SENTRY_DSN: process.env.SENTRY_DSN,
     },
     owner: "epilogue-1",
   },

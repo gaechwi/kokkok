@@ -1,6 +1,7 @@
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
+import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
@@ -8,12 +9,7 @@ import {
   getReplies,
   toggleLikeComment,
 } from "@/utils/supabase";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
@@ -49,6 +45,7 @@ const ReplySkeleton = () => (
     </View>
   </View>
 );
+const LIMIT = 5;
 
 interface CommentItemProps {
   id: number;
@@ -112,29 +109,15 @@ export default function CommentItem({
   // 답글 가져오기
   const {
     data: replyData,
-    fetchNextPage: replyFetchNextPage,
-    hasNextPage: replyHasNextPage,
-    isFetchingNextPage: isReplyFetchingNextPage,
-    isFetching: isReplyFetching,
-  } = useInfiniteQuery({
+    loadMore,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
+  } = useInfiniteLoad({
+    queryFn: getReplies(id),
     queryKey: ["replies", id],
-    queryFn: ({ pageParam = 0 }) =>
-      getReplies(id, pageParam, pageParam === 0 ? 1 : 5),
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNext ? lastPage.nextPage : undefined,
-    enabled: !!totalReplies && totalReplies > 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: keepPreviousData,
-    initialPageParam: 0,
+    genLimit: (pageParam: number) => (pageParam === 0 ? 1 : LIMIT),
   });
-
-  // 답글 더 불러오기
-  const loadMoreReply = useCallback(() => {
-    if (replyHasNextPage && !isReplyFetchingNextPage) {
-      replyFetchNextPage();
-    }
-  }, [replyHasNextPage, isReplyFetchingNextPage, replyFetchNextPage]);
 
   const handleOpenModal = useCallback(() => {
     setIsModalVisible(true);
@@ -350,7 +333,7 @@ export default function CommentItem({
           {!!replyData && (
             <FlatList
               className="gap-2"
-              data={replyData.pages.flatMap((page) => page.replies)}
+              data={replyData.pages.flatMap((page) => page.data)}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item, index }) => (
                 <CommentItem
@@ -375,30 +358,30 @@ export default function CommentItem({
                 />
               )}
               ListFooterComponent={() =>
-                isReplyFetchingNextPage ? <ReplySkeleton /> : null
+                isFetchingNextPage ? <ReplySkeleton /> : null
               }
             />
           )}
 
-          {!replyData && isReplyFetching && <ReplySkeleton />}
+          {!replyData && isFetching && <ReplySkeleton />}
 
-          {(totalReplies > 1 || replyHasNextPage) &&
+          {(totalReplies > 1 || hasNextPage) &&
             !!(
               totalReplies -
               (replyData?.pages.reduce(
-                (acc, page) => acc + page.replies.length,
+                (acc, page) => acc + page.data.length,
                 0,
               ) ?? 0)
             ) && (
               <TouchableOpacity
-                onPress={loadMoreReply}
+                onPress={loadMore}
                 className="w-full flex-1 items-center justify-center"
               >
                 <Text className="font-pregular text-[11px] text-gray-60">
                   + 답글{" "}
                   {totalReplies -
                     (replyData?.pages.reduce(
-                      (acc, page) => acc + page.replies.length,
+                      (acc, page) => acc + page.data.length,
                       0,
                     ) ?? 0)}
                   개 더보기
