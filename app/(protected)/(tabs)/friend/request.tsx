@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,16 +7,19 @@ import { FriendRequest } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import colors from "@/constants/colors";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
-import { getFriendRequests, supabase } from "@/utils/supabase";
+import {
+  getFriendRequests,
+  subscribeFriendRequest,
+  supabase,
+} from "@/utils/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 
 const LIMIT = 12;
 
 export default function Request() {
   const queryClient = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
 
   // 유저의 친구 요청 정보 조회
   const {
@@ -39,45 +42,23 @@ export default function Request() {
     }
   });
 
-  // 유저 아이디 불러오기
-  useEffect(() => {
-    const handleLoadId = async () => {
-      try {
-        setUserId(await SecureStore.getItemAsync("userId"));
-      } catch (error) {
-        console.error("userId 조회 중 오류 발생:", error);
-        setUserId(null);
-      }
-    };
-
-    handleLoadId();
-  }, []);
-
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
-    if (!userId) return;
+    let requestChannel: RealtimeChannel;
 
-    const requestChannel = supabase
-      .channel("friendRequest")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "friendRequest",
-          filter: `to=eq.${userId}`,
-        },
-        (payload) => {
-          if (!payload.new.isAccepted)
-            queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-        },
-      )
-      .subscribe();
+    const handleSubscribe = async () => {
+      requestChannel = await subscribeFriendRequest((payload) => {
+        if (!payload.new.isAccepted)
+          queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      });
+    };
+
+    handleSubscribe();
 
     return () => {
       supabase.removeChannel(requestChannel);
     };
-  }, [userId, queryClient.invalidateQueries]);
+  }, [queryClient.invalidateQueries]);
 
   // 에러 스크린
   if (error) {
