@@ -19,6 +19,7 @@ const ProtectedLayout = () => {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen
         name="notification"
         options={{ header: () => <HeaderWithBack name="NOTIFICATION" /> }}
@@ -39,6 +40,10 @@ const ProtectedLayout = () => {
         options={{ header: () => <HeaderWithBack name="SEARCH_FRIEND" /> }}
       />
       <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="change-password"
+        options={{ header: () => <HeaderWithBack name="CHANGE_PASSWORD" /> }}
+      />
     </Stack>
   );
 };

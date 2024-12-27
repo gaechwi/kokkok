@@ -9,14 +9,14 @@ import {
 } from "react-native";
 
 import { signIn, supabase } from "@/utils/supabase";
+import { validateSignInForm } from "@/utils/validation";
 import icons from "@constants/icons";
 import images from "@constants/images";
 import type { Provider } from "@supabase/supabase-js";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
-import { Link } from "expo-router";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 
@@ -79,17 +79,17 @@ const SignIn = () => {
           .eq("id", session.user.id)
           .single();
 
-        if (!existingUser) {
+        if (!existingUser && session.user.email) {
           const { error: insertError } = await supabase.from("user").insert({
             id: session.user.id,
             email: session.user.email,
             username:
               session.user.user_metadata.full_name ||
-              session.user.email?.split("@")[0],
+              session.user.email.split("@")[0],
             avatarUrl:
               session.user.user_metadata.avatar_url ||
               `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                session.user.email || "",
+                session.user.email,
               )}`,
             isOAuth: true,
           });
@@ -105,17 +105,29 @@ const SignIn = () => {
 
   const handleSignIn = async () => {
     try {
+      const validationError = validateSignInForm(
+        userInput.email,
+        userInput.password,
+      );
+
+      if (validationError) {
+        Alert.alert("알림", validationError.message);
+        return;
+      }
+
       await signIn({
         email: userInput.email,
         password: userInput.password,
       });
     } catch (error: unknown) {
-      Alert.alert(
-        "로그인 실패",
+      const errorMessage =
         error instanceof Error
-          ? error.message
-          : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.",
-      );
+          ? error.message === "Invalid login credentials"
+            ? "이메일 또는 비밀번호가 올바르지 않습니다."
+            : error.message
+          : "로그인에 실패했습니다.";
+
+      Alert.alert("알림", errorMessage);
     }
   };
 
@@ -181,7 +193,7 @@ const SignIn = () => {
 
           <View className="mt-10 flex flex-row justify-center gap-3">
             <Link href="/password-reset/step1">
-              <Text className="body-1 text-gray-50">비밀번호 찾기</Text>
+              <Text className="body-1 text-gray-50">비밀번호 재설정</Text>
             </Link>
             <Text className="body-1 text-gray-50">|</Text>
             <Link href="/sign-up/step1">
