@@ -9,7 +9,7 @@ import useCheckNewNotification from "@/hooks/useCheckNewNotification";
 
 const HEADER_TITLE = {
   LOGIN: "로그인",
-  RESET_PASSWORD: "비밀번호 초기화",
+  RESET_PASSWORD: "비밀번호 재설정",
   CHANGE_PASSWORD: "비밀번호 변경",
   SIGNUP: "회원가입",
   EDIT_PROFILE: "프로필 수정",
