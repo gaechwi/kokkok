@@ -29,51 +29,33 @@ export default function ModalContainer() {
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (isOpen) {
-      opacityAnim.setValue(1);
       if (!previousPosition) {
-        translateYAnim.setValue(0);
-        Animated.timing(translateYAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          duration: 600,
-          easing: Easing.bezier(0.6, 1, 0.4, 1),
-        }).start();
-      } else {
-        if (position === "center" && previousPosition === "bottom") {
+        if (position === "bottom") {
           translateYAnim.setValue(0);
           Animated.timing(translateYAnim, {
             toValue: 1,
-            duration: 300,
-            easing: Easing.bezier(0.6, 1, 0.4, 1),
             useNativeDriver: true,
+            duration: 500,
+            easing: Easing.bezier(0.5, 1, 0.3, 1),
           }).start();
-        } else {
+        }
+      } else {
+        if (position === "center" && previousPosition === "bottom") {
+          opacityAnim.setValue(0);
+
           Animated.timing(opacityAnim, {
-            toValue: 0,
-            duration: 300,
-            easing: Easing.bezier(0.16, 1, 0.3, 1),
+            toValue: 1,
             useNativeDriver: true,
-          }).start(() => {
-            Animated.timing(opacityAnim, {
-              toValue: 1,
-              duration: 300,
-              easing: Easing.bezier(0.16, 1, 0.3, 1),
-              useNativeDriver: true,
-            }).start();
-          });
+            duration: 300,
+            easing: Easing.bezier(0.5, 1, 0.3, 1),
+          }).start();
         }
       }
-    } else {
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.bezier(0.6, 1, 0.4, 1),
-        useNativeDriver: true,
-      }).start();
     }
-  }, [isOpen, position, previousPosition, opacityAnim, translateYAnim]);
+  }, [isOpen, position, previousPosition]);
 
   if (!modal) return null;
 
