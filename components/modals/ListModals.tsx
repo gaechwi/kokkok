@@ -1,17 +1,28 @@
-import useManageFriend from "@/hooks/useManageFriend";
-import { useModal } from "@/hooks/useModal";
-import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
-import type { ListButton, ModalPosition } from "@/types/Modal.interface";
-import optimizeImage from "@/utils/optimizeImage";
+import { useCallback } from "react";
+import { Alert, Platform, Text, TouchableOpacity, View } from "react-native";
+import type { FlatList } from "react-native-gesture-handler";
+
 import * as ImagePicker from "expo-image-picker";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
-import { Alert, Platform, Text, TouchableOpacity } from "react-native";
-import { View } from "react-native";
-import type { FlatList } from "react-native-gesture-handler";
+
+import { RELATION_TYPE, type RelationType } from "@/types/Friend.interface";
+import type { ListButton, ModalPosition } from "@/types/Modal.interface";
+import type { ImagePickerOptions, ImagePickerResult } from "expo-image-picker";
+
+import useManageFriend from "@/hooks/useManageFriend";
+import { useModal } from "@/hooks/useModal";
+import optimizeImage from "@/utils/optimizeImage";
 import { showToast } from "../ToastConfig";
 
+/* -------------------------------------------------------------------------- */
+/*                                ListModal                                   */
+/* -------------------------------------------------------------------------- */
+/**
+ * 리스트 형태의 모달 창을 보여주는 컴포넌트.
+ * @param {ModalPosition} position 모달 위치 (center | bottom)
+ * @param {ListButton[]} buttons 버튼 목록
+ */
 export function ListModal({
   position,
   buttons,
@@ -19,33 +30,48 @@ export function ListModal({
   position: ModalPosition;
   buttons: ListButton[];
 }) {
+  const containerPadding = position === "center" ? "px-[46px]" : "";
+  const borderRadiusStyle =
+    position === "center" ? "rounded-xl" : "rounded-t-xl";
+
   return (
-    <View className={position === "center" ? "px-[46px]" : ""}>
-      <View
-        className={`items-center bg-white ${position === "center" ? "rounded-xl" : "rounded-t-xl"}`}
-      >
-        {buttons.map((button, index) => (
-          <TouchableOpacity
-            key={button.text}
-            className={`h-[82px] w-full items-center justify-center ${
-              index !== buttons.length - 1 ? "border-gray-20 border-b" : ""
-            } ${button.className || ""}`}
-            onPress={async () => {
-              await button.onPress();
-            }}
-          >
-            <Text className="title-2 text-gray-90">{button.text}</Text>
-          </TouchableOpacity>
-        ))}
+    <View className={containerPadding}>
+      <View className={`items-center bg-white ${borderRadiusStyle}`}>
+        {buttons.map((buttonItem, idx) => {
+          const isNotLast = idx !== buttons.length - 1;
+          const dividerClass = isNotLast ? "border-gray-20 border-b" : "";
+          const extraClass = buttonItem.className || "";
+
+          return (
+            <TouchableOpacity
+              key={buttonItem.text}
+              className={`h-[82px] w-full items-center justify-center ${dividerClass} ${extraClass}`}
+              onPress={async () => {
+                await buttonItem.onPress();
+              }}
+            >
+              <Text className="title-2 text-gray-90">{buttonItem.text}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                      SelectPostEditDeleteModal                             */
+/* -------------------------------------------------------------------------- */
+/**
+ * 게시물 수정, 삭제 모달
+ */
 export function SelectPostEditDeleteModal({
   position,
   postId,
-}: { position: ModalPosition; postId: number }) {
+}: {
+  position: ModalPosition;
+  postId: number;
+}) {
   const { openModal, closeModal } = useModal();
   const router = useRouter();
 
@@ -71,11 +97,21 @@ export function SelectPostEditDeleteModal({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                       SelectCommentDeleteModal                             */
+/* -------------------------------------------------------------------------- */
+/**
+ * 댓글 삭제 모달
+ */
 export function SelectCommentDeleteModal({
   position,
   postId,
   commentId,
-}: { position: ModalPosition; postId: number; commentId: number }) {
+}: {
+  position: ModalPosition;
+  postId: number;
+  commentId: number;
+}) {
   const { openModal } = useModal();
 
   return (
@@ -93,6 +129,9 @@ export function SelectCommentDeleteModal({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                        SelectProfileImageEditModal                         */
+/* -------------------------------------------------------------------------- */
 interface ProfileEditModalProps {
   setProfileInput: React.Dispatch<
     React.SetStateAction<{
@@ -103,15 +142,20 @@ interface ProfileEditModalProps {
   >;
 }
 
+/**
+ * 프로필 이미지 선택/삭제 모달
+ */
 export function SelectProfileImageEditModal({
   setProfileInput,
 }: ProfileEditModalProps) {
   const { closeModal } = useModal();
 
-  const handleAvatarPress = async () => {
+  const requestLibraryPermissions = async () => {
     const { status, accessPrivileges } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted" && accessPrivileges !== "limited") {
+    const isDenied = status !== "granted" && accessPrivileges !== "limited";
+
+    if (isDenied) {
       Alert.alert(
         "사진 접근 권한 필요",
         "사진을 업로드하기 위해 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
@@ -123,8 +167,15 @@ export function SelectProfileImageEditModal({
           },
         ],
       );
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleAvatarPress = async () => {
+    const allowed = await requestLibraryPermissions();
+    if (!allowed) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -167,6 +218,12 @@ export function SelectProfileImageEditModal({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                        SelectProfileEditModal                              */
+/* -------------------------------------------------------------------------- */
+/**
+ * 프로필 편집 페이지로 이동하는 모달
+ */
 export function SelectProfileEditModal() {
   const { closeModal } = useModal();
   const router = useRouter();
@@ -187,6 +244,9 @@ export function SelectProfileEditModal() {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                             SelectPostUploadImageModal                     */
+/* -------------------------------------------------------------------------- */
 export interface ImageItem {
   type: "prev" | "new";
   index: number;
@@ -195,7 +255,11 @@ export interface ImageItem {
 }
 
 export const IMAGE_LIMIT = 5;
-export const IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
+
+/**
+ * 공통 이미지 옵션
+ */
+export const IMAGE_OPTIONS: ImagePickerOptions = {
   mediaTypes: ["images"],
   allowsEditing: true,
   aspect: [1, 1],
@@ -204,27 +268,35 @@ export const IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
   legacy: Platform.OS === "android",
 };
 
+interface SelectPostUploadImageModalProps {
+  imageItems: ImageItem[];
+  setImageItems: React.Dispatch<React.SetStateAction<ImageItem[]>>;
+  flatListRef: React.RefObject<FlatList<ImageItem>>;
+  isLoading: boolean;
+}
+
+/**
+ * 게시글 업로드 시 이미지 선택(갤러리/카메라) 모달
+ */
 export function SelectPostUploadImageModal({
   imageItems,
   setImageItems,
   flatListRef,
   isLoading,
-}: {
-  imageItems: ImageItem[];
-  setImageItems: React.Dispatch<React.SetStateAction<ImageItem[]>>;
-  flatListRef: React.RefObject<FlatList<ImageItem>>;
-  isLoading: boolean;
-}) {
+}: SelectPostUploadImageModalProps) {
   const { closeModal } = useModal();
 
-  // 이미지 처리 함수
+  /**
+   * 이미지 최적화 후 리스트에 추가
+   */
   const handleImageProcess = useCallback(
-    async (result: ImagePicker.ImagePickerResult) => {
+    async (result: ImagePickerResult) => {
       if (result.canceled) return;
 
       try {
-        // 이미지 최적화
-        const optimizedUri = await optimizeImage(result.assets[0].uri);
+        const originUri = result.assets[0].uri;
+        const optimizedUri = await optimizeImage(originUri);
+
         const newImage: ImageItem = {
           type: "new",
           uri: optimizedUri,
@@ -237,6 +309,7 @@ export function SelectPostUploadImageModal({
             height: 520,
           },
         };
+
         setImageItems((prev) => [...prev, newImage]);
 
         // 이미지 추가 후 자동 스크롤
@@ -250,7 +323,9 @@ export function SelectPostUploadImageModal({
     [imageItems, setImageItems, flatListRef],
   );
 
-  // 카메라나 갤러리 접근 권한 확인 함수
+  /**
+   * 카메라 또는 갤러리 권한 체크
+   */
   const checkPermission = useCallback(async (type: "camera" | "gallery") => {
     const permissionFn =
       type === "camera"
@@ -262,7 +337,9 @@ export function SelectPostUploadImageModal({
     if (status !== "granted") {
       Alert.alert(
         `${type === "camera" ? "카메라" : "사진"} 접근 권한 필요`,
-        `${type === "camera" ? "카메라를 사용" : "사진을 업로드"}하기 위해 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.`,
+        `${
+          type === "camera" ? "카메라를 사용" : "사진을 업로드"
+        }하기 위해 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.`,
         [
           { text: "취소", style: "cancel" },
           { text: "설정으로 이동", onPress: () => Linking.openSettings() },
@@ -273,7 +350,9 @@ export function SelectPostUploadImageModal({
     return true;
   }, []);
 
-  // 이미지 선택 함수
+  /**
+   * 갤러리에서 이미지 선택
+   */
   const pickImage = async () => {
     if (isLoading || imageItems.length >= IMAGE_LIMIT) {
       showToast("fail", "이미지는 5개까지 선택가능해요");
@@ -281,11 +360,14 @@ export function SelectPostUploadImageModal({
     }
 
     if (!(await checkPermission("gallery"))) return;
+
     const result = await ImagePicker.launchImageLibraryAsync(IMAGE_OPTIONS);
     await handleImageProcess(result);
   };
 
-  // 카메라로 사진 촬영 함수
+  /**
+   * 카메라 촬영
+   */
   const takePhoto = async () => {
     if (isLoading || imageItems.length >= IMAGE_LIMIT) {
       showToast("fail", "이미지는 5개까지 선택가능해요");
@@ -293,6 +375,7 @@ export function SelectPostUploadImageModal({
     }
 
     if (!(await checkPermission("camera"))) return;
+
     const result = await ImagePicker.launchCameraAsync(IMAGE_OPTIONS);
     await handleImageProcess(result);
   };
@@ -320,47 +403,54 @@ export function SelectPostUploadImageModal({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                          SelectFriendRequestModal                          */
+/* -------------------------------------------------------------------------- */
 export function SelectFriendRequestModal({
   userId,
   relation,
-}: { userId: string; relation: RelationType }) {
+}: {
+  userId: string;
+  relation: RelationType;
+}) {
   const { useUnfriend, useAcceptRequest, useCreateRequest } = useManageFriend();
   const { mutate: handleUnfriend } = useUnfriend();
   const { mutate: handleAccept } = useAcceptRequest();
   const { mutate: handleCreate } = useCreateRequest();
   const { closeModal } = useModal();
 
-  const BUTTON_CONFIG = {
+  // 버튼 라벨과 핸들러를 relation 상태에 따라 매핑
+  const FRIEND_REQUEST_BUTTON_CONFIG = {
     [RELATION_TYPE.FRIEND]: {
-      message: "친구 끊기",
+      label: "친구 끊기",
       onPress: () => handleUnfriend({ toUserId: userId }),
     },
     [RELATION_TYPE.ASKING]: {
-      message: "친구 요청 취소",
+      label: "친구 요청 취소",
       onPress: () => handleUnfriend({ toUserId: userId }),
     },
     [RELATION_TYPE.ASKED]: {
-      message: "친구 요청 수락",
+      label: "친구 요청 수락",
       onPress: () => handleAccept({ fromUserId: userId }),
     },
     [RELATION_TYPE.NONE]: {
-      message: "친구 요청",
+      label: "친구 요청",
       onPress: () => handleCreate({ toUserId: userId }),
     },
   };
 
+  const { label, onPress } = FRIEND_REQUEST_BUTTON_CONFIG[relation];
+
   return (
-    <View className="items-center rounded-t-xl bg-white ">
+    <View className="items-center rounded-t-xl bg-white">
       <TouchableOpacity
         className="h-[82px] w-full items-center justify-center"
         onPress={() => {
-          BUTTON_CONFIG[relation].onPress();
+          onPress();
           closeModal();
         }}
       >
-        <Text className="title-2 text-gray-90">
-          {BUTTON_CONFIG[relation].message}
-        </Text>
+        <Text className="title-2 text-gray-90">{label}</Text>
       </TouchableOpacity>
     </View>
   );

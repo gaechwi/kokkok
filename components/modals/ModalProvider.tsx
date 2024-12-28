@@ -2,9 +2,12 @@ import { modalStateAtom } from "@/contexts/modal.atom";
 import { useModal } from "@/hooks/useModal";
 import { useAtom } from "jotai";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Modal } from "react-native";
-import { View } from "react-native";
+import { Animated, Easing, Modal, View } from "react-native";
+
+// Delete Modals
 import { DeleteCommentModal, DeletePostModal } from "./DeleteModals";
+
+// List Modals
 import {
   SelectCommentDeleteModal,
   SelectFriendRequestModal,
@@ -13,55 +16,75 @@ import {
   SelectProfileEditModal,
   SelectProfileImageEditModal,
 } from "./ListModals";
+
+// One Button Modals
 import { EmailCheckModal, PostUploadFailModal } from "./OneButtonModals";
-import RestDayModal from "./RestDayModal";
+
+// Two Button Modals
 import {
   AccountDeleteModal,
   PostNotFoundModal,
   SignOutModal,
 } from "./TwoButtonModals";
 
+// Custom Modal
+import RestDayModal from "./RestDayModal";
+
+/**
+ * @description
+ * 모달 상태를 전역에서 관리하며, 조건에 맞춰 모달을 노출합니다.
+ */
 export default function ModalContainer() {
   const [modalState] = useAtom(modalStateAtom);
   const { closeModal } = useModal();
   const { isOpen, modal, position, previousPosition } = modalState;
 
-  const opacityAnim = useRef(new Animated.Value(1)).current;
-  const translateYAnim = useRef(new Animated.Value(0)).current;
+  // 모달 애니메이션
+  const fadeAnim = useRef(new Animated.Value(1)).current; // 투명도
+  const slideAnim = useRef(new Animated.Value(0)).current; // 슬라이딩(세로)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  /**
+   * 모달 열릴 때 실행되는 애니메이션 처리
+   * - position === "bottom"으로 열릴 때 : slideAnim
+   * - "bottom" -> "center" 변경 시 : fadeAnim
+   */
   useEffect(() => {
-    if (isOpen) {
-      if (!previousPosition) {
-        if (position === "bottom") {
-          translateYAnim.setValue(0);
-          Animated.timing(translateYAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-            duration: 500,
-            easing: Easing.bezier(0.5, 1, 0.3, 1),
-          }).start();
-        }
-      } else {
-        if (position === "center" && previousPosition === "bottom") {
-          opacityAnim.setValue(0);
+    if (!isOpen) return;
 
-          Animated.timing(opacityAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-            duration: 300,
-            easing: Easing.bezier(0.5, 1, 0.3, 1),
-          }).start();
-        }
-      }
+    // 첫 모달 오픈 시, bottom 위치라면 slideAnim 작동
+    if (!previousPosition && position === "bottom") {
+      slideAnim.setValue(0);
+      Animated.timing(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        duration: 500,
+        easing: Easing.bezier(0.5, 1, 0.3, 1),
+      }).start();
+      return;
     }
-  }, [isOpen, position, previousPosition]);
 
+    // modal이 bottom -> center로 바뀔 때: fadeAnim 작동
+    if (position === "center" && previousPosition === "bottom") {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        duration: 300,
+        easing: Easing.bezier(0.5, 1, 0.3, 1),
+      }).start();
+    }
+  }, [isOpen, position, previousPosition, fadeAnim, slideAnim]);
+
+  // 모달이 없거나 닫혀있다면 렌더링 X
   if (!modal) return null;
 
-  const renderContent = () => {
+  /**
+   * @description
+   * 모달 타입에 맞춰 알맞은 컴포넌트를 렌더링합니다.
+   */
+  const renderModalContent = () => {
     switch (modal.type) {
-      // Delete Modals
+      /* -------------------------------- Delete Modals -------------------------------- */
       case "DELETE_POST":
         return <DeletePostModal postId={modal.postId} />;
       case "DELETE_COMMENT":
@@ -71,7 +94,8 @@ export default function ModalContainer() {
             commentId={modal.commentId}
           />
         );
-      // List Modals
+
+      /* --------------------------------- List Modals ---------------------------------- */
       case "SELECT_POST_EDIT_DELETE":
         return (
           <SelectPostEditDeleteModal
@@ -111,21 +135,25 @@ export default function ModalContainer() {
             relation={modal.relation}
           />
         );
-      // One Button Modals
+
+      /* ------------------------------- One Button Modals ------------------------------- */
       case "EMAIL_CHECK":
         return <EmailCheckModal />;
       case "POST_UPLOAD_FAIL":
         return <PostUploadFailModal />;
-      // Two Button Modals
+
+      /* ------------------------------- Two Button Modals ------------------------------- */
       case "POST_NOT_FOUND":
         return <PostNotFoundModal />;
       case "ACCOUNT_DELETE":
         return <AccountDeleteModal />;
       case "SIGN_OUT":
         return <SignOutModal />;
-      // Custom Modals
+
+      /* -------------------------------- Custom Modals -------------------------------- */
       case "REST_DAY":
         return <RestDayModal />;
+
       default:
         return null;
     }
@@ -134,6 +162,7 @@ export default function ModalContainer() {
   return (
     <>
       {isOpen && (
+        // Modal 컴포넌트를 팝업 위치 중앙으로 고정하기 위한 Wrapper
         <View className="-translate-y-1/2 -translate-x-1/2 absolute top-1/2 left-1/2 flex-1">
           <Modal
             transparent
@@ -141,6 +170,7 @@ export default function ModalContainer() {
             animationType="fade"
             onRequestClose={closeModal}
           >
+            {/* 바깥 영역 클릭 시 모달 닫힘 */}
             <View
               className={`size-full flex-1 bg-black/50 ${
                 position === "center" ? "justify-center" : "justify-end"
@@ -148,12 +178,12 @@ export default function ModalContainer() {
               onTouchStart={closeModal}
             >
               <Animated.View
-                onTouchStart={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()} // 모달 자체를 클릭했을 때 이벤트 버블링 방지
                 style={{
-                  opacity: opacityAnim,
+                  opacity: fadeAnim,
                   transform: [
                     {
-                      translateY: translateYAnim.interpolate({
+                      translateY: slideAnim.interpolate({
                         inputRange: [0, 1],
                         outputRange: [500, 0],
                       }),
@@ -161,7 +191,7 @@ export default function ModalContainer() {
                   ],
                 }}
               >
-                {renderContent()}
+                {renderModalContent()}
               </Animated.View>
             </View>
           </Modal>

@@ -2,17 +2,28 @@ import Icons from "@/constants/icons";
 import { useModal } from "@/hooks/useModal";
 import { deleteComment, deletePost } from "@/utils/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Text, View } from "react-native";
-import { TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
 import { showToast } from "../ToastConfig";
 
+/* -------------------------------------------------------------------------- */
+/*                           기본 삭제 확인 모달 (UI)                         */
+/* -------------------------------------------------------------------------- */
+/**
+ * @description
+ * 공통적으로 사용되는 삭제 확인 모달.
+ * '취소'와 '삭제' 버튼을 제공한다.
+ */
 export function DeleteModal({
   onClose,
   onDelete,
-}: { onClose: () => void; onDelete: () => void }) {
+}: {
+  onClose: () => void;
+  onDelete: () => void;
+}) {
   return (
     <View className="px-7">
-      <View className="items-center rounded-xl bg-white p-6 ">
+      <View className="items-center rounded-xl bg-white p-6">
         <Icons.TrashCanIcon width={30} height={38} />
 
         <Text className="title-3 mt-4 text-center text-gray-90">
@@ -20,6 +31,7 @@ export function DeleteModal({
         </Text>
 
         <View className="mt-5 h-[52px] flex-row items-center gap-5">
+          {/* 취소 버튼 */}
           <TouchableOpacity
             onPress={onClose}
             className="h-full grow items-center justify-center rounded-[8px] bg-gray-40"
@@ -27,6 +39,7 @@ export function DeleteModal({
             <Text className="title-3 text-white">취소</Text>
           </TouchableOpacity>
 
+          {/* 삭제 버튼 */}
           <TouchableOpacity
             onPress={onDelete}
             className="h-full grow items-center justify-center rounded-[8px] bg-primary"
@@ -39,7 +52,13 @@ export function DeleteModal({
   );
 }
 
-// 게시글 삭제 모달
+/* -------------------------------------------------------------------------- */
+/*                           게시글 삭제 모달                                 */
+/* -------------------------------------------------------------------------- */
+/**
+ * @description
+ * 게시글을 삭제하는 모달. React Query로 삭제 Mutate 요청을 보낸다.
+ */
 export function DeletePostModal({ postId }: { postId: number }) {
   const queryClient = useQueryClient();
   const { closeModal } = useModal();
@@ -50,6 +69,7 @@ export function DeletePostModal({ postId }: { postId: number }) {
     },
     onSuccess: () => {
       showToast("success", "게시글이 삭제되었어요.");
+      // 게시글 리스트/상세 등 관련된 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: () => {
@@ -57,24 +77,31 @@ export function DeletePostModal({ postId }: { postId: number }) {
     },
   });
 
-  return (
-    <DeleteModal
-      onClose={closeModal}
-      onDelete={() => {
-        if (!deletePostMutation.isPending) {
-          deletePostMutation.mutate();
-          closeModal();
-        }
-      }}
-    />
-  );
+  const handleDelete = () => {
+    // isPending 대신 isLoading, isIdle 등의 상태를 사용할 수도 있음
+    if (!deletePostMutation.isPending) {
+      deletePostMutation.mutate();
+      closeModal();
+    }
+  };
+
+  return <DeleteModal onClose={closeModal} onDelete={handleDelete} />;
 }
 
-// 댓글 삭제 모달
+/* -------------------------------------------------------------------------- */
+/*                             댓글 삭제 모달                                 */
+/* -------------------------------------------------------------------------- */
+/**
+ * @description
+ * 댓글을 삭제하는 모달. React Query로 삭제 Mutate 요청을 보낸다.
+ */
 export function DeleteCommentModal({
   postId,
   commentId,
-}: { postId: number; commentId: number }) {
+}: {
+  postId: number;
+  commentId: number;
+}) {
   const queryClient = useQueryClient();
   const { closeModal } = useModal();
 
@@ -85,6 +112,7 @@ export function DeleteCommentModal({
     onSuccess: () => {
       showToast("success", "댓글이 삭제되었어요.");
 
+      // 댓글, 게시글, 대댓글(또는 답글) 관련된 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["replies"] });
@@ -94,15 +122,12 @@ export function DeleteCommentModal({
     },
   });
 
-  return (
-    <DeleteModal
-      onClose={closeModal}
-      onDelete={() => {
-        if (!deleteCommentMutation.isPending) {
-          deleteCommentMutation.mutate();
-          closeModal();
-        }
-      }}
-    />
-  );
+  const handleDelete = () => {
+    if (!deleteCommentMutation.isPending) {
+      deleteCommentMutation.mutate();
+      closeModal();
+    }
+  };
+
+  return <DeleteModal onClose={closeModal} onDelete={handleDelete} />;
 }
