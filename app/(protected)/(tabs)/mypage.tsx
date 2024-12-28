@@ -1,17 +1,14 @@
 import LoadingScreen from "@/components/LoadingScreen";
-import CustomModal from "@/components/Modal";
 import PostGrid from "@/components/PostGrid";
 import ProfileSection from "@/components/ProfileSection";
 import useFetchData from "@/hooks/useFetchData";
+import { useModal } from "@/hooks/useModal";
 import { getCurrentUser, getMyPosts } from "@/utils/supabase";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MyPage() {
-  const router = useRouter();
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { openModal } = useModal();
 
   const { data: currentUser, isLoading: isUserLoading } = useFetchData(
     ["currentUser"],
@@ -41,7 +38,9 @@ export default function MyPage() {
             username={currentUser?.username || ""}
             avatarUrl={currentUser?.avatarUrl || undefined}
             description={currentUser?.description || undefined}
-            onSettingsPress={() => setIsModalVisible(true)}
+            onSettingsPress={() =>
+              openModal({ type: "SELECT_PROFILE_EDIT" }, "bottom")
+            }
           />
           <PostGrid
             posts={
@@ -53,23 +52,6 @@ export default function MyPage() {
           />
         </View>
       </SafeAreaView>
-      <CustomModal
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        position="bottom"
-      >
-        <View className="items-center">
-          <TouchableOpacity
-            className="h-[82px] w-full items-center justify-center"
-            onPress={() => {
-              setIsModalVisible(false);
-              router.push("/profile");
-            }}
-          >
-            <Text className="title-2 text-gray-90">수정하기</Text>
-          </TouchableOpacity>
-        </View>
-      </CustomModal>
     </>
   );
 }

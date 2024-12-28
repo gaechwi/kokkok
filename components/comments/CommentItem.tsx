@@ -2,6 +2,7 @@ import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import images from "@/constants/images";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import { useModal } from "@/hooks/useModal";
 import { useTruncateText } from "@/hooks/useTruncateText";
 import { diffDate } from "@/utils/formatDate";
 import {
@@ -12,10 +13,9 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native";
-import CustomModal from "../Modal";
 
 const ReplySkeleton = () => (
   <View className="mb-4 animate-pulse">
@@ -97,9 +97,9 @@ export default function CommentItem({
 }: CommentItemProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(liked);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTextMore, setIsTextMore] = useState(false);
   const { truncateText, calculateMaxChars } = useTruncateText();
+  const { openModal } = useModal();
 
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -119,13 +119,12 @@ export default function CommentItem({
     genLimit: (pageParam: number) => (pageParam === 0 ? 1 : LIMIT),
   });
 
-  const handleOpenModal = useCallback(() => {
-    setIsModalVisible(true);
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setIsModalVisible(false);
-  }, []);
+  const handleOpenModal = () => {
+    openModal(
+      { type: "SELECT_COMMENT_DELETE", commentId: id, postId },
+      "bottom",
+    );
+  };
 
   // 좋아요 토글
   const toggleLike = useMutation({
@@ -178,9 +177,7 @@ export default function CommentItem({
   return (
     <Pressable
       onLongPress={() => {
-        if (author?.id === userId) {
-          handleOpenModal();
-        }
+        if (author?.id === userId) handleOpenModal();
       }}
     >
       {/* header */}
@@ -270,24 +267,6 @@ export default function CommentItem({
               />
             </TouchableOpacity>
           )}
-
-          <CustomModal
-            visible={isModalVisible}
-            onClose={handleCloseModal}
-            position="bottom"
-          >
-            <View className="items-center">
-              <TouchableOpacity
-                onPress={() => {
-                  onDeletedPress(id);
-                  handleCloseModal();
-                }}
-                className="h-[82px] w-full items-center justify-center"
-              >
-                <Text className="title-2 text-gray-90">삭제하기</Text>
-              </TouchableOpacity>
-            </View>
-          </CustomModal>
         </View>
       </View>
       {/* contents */}
@@ -297,9 +276,7 @@ export default function CommentItem({
             contents.length > calculateMaxChars && setIsTextMore(!isTextMore)
           }
           onLongPress={() => {
-            if (author?.id === userId) {
-              handleOpenModal();
-            }
+            if (author?.id === userId) handleOpenModal();
           }}
           className="title-5 flex-1 text-gray-90"
         >

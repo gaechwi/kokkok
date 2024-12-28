@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { setModalStateAtom } from "@/contexts/modal.atom";
+import type { ModalType } from "@/types/Modal.interface";
+import { useAtom } from "jotai";
 
-export default function useModal(initialState = false) {
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(initialState);
+export function useModal() {
+  const [, setModalState] = useAtom(setModalStateAtom);
 
-  const openModal = () => {
-    setIsModalVisible(true);
+  const openModal = (
+    modal: ModalType,
+    position: "center" | "bottom" = "center",
+  ) => {
+    setModalState({
+      isOpen: true,
+      modal,
+      position,
+    });
   };
   const closeModal = () => {
-    setIsModalVisible(false);
+    setModalState({
+      isOpen: false,
+      modal: null,
+      position: undefined,
+    });
   };
 
-  return { isModalVisible, openModal, closeModal };
+  return { openModal, closeModal };
 }

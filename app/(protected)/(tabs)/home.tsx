@@ -1,16 +1,14 @@
-import { DeleteModal } from "@/components/Modal";
-import MotionModal from "@/components/MotionModal";
 import PostItem from "@/components/PostItem";
-import { showToast } from "@/components/ToastConfig";
 import CommentsSection from "@/components/comments/CommentsSection";
+import MotionModal from "@/components/modals/MotionModal";
 import colors from "@/constants/colors";
 import Icons from "@/constants/icons";
 import { default as imgs } from "@/constants/images";
 import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import { useModal } from "@/hooks/useModal";
 import useRefresh from "@/hooks/useRefresh";
-import { deletePost, getPostLikes, getPosts } from "@/utils/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getPostLikes, getPosts } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
@@ -35,10 +33,9 @@ export default function Home() {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const { openModal } = useModal();
 
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const { data: likedAuthorData } = useFetchData(
     ["likedAuthorAvatar", selectedPostId],
@@ -79,19 +76,6 @@ export default function Home() {
   });
 
   const { refreshing, onRefresh } = useRefresh({ refetch });
-
-  const deletePostMutation = useMutation({
-    mutationFn: async () => {
-      if (selectedPostId) await deletePost(selectedPostId);
-    },
-    onSuccess: () => {
-      showToast("success", "게시글이 삭제되었어요.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      showToast("fail", "게시글 삭제에 실패했어요.");
-    },
-  });
 
   // 유저 아이디 불러오기
   useEffect(() => {
@@ -144,7 +128,13 @@ export default function Home() {
             onAuthorPress={onOpenLikedAuthor}
             onDeletePress={() => {
               setSelectedPostId(Number(post.id));
-              setIsDeleteModalVisible(true);
+              openModal(
+                {
+                  type: "SELECT_POST_EDIT_DELETE",
+                  postId: Number(post.id),
+                },
+                "bottom",
+              );
             }}
           />
         )}
@@ -177,19 +167,6 @@ export default function Home() {
             />
           </View>
         )}
-
-      {isDeleteModalVisible && selectedPostId !== null && (
-        <View className="flex-1">
-          <DeleteModal
-            isVisible={isDeleteModalVisible}
-            onClose={() => setIsDeleteModalVisible(false)}
-            onDelete={() => {
-              deletePostMutation.mutate();
-              setIsDeleteModalVisible(false);
-            }}
-          />
-        </View>
-      )}
 
       {isLikedModalVisible && (
         <View className="flex-1 ">

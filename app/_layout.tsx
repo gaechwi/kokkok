@@ -7,6 +7,7 @@ import Toast from "react-native-toast-message";
 import "../global.css";
 import { HeaderWithBack } from "@/components/Header";
 import { ToastConfig } from "@/components/ToastConfig";
+import ModalContainer from "@/components/modals/ModalProvider";
 import { useAppState } from "@/hooks/useAppState";
 import { useOnlineManager } from "@/hooks/useOnlineManager";
 import NotificationProvider from "@/providers/notificationProvider";
@@ -106,6 +107,7 @@ function RootLayout() {
             />
           </Stack>
           <StatusBar style="dark" />
+          <ModalContainer />
           <Toast config={ToastConfig} />
         </NotificationProvider>
       </QueryClientProvider>

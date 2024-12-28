@@ -1,9 +1,8 @@
-import { OneButtonModal } from "@/components/Modal";
+import { useModal } from "@/hooks/useModal";
 import { sendUpOTP } from "@/utils/supabase";
 import { validateSignUpFormWithSupabase } from "@/utils/validation";
 import images from "@constants/images";
 import { signUpFormAtom } from "@contexts/auth";
-import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
 import { useState } from "react";
 import {
@@ -21,10 +20,8 @@ import {
 const Step1 = () => {
   const [signUpForm, setSignUpForm] = useAtom(signUpFormAtom);
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
+  const { openModal } = useModal();
 
   const handleContinue = async () => {
     if (isLoading) return;
@@ -44,7 +41,8 @@ const Step1 = () => {
       }
 
       await sendUpOTP(signUpForm.email);
-      setIsModalVisible(true);
+
+      openModal({ type: "EMAIL_CHECK" });
     } catch (error) {
       Alert.alert(
         "알림",
@@ -138,20 +136,6 @@ const Step1 = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <OneButtonModal
-        isVisible={isModalVisible}
-        onClose={() => {
-          setIsModalVisible(false);
-          router.push("/sign-up/step2");
-        }}
-        emoji="happy"
-        contents={"이메일로 전송된\n인증 코드를 확인해주세요!"}
-        buttonText="확인"
-        onPress={() => {
-          setIsModalVisible(false);
-          router.push("/sign-up/step2");
-        }}
-      />
     </>
   );
 };
