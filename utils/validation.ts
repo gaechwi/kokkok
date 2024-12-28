@@ -158,3 +158,196 @@ export const validateStep2Form = (
 
   return null;
 };
+
+export const validateCurrentPassword = async (
+  email: string,
+  currentPassword: string,
+): Promise<SignUpValidationError | null> => {
+  if (!currentPassword) {
+    return {
+      message: "현재 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (signInError) {
+    return {
+      message: "현재 비밀번호가 올바르지 않습니다.",
+      field: "password",
+    };
+  }
+
+  return null;
+};
+
+export const validatePasswordChangeFields = (
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  if (!currentPassword) {
+    return {
+      message: "현재 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!newPassword) {
+    return {
+      message: "새 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!confirmPassword) {
+    return {
+      message: "비밀번호 확인을 입력해주세요.",
+      field: "passwordConfirm",
+    };
+  }
+
+  return null;
+};
+
+export const validateChangePasswordForm = async (
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<SignUpValidationError | null> => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validatePasswordChangeFields(
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  );
+  if (fieldsError) return fieldsError;
+
+  // 새 비밀번호 검증
+  const newPasswordError = validatePassword(newPassword);
+  if (newPasswordError) return newPasswordError;
+
+  // 비밀번호 확인 검증
+  const confirmPasswordError = validatePasswordConfirm(
+    newPassword,
+    confirmPassword,
+  );
+  if (confirmPasswordError) return confirmPasswordError;
+
+  // 현재 비밀번호 검증
+  const currentPasswordError = await validateCurrentPassword(
+    email,
+    currentPassword,
+  );
+  if (currentPasswordError) return currentPasswordError;
+
+  return null;
+};
+
+export const validatePasswordResetEmail = async (
+  email: string,
+): Promise<SignUpValidationError | null> => {
+  // 이메일 기본 유효성 검사
+  const emailError = validateEmail(email);
+  if (emailError) return emailError;
+
+  // 이메일이 존재하는지 확인
+  const { data: userData } = await supabase
+    .from("user")
+    .select("email")
+    .eq("email", email)
+    .single();
+
+  if (!userData?.email) {
+    return {
+      message: "등록되지 않은 이메일입니다.",
+      field: "email",
+    };
+  }
+
+  return null;
+};
+
+export const validateResetPasswordFields = (
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  if (!newPassword) {
+    return {
+      message: "새 비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  if (!confirmPassword) {
+    return {
+      message: "비밀번호 확인을 입력해주세요.",
+      field: "passwordConfirm",
+    };
+  }
+
+  return null;
+};
+
+export const validateResetPasswordForm = (
+  newPassword: string,
+  confirmPassword: string,
+): SignUpValidationError | null => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validateResetPasswordFields(newPassword, confirmPassword);
+  if (fieldsError) return fieldsError;
+
+  // 새 비밀번호 검증
+  const newPasswordError = validatePassword(newPassword);
+  if (newPasswordError) return newPasswordError;
+
+  // 비밀번호 확인 검증
+  const confirmPasswordError = validatePasswordConfirm(
+    newPassword,
+    confirmPassword,
+  );
+  if (confirmPasswordError) return confirmPasswordError;
+
+  return null;
+};
+
+export const validateSignInFields = (
+  email: string,
+  password: string,
+): SignUpValidationError | null => {
+  if (!email) {
+    return {
+      message: "이메일을 입력해주세요.",
+      field: "email",
+    };
+  }
+
+  if (!password) {
+    return {
+      message: "비밀번호를 입력해주세요.",
+      field: "password",
+    };
+  }
+
+  return null;
+};
+
+export const validateSignInForm = (
+  email: string,
+  password: string,
+): SignUpValidationError | null => {
+  // 모든 필드가 채워졌는지 검증
+  const fieldsError = validateSignInFields(email, password);
+  if (fieldsError) return fieldsError;
+
+  // 이메일 형식 검증
+  const emailError = validateEmail(email);
+  if (emailError) return emailError;
+
+  return null;
+};

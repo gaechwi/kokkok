@@ -1,51 +1,27 @@
-import { supabase } from "@/utils/supabase";
+import { subscribeNotification, supabase } from "@/utils/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const useSubscribeNotification = () => {
   const queryClient = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // 유저 아이디 불러오기
+  // 나에게 오는 알림 구독
   useEffect(() => {
-    const handleLoadId = async () => {
-      try {
-        setUserId(await SecureStore.getItemAsync("userId"));
-      } catch (error) {
-        console.error("userId 조회 중 오류 발생:", error);
-        setUserId(null);
-      }
+    let notificationChannel: RealtimeChannel;
+
+    const handleSubscribe = async () => {
+      notificationChannel = await subscribeNotification(() => {
+        queryClient.invalidateQueries({ queryKey: ["notification"] });
+        queryClient.invalidateQueries({ queryKey: ["lastNotification"] });
+      });
     };
 
-    handleLoadId();
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    // 나에게 오는 알림 구독
-    const notificationChannel = supabase
-      .channel("notification")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notification",
-          filter: `to=eq.${userId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["notification"] });
-          queryClient.invalidateQueries({ queryKey: ["lastNotification"] });
-        },
-      )
-      .subscribe();
-
+    handleSubscribe();
     return () => {
       supabase.removeChannel(notificationChannel);
     };
-  }, [userId, queryClient.invalidateQueries]);
+  }, [queryClient.invalidateQueries]);
 };
 
 export default useSubscribeNotification;

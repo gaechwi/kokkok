@@ -44,7 +44,7 @@ export default function MotionModal({
   const handleClose = useCallback(() => {
     Animated.timing(heightAnim.current, {
       toValue: 0,
-      duration: 300,
+      duration: 200,
       useNativeDriver: false,
     }).start(() => {
       onClose();
@@ -134,14 +134,18 @@ export default function MotionModal({
 
   useEffect(() => {
     if (visible) {
-      requestAnimationFrame(() => {
-        Animated.timing(slideAnim.current, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: false,
-        }).start(() => {
-          setShowToast(true);
-        });
+      // 초기값 설정
+      slideAnim.current.setValue(0);
+
+      // spring 애니메이션으로 변경
+      Animated.spring(slideAnim.current, {
+        toValue: 1,
+        useNativeDriver: false,
+        stiffness: 300, // 강성 (탄성력)
+        damping: 25, // 감쇠
+        mass: 0.8, // 질량
+      }).start(() => {
+        setShowToast(true);
       });
     } else {
       setShowToast(false);
@@ -176,6 +180,7 @@ export default function MotionModal({
                     translateY: slideAnim.current.interpolate({
                       inputRange: [0, 1],
                       outputRange: [maxHeightRef.current, 0],
+                      extrapolate: "clamp",
                     }),
                   },
                 ],

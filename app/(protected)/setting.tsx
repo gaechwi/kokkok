@@ -11,7 +11,11 @@ import {
   type PushSetting,
 } from "@/types/Notification.interface";
 import { isTokenValid, updatePushToken } from "@/utils/pushTokenManager";
-import { getPushSetting, updatePushSetting } from "@/utils/supabase";
+import {
+  getCurrentUser,
+  getPushSetting,
+  updatePushSetting,
+} from "@/utils/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
@@ -45,6 +49,13 @@ export default function Setting() {
       "푸시 알림 설정 정보 로드에 실패했습니다.",
     );
 
+  // 간편 로그인 사용자 판단을 위한 유저 정보 조회
+  const { data: currentUser } = useFetchData(
+    ["currentUser"],
+    getCurrentUser,
+    "현재 사용자를 불러올 수 없습니다.",
+  );
+
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <View className="gap-2 bg-gray-5 pb-2">
@@ -61,15 +72,17 @@ export default function Setting() {
         <View className="bg-white px-6 py-[22px]">
           <Text className="heading-2 text-gray-80">계정 설정</Text>
           <View className="mt-5 gap-5 px-2">
-            <TouchableOpacity
-              className="flex-row items-center justify-between"
-              onPress={() => router.push("/password-reset/step1")}
-            >
-              <Text className="font-pmedium text-gray-80 text-xl">
-                비밀번호 변경
-              </Text>
-              <Icons.ChevronRightIcon color={colors.gray[70]} />
-            </TouchableOpacity>
+            {!currentUser?.isOAuth && (
+              <TouchableOpacity
+                className="flex-row items-center justify-between"
+                onPress={() => router.push("/change-password")}
+              >
+                <Text className="font-pmedium text-gray-80 text-xl">
+                  비밀번호 변경
+                </Text>
+                <Icons.ChevronRightIcon color={colors.gray[70]} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               className="flex-row items-center justify-between"
               onPress={() => openModal({ type: "SIGN_OUT" })}
@@ -93,7 +106,15 @@ export default function Setting() {
 
         {/* 문의하기 */}
         <View className="bg-white px-6 py-[22px]">
-          <Text className="heading-2 text-gray-80">문의하기</Text>
+          <TouchableOpacity
+            onPress={() =>
+              Linking.openURL(
+                "https://docs.google.com/forms/d/e/1FAIpQLSdjdkcRV8CfAyxMutiH8xxFbzNg7wQc4bVRlNo4InST4H5Mng/viewform?usp=header",
+              )
+            }
+          >
+            <Text className="heading-2 text-gray-80">문의하기</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 깃허브 놀러가기 */}

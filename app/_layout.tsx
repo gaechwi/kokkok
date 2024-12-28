@@ -90,13 +90,13 @@ function RootLayout() {
             <Stack.Screen
               name="password-reset/step1"
               options={{
-                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+                header: () => <HeaderWithBack name="RESET_PASSWORD" />,
               }}
             />
             <Stack.Screen
               name="password-reset/step2"
               options={{
-                header: () => <HeaderWithBack name="CHANGE_PASSWORD" />,
+                header: () => <HeaderWithBack name="RESET_PASSWORD" />,
               }}
             />
             <Stack.Screen
@@ -105,9 +105,7 @@ function RootLayout() {
                 header: () => <HeaderWithBack name="RESET_PASSWORD" />,
               }}
             />
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           </Stack>
-
           <StatusBar style="dark" />
           <ModalContainer />
           <Toast config={ToastConfig} />

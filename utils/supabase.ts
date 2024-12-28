@@ -1,6 +1,9 @@
 import { DEFAULT_AVATAR_URL } from "@/constants/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import {
+  type RealtimePostgresInsertPayload,
+  createClient,
+} from "@supabase/supabase-js";
 import { decode } from "base64-arraybuffer";
 import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
@@ -25,6 +28,7 @@ import type { Comment, Post, Reply } from "@/types/Post.interface";
 import type { User, UserProfile } from "@/types/User.interface";
 import type { Database } from "@/types/supabase";
 import { formMessage } from "./formMessage";
+import { formatDate } from "./formatDate";
 
 class AuthError extends Error {}
 
@@ -1127,6 +1131,58 @@ export async function unfriend(to: string) {
   if (error) throw error;
 }
 
+// 친구의 운동 정보가 바뀌는지 정보 구독
+export function subscribeFriendsStatus(
+  friendIds: string[],
+  onSubscribe: () => void,
+) {
+  const today = formatDate(new Date());
+
+  return supabase
+    .channel("workoutHistory")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "workoutHistory",
+        filter: `userId=in.(${friendIds.join(",")})`,
+      },
+      (payload) => {
+        // DELETE는 상세내용 감지가 안되어서 실시간 업데이트 X
+        // 필요성도 INSERT에 비해 크지 않을 것으로 생각됨
+        if (payload.new.date === today) onSubscribe();
+      },
+    )
+    .subscribe();
+}
+
+// 본인과 관련된 친구요청 정보 구독
+export async function subscribeFriendRequest(
+  onSubscribe: (
+    payload: RealtimePostgresInsertPayload<{
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      [key: string]: any;
+    }>,
+  ) => void,
+) {
+  const userId = await getUserIdFromStorage();
+
+  return supabase
+    .channel("friendRequest")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "friendRequest",
+        filter: `to=eq.${userId}`,
+      },
+      (payload) => onSubscribe(payload),
+    )
+    .subscribe();
+}
+
 // ============================================
 //
 //                    history
@@ -1267,6 +1323,7 @@ export async function addWorkoutHistory({ date }: { date: string }) {
 //
 // ============================================
 
+// 알림 30개 불러오기
 export async function getNotifications(): Promise<NotificationResponse[]> {
   const userId = await getUserIdFromStorage();
 
@@ -1295,6 +1352,7 @@ export async function getNotifications(): Promise<NotificationResponse[]> {
   }));
 }
 
+// 마지막으로 온 알림 시간 확인하기
 export async function getLatestNotification(): Promise<string> {
   const userId = await getUserIdFromStorage();
 
@@ -1388,6 +1446,25 @@ async function sendPushNotification(message: PushMessage) {
       `푸시 알림 전송 실패: ${error.message || response.statusText}`,
     );
   }
+}
+
+// 나에게 오는 알림 구독
+export async function subscribeNotification(onSubscribe: () => void) {
+  const userId = await getUserIdFromStorage();
+
+  return supabase
+    .channel("notification")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notification",
+        filter: `to=eq.${userId}`,
+      },
+      () => onSubscribe(),
+    )
+    .subscribe();
 }
 
 // ============================================

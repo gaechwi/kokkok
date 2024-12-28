@@ -9,7 +9,7 @@ import { verifyResetToken } from "@/utils/supabase";
 import images from "@constants/images";
 import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -28,15 +28,25 @@ const Step2 = () => {
   const [resetEmail, setResetEmail] = useAtom(passwordResetFormAtom);
   const { timeLeft } = useTimerWithDuration(OTP_TIME, alertExpirationOnTimeout);
 
+  useEffect(() => {
+    return () => {
+      setResetEmail({ email: "" });
+    };
+  }, [setResetEmail]);
+
   const handleVerifyToken = async () => {
     try {
       await verifyResetToken(resetEmail.email, token);
       router.replace("/password-reset/step3");
     } catch (error) {
-      Alert.alert(
-        "인증 실패",
-        error instanceof Error ? error.message : "인증에 실패했습니다.",
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message === "Token has expired or is invalid"
+            ? "인증번호가 만료되었거나\n유효하지 않습니다."
+            : error.message
+          : "인증에 실패했습니다.";
+
+      Alert.alert("알림", errorMessage);
     }
   };
 

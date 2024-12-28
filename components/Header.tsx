@@ -9,7 +9,8 @@ import useCheckNewNotification from "@/hooks/useCheckNewNotification";
 
 const HEADER_TITLE = {
   LOGIN: "로그인",
-  RESET_PASSWORD: "비밀번호 초기화",
+  RESET_PASSWORD: "비밀번호 재설정",
+  CHANGE_PASSWORD: "비밀번호 변경",
   SIGNUP: "회원가입",
   EDIT_PROFILE: "프로필 수정",
   SETTING: "계정 설정",
@@ -20,7 +21,6 @@ const HEADER_TITLE = {
   HISTORY: "기록",
   FRIEND: "친구",
   SEARCH_FRIEND: "친구 찾기",
-  CHANGE_PASSWORD: "비밀번호 변경",
   POST_DETAIL: "게시물",
 } as const;
 type HeaderType = keyof typeof HEADER_TITLE;

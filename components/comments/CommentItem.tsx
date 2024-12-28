@@ -14,16 +14,37 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native";
 
+const ReplySkeleton = () => (
+  <View className="mb-4 animate-pulse">
+    {/* header */}
+    <View className="flex-row items-center justify-between pb-[13px]">
+      <View className="flex-1 flex-row items-center gap-2">
+        <View className="size-12 rounded-full bg-gray-25" />
+        <View className="max-w-[80%] gap-1">
+          <View className="h-[16px] w-20 rounded-md bg-gray-25" />
+          <View className="h-[10px] w-12 rounded-md bg-gray-25" />
+        </View>
+      </View>
+      <View className="flex-row items-center gap-1">
+        <View className="size-6 rounded-full bg-gray-25" />
+        <View className="size-6 rounded-full bg-gray-25" />
+      </View>
+    </View>
+
+    {/* contents */}
+    <View className="pb-[13px]">
+      <View className="h-[18px] w-[90%] rounded-md bg-gray-25" />
+    </View>
+
+    {/* reply button */}
+    <View className="pb-[5px]">
+      <View className="h-[14px] w-16 rounded-md bg-gray-25" />
+    </View>
+  </View>
+);
 const LIMIT = 5;
 
 interface CommentItemProps {
@@ -88,9 +109,10 @@ export default function CommentItem({
   // 답글 가져오기
   const {
     data: replyData,
-    isFetchingNextPage,
-    hasNextPage,
     loadMore,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
   } = useInfiniteLoad({
     queryFn: getReplies(id),
     queryKey: ["replies", id],
@@ -313,12 +335,12 @@ export default function CommentItem({
                 />
               )}
               ListFooterComponent={() =>
-                isFetchingNextPage ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : null
+                isFetchingNextPage ? <ReplySkeleton /> : null
               }
             />
           )}
+
+          {!replyData && isFetching && <ReplySkeleton />}
 
           {(totalReplies > 1 || hasNextPage) &&
             !!(
