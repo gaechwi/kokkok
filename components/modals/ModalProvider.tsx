@@ -63,6 +63,10 @@ export default function ModalContainer() {
       return;
     }
 
+    if (!previousPosition && position === "center") {
+      slideAnim.setValue(1);
+    }
+
     // modal이 bottom -> center로 바뀔 때: fadeAnim 작동
     if (position === "center" && previousPosition === "bottom") {
       fadeAnim.setValue(0);
@@ -75,13 +79,8 @@ export default function ModalContainer() {
     }
   }, [isOpen, position, previousPosition, fadeAnim, slideAnim]);
 
-  // 모달이 없거나 닫혀있다면 렌더링 X
   if (!modal) return null;
 
-  /**
-   * @description
-   * 모달 타입에 맞춰 알맞은 컴포넌트를 렌더링합니다.
-   */
   const renderModalContent = () => {
     switch (modal.type) {
       /* -------------------------------- Delete Modals -------------------------------- */
@@ -162,7 +161,6 @@ export default function ModalContainer() {
   return (
     <>
       {isOpen && (
-        // Modal 컴포넌트를 팝업 위치 중앙으로 고정하기 위한 Wrapper
         <View className="-translate-y-1/2 -translate-x-1/2 absolute top-1/2 left-1/2 flex-1">
           <Modal
             transparent
@@ -170,7 +168,6 @@ export default function ModalContainer() {
             animationType="fade"
             onRequestClose={closeModal}
           >
-            {/* 바깥 영역 클릭 시 모달 닫힘 */}
             <View
               className={`size-full flex-1 bg-black/50 ${
                 position === "center" ? "justify-center" : "justify-end"
@@ -178,7 +175,7 @@ export default function ModalContainer() {
               onTouchStart={closeModal}
             >
               <Animated.View
-                onTouchStart={(e) => e.stopPropagation()} // 모달 자체를 클릭했을 때 이벤트 버블링 방지
+                onTouchStart={(e) => e.stopPropagation()}
                 style={{
                   opacity: fadeAnim,
                   transform: [
