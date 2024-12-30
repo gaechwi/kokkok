@@ -107,6 +107,14 @@ export interface EmailCheckModalProps {
 
 /**
  * @description
+ * 비밀번호 재설정 완료 안내 모달
+ */
+export interface PasswordResetCompleteModalProps {
+  type: "PASSWORD_RESET_COMPLETE";
+}
+
+/**
+ * @description
  * 게시물 업로드 실패 안내 모달
  */
 export interface PostUploadFailModalProps {
@@ -174,6 +182,7 @@ export type ModalType =
   | SelectFriendRequestModalProps
   // One Button
   | EmailCheckModalProps
+  | PasswordResetCompleteModalProps
   | PostUploadFailModalProps
   // Two Button
   | PostNotFoundModalProps

@@ -18,7 +18,11 @@ import {
 } from "./ListModals";
 
 // One Button Modals
-import { EmailCheckModal, PostUploadFailModal } from "./OneButtonModals";
+import {
+  EmailCheckModal,
+  PasswordResetCompleteModal,
+  PostUploadFailModal,
+} from "./OneButtonModals";
 
 // Two Button Modals
 import {
@@ -139,6 +143,8 @@ export default function ModalContainer() {
       /* ------------------------------- One Button Modals ------------------------------- */
       case "EMAIL_CHECK":
         return <EmailCheckModal />;
+      case "PASSWORD_RESET_COMPLETE":
+        return <PasswordResetCompleteModal />;
       case "POST_UPLOAD_FAIL":
         return <PostUploadFailModal />;
 
