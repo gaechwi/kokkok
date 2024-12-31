@@ -121,6 +121,14 @@ export interface PostUploadFailModalProps {
   type: "POST_UPLOAD_FAIL";
 }
 
+/**
+ * @description
+ * 비밀번호 재설정 이메일 체크 모달
+ */
+export interface PasswordResetEmailCheckModalProps {
+  type: "PASSWORD_RESET_EMAIL_CHECK";
+}
+
 /* -------------------------------------------------------------------------- */
 /*                           Two Button Modal Props                           */
 /* -------------------------------------------------------------------------- */
@@ -184,6 +192,7 @@ export type ModalType =
   | EmailCheckModalProps
   | PasswordResetCompleteModalProps
   | PostUploadFailModalProps
+  | PasswordResetEmailCheckModalProps
   // Two Button
   | PostNotFoundModalProps
   | AccountDeleteModalProps
