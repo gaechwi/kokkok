@@ -3,7 +3,6 @@ import { passwordResetFormAtom } from "@/contexts/auth";
 import { useModal } from "@/hooks/useModal";
 import { updateNewPassword } from "@/utils/supabase";
 import { validateResetPasswordForm } from "@/utils/validation";
-import { useRouter } from "expo-router";
 import { useAtom } from "jotai";
 import { useState } from "react";
 import {
@@ -19,7 +18,6 @@ import {
 } from "react-native";
 
 const Step3 = () => {
-  const router = useRouter();
   const [_, setResetEmail] = useAtom(passwordResetFormAtom);
   const { openModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
