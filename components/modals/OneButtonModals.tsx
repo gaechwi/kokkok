@@ -112,7 +112,7 @@ export function PasswordResetCompleteModal() {
 
   const handleConfirm = () => {
     closeModal();
-    router.replace("/sign-in");
+    router.replace("/home");
   };
 
   return (
@@ -120,7 +120,7 @@ export function PasswordResetCompleteModal() {
       onClose={handleConfirm}
       onPress={handleConfirm}
       emoji="HAPPY"
-      contents={"비밀번호가 재설정되었습니다"}
+      contents={"비밀번호가 변경되었습니다"}
       buttonText="확인"
     />
   );
