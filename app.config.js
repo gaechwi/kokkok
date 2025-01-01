@@ -10,7 +10,6 @@ module.exports = {
     newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
-      resizeMode: "cover",
       backgroundColor: "#885FF1",
     },
     ios: {
