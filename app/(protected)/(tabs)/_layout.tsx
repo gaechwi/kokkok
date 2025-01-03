@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Platform, Text, View } from "react-native";
+import { DeviceEventEmitter, Platform, Text, View } from "react-native";
 
 import { HeaderWithBack, HeaderWithNotification } from "@/components/Header";
 import useSubscribeNotification from "@/hooks/useSubscribeNotification";
@@ -81,6 +81,14 @@ export default function TabsLayout() {
             title: "Home",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="HOME" />,
           }}
+          listeners={({ navigation, route }) => ({
+            tabPress: (e) => {
+              const state = navigation.getState();
+              if (state.routes[state.index].name === route.name) {
+                DeviceEventEmitter.emit("SCROLL_HOME_TO_TOP");
+              }
+            },
+          })}
         />
         <Tabs.Screen
           name="friend"
@@ -89,6 +97,14 @@ export default function TabsLayout() {
             title: "Friend",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="FRIEND" />,
           }}
+          listeners={({ navigation, route }) => ({
+            tabPress: (e) => {
+              const state = navigation.getState();
+              if (state.routes[state.index].name === route.name) {
+                DeviceEventEmitter.emit("SCROLL_FRIEND_TO_TOP");
+              }
+            },
+          })}
         />
         <Tabs.Screen
           name="upload"
@@ -119,6 +135,14 @@ export default function TabsLayout() {
             title: "MyPage",
             tabBarIcon: ({ color }) => <TabIcon color={color} name="MY_PAGE" />,
           }}
+          listeners={({ navigation, route }) => ({
+            tabPress: (e) => {
+              const state = navigation.getState();
+              if (state.routes[state.index].name === route.name) {
+                DeviceEventEmitter.emit("SCROLL_MY_PAGE_TO_TOP");
+              }
+            },
+          })}
         />
       </Tabs>
     </>

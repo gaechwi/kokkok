@@ -1,4 +1,5 @@
 import images from "@/constants/images";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { useRouter } from "expo-router";
 import {
   Dimensions,
@@ -14,11 +15,12 @@ interface Post {
 }
 
 interface PostGridProps {
+  refetch: () => void;
   posts: Post[] | null;
   isError?: boolean;
 }
 
-export default function PostGrid({ posts, isError }: PostGridProps) {
+export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
   const router = useRouter();
 
   if (isError) {
@@ -49,9 +51,15 @@ export default function PostGrid({ posts, isError }: PostGridProps) {
     );
   }
 
+  const flatListRef = useScrollToTop<Post>({
+    event: "SCROLL_HOME_TO_TOP",
+    onRefetch: refetch,
+  });
+
   return (
     <View className="mt-[32px] h-full bg-gray-5">
       <FlatList
+        ref={flatListRef}
         data={posts}
         renderItem={({ item }) => {
           const size = Dimensions.get("window").width / 3;

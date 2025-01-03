@@ -8,6 +8,8 @@ import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { useModal } from "@/hooks/useModal";
 import useRefresh from "@/hooks/useRefresh";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
+import type { Post } from "@/types/Post.interface";
 import { getPostLikes, getPosts } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -91,9 +93,15 @@ export default function Home() {
     handleLoadId();
   }, []);
 
+  const flatListRef = useScrollToTop<Post>({
+    event: "SCROLL_HOME_TO_TOP",
+    onRefetch: refetch,
+  });
+
   return (
     <SafeAreaView edges={[]} className="flex-1 items-center justify-center">
       <FlatList
+        ref={flatListRef}
         data={data?.pages.flatMap((page) => page.data) ?? []}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ gap: 10 }}

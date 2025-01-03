@@ -23,6 +23,7 @@ export default function Friend() {
     isFetchingNextPage,
     error,
     loadMore,
+    refetch,
   } = useInfiniteLoad({
     queryFn: getFriends(keyword),
     queryKey: ["friends", keyword],
@@ -80,6 +81,7 @@ export default function Friend() {
 
   return (
     <SearchLayout
+      refetch={refetch}
       data={friends}
       onChangeKeyword={handleKeywordChange}
       loadMore={loadMore}

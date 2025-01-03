@@ -1,4 +1,5 @@
 import colors from "@/constants/colors";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import type { UserProfile } from "@/types/User.interface";
 import { useState } from "react";
 import {
@@ -11,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "./SearchBar";
 
 interface SearchLayoutProps {
+  refetch?: () => void;
   data: UserProfile[]; // 추후 검색 사용 범위 넓어지면 변경 가능
   isFetchingNextPage?: boolean;
   onChangeKeyword: (newKeyword: string) => void;
@@ -20,6 +22,7 @@ interface SearchLayoutProps {
 }
 
 export function SearchLayout<T>({
+  refetch,
   data,
   isFetchingNextPage,
   onChangeKeyword,
@@ -28,10 +31,15 @@ export function SearchLayout<T>({
   emptyComponent,
 }: SearchLayoutProps) {
   const [keyword, setKeyword] = useState("");
+  const flatListRef = useScrollToTop<UserProfile>({
+    event: "SCROLL_FRIEND_TO_TOP",
+    onRefetch: refetch,
+  });
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
+        ref={flatListRef}
         className="w-full grow px-6"
         data={data}
         keyExtractor={(elem) => elem.id}
