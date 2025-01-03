@@ -101,7 +101,7 @@ export default function Home() {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_HOME_TO_TOP",
-      () => handleScrollToTop,
+      handleScrollToTop,
     );
 
     return () => subscription.remove();

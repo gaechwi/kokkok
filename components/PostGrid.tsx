@@ -61,7 +61,7 @@ export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_MY_PAGE_TO_TOP",
-      () => handleScrollToTop,
+      handleScrollToTop,
     );
 
     return () => subscription.remove();

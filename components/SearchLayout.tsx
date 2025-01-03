@@ -41,7 +41,7 @@ export function SearchLayout<T>({
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_FRIEND_TO_TOP",
-      () => handleScrollToTop,
+      handleScrollToTop,
     );
 
     return () => subscription.remove();

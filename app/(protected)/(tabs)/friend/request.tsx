@@ -77,7 +77,7 @@ export default function Request() {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_REQUEST_TO_TOP",
-      () => handleScrollToTop,
+      handleScrollToTop,
     );
 
     return () => subscription.remove();
