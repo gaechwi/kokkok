@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
-import { ActivityIndicator, FlatList, View } from "react-native";
+import {
+  ActivityIndicator,
+  DeviceEventEmitter,
+  FlatList,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import ErrorScreen from "@/components/ErrorScreen";
@@ -7,7 +12,6 @@ import { FriendRequest } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import colors from "@/constants/colors";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
-import useScrollToTop from "@/hooks/useScrollToTop";
 import {
   getFriendRequests,
   subscribeFriendRequest,
@@ -65,7 +69,17 @@ export default function Request() {
     };
   }, [queryClient.invalidateQueries]);
 
-  useScrollToTop({ flatListRef, refetch, eventName: "SCROLL_REQUEST_TO_TOP" });
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "SCROLL_REQUEST_TO_TOP",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        refetch();
+      },
+    );
+
+    return () => subscription.remove();
+  }, [refetch]);
 
   // 에러 스크린
   if (error) {
@@ -80,6 +94,7 @@ export default function Request() {
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">
       <FlatList
+        ref={flatListRef}
         className="w-full grow px-8"
         data={hasRequests ? requestData.pages.flatMap((page) => page.data) : []}
         keyExtractor={(request) => String(request.requestId)}

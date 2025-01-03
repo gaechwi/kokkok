@@ -1,9 +1,9 @@
 import colors from "@/constants/colors";
-import useScrollToTop from "@/hooks/useScrollToTop";
 import type { UserProfile } from "@/types/User.interface";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   FlatList,
   type ListRenderItemInfo,
   View,
@@ -33,11 +33,17 @@ export function SearchLayout<T>({
   const [keyword, setKeyword] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
-  useScrollToTop({
-    refetch: refetch ?? (() => {}),
-    flatListRef,
-    eventName: "SCROLL_FRIEND_TO_TOP",
-  });
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "SCROLL_FRIEND_TO_TOP",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        refetch?.();
+      },
+    );
+
+    return () => subscription.remove();
+  }, [refetch]);
 
   return (
     <SafeAreaView edges={[]} className="flex-1 bg-white">

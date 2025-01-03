@@ -8,13 +8,13 @@ import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { useModal } from "@/hooks/useModal";
 import useRefresh from "@/hooks/useRefresh";
-import useScrollToTop from "@/hooks/useScrollToTop";
 import { getPostLikes, getPosts } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   Dimensions,
   FlatList,
   Image,
@@ -93,11 +93,17 @@ export default function Home() {
     handleLoadId();
   }, []);
 
-  useScrollToTop({
-    refetch,
-    flatListRef,
-    eventName: "SCROLL_HOME_TO_TOP",
-  });
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "SCROLL_HOME_TO_TOP",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        refetch();
+      },
+    );
+
+    return () => subscription.remove();
+  }, [refetch]);
 
   return (
     <SafeAreaView edges={[]} className="flex-1 items-center justify-center">

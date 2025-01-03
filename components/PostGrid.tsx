@@ -1,8 +1,8 @@
 import images from "@/constants/images";
-import useScrollToTop from "@/hooks/useScrollToTop";
 import { useRouter } from "expo-router";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
+  DeviceEventEmitter,
   Dimensions,
   FlatList,
   Image,
@@ -53,7 +53,17 @@ export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
     );
   }
 
-  useScrollToTop({ refetch, flatListRef, eventName: "SCROLL_MY_PAGE_TO_TOP" });
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "SCROLL_MY_PAGE_TO_TOP",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        refetch();
+      },
+    );
+
+    return () => subscription.remove();
+  }, [refetch]);
 
   return (
     <View className="mt-[32px] h-full bg-gray-5">
