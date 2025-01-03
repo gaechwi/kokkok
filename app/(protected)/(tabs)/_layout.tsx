@@ -99,9 +99,23 @@ export default function TabsLayout() {
           }}
           listeners={({ navigation, route }) => ({
             tabPress: (e) => {
-              const state = navigation.getState();
-              if (state.routes[state.index].name === route.name) {
-                DeviceEventEmitter.emit("SCROLL_FRIEND_TO_TOP");
+              const rootState = navigation.getState();
+              if (rootState.routes[rootState.index].name === route.name) {
+                const nestedState = rootState.routes[rootState.index].state as
+                  | {
+                      index: number;
+                      routeNames: string[];
+                    }
+                  | undefined;
+                if (nestedState) {
+                  const topTabIndex = nestedState.index;
+                  const topTabName = nestedState.routeNames[topTabIndex];
+                  if (topTabName === "index") {
+                    DeviceEventEmitter.emit("SCROLL_FRIEND_TO_TOP");
+                  } else if (topTabName === "request") {
+                    DeviceEventEmitter.emit("SCROLL_REQUEST_TO_TOP");
+                  }
+                }
               }
             },
           })}

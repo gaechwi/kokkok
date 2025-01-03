@@ -8,12 +8,11 @@ import useFetchData from "@/hooks/useFetchData";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
 import { useModal } from "@/hooks/useModal";
 import useRefresh from "@/hooks/useRefresh";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
-import type { Post } from "@/types/Post.interface";
+import useScrollToTop from "@/hooks/useScrollToTop";
 import { getPostLikes, getPosts } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -35,6 +34,7 @@ export default function Home() {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [isLikedModalVisible, setIsLikedModalVisible] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
   const { openModal } = useModal();
 
   const router = useRouter();
@@ -93,9 +93,10 @@ export default function Home() {
     handleLoadId();
   }, []);
 
-  const flatListRef = useScrollToTop<Post>({
-    event: "SCROLL_HOME_TO_TOP",
-    onRefetch: refetch,
+  useScrollToTop({
+    refetch,
+    flatListRef,
+    eventName: "SCROLL_HOME_TO_TOP",
   });
 
   return (

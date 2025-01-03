@@ -1,6 +1,7 @@
 import images from "@/constants/images";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
+import useScrollToTop from "@/hooks/useScrollToTop";
 import { useRouter } from "expo-router";
+import { useRef } from "react";
 import {
   Dimensions,
   FlatList,
@@ -22,6 +23,7 @@ interface PostGridProps {
 
 export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
   const router = useRouter();
+  const flatListRef = useRef<FlatList>(null);
 
   if (isError) {
     return (
@@ -51,10 +53,7 @@ export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
     );
   }
 
-  const flatListRef = useScrollToTop<Post>({
-    event: "SCROLL_HOME_TO_TOP",
-    onRefetch: refetch,
-  });
+  useScrollToTop({ refetch, flatListRef, eventName: "SCROLL_MY_PAGE_TO_TOP" });
 
   return (
     <View className="mt-[32px] h-full bg-gray-5">

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,6 +7,7 @@ import { FriendRequest } from "@/components/FriendItem";
 import LoadingScreen from "@/components/LoadingScreen";
 import colors from "@/constants/colors";
 import useInfiniteLoad from "@/hooks/useInfiniteLoad";
+import useScrollToTop from "@/hooks/useScrollToTop";
 import {
   getFriendRequests,
   subscribeFriendRequest,
@@ -20,6 +21,7 @@ const LIMIT = 12;
 
 export default function Request() {
   const queryClient = useQueryClient();
+  const flatListRef = useRef<FlatList>(null);
 
   // 유저의 친구 요청 정보 조회
   const {
@@ -28,6 +30,7 @@ export default function Request() {
     isFetchingNextPage,
     error,
     loadMore,
+    refetch,
   } = useInfiniteLoad({
     queryFn: getFriendRequests,
     queryKey: ["friendRequests"],
@@ -36,11 +39,13 @@ export default function Request() {
   const hasRequests = !!requestData?.pages[0].total;
 
   // 친구 요청창에 focus 들어올 때마다 친구목록 새로고침
-  useFocusEffect(() => {
-    if (!isFetchingNextPage) {
-      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
-    }
-  });
+  useFocusEffect(
+    useCallback(() => {
+      if (!isFetchingNextPage) {
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      }
+    }, [isFetchingNextPage, queryClient]),
+  );
 
   // 친구 요청이 추가되면 쿼리 다시 패치하도록 정보 구독
   useEffect(() => {
@@ -59,6 +64,8 @@ export default function Request() {
       supabase.removeChannel(requestChannel);
     };
   }, [queryClient.invalidateQueries]);
+
+  useScrollToTop({ flatListRef, refetch, eventName: "SCROLL_REQUEST_TO_TOP" });
 
   // 에러 스크린
   if (error) {

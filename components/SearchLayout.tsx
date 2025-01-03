@@ -1,7 +1,7 @@
 import colors from "@/constants/colors";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
+import useScrollToTop from "@/hooks/useScrollToTop";
 import type { UserProfile } from "@/types/User.interface";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -31,9 +31,12 @@ export function SearchLayout<T>({
   emptyComponent,
 }: SearchLayoutProps) {
   const [keyword, setKeyword] = useState("");
-  const flatListRef = useScrollToTop<UserProfile>({
-    event: "SCROLL_FRIEND_TO_TOP",
-    onRefetch: refetch,
+  const flatListRef = useRef<FlatList>(null);
+
+  useScrollToTop({
+    refetch: refetch ?? (() => {}),
+    flatListRef,
+    eventName: "SCROLL_FRIEND_TO_TOP",
   });
 
   return (
