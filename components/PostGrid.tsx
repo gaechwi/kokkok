@@ -1,6 +1,6 @@
 import images from "@/constants/images";
 import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   DeviceEventEmitter,
   Dimensions,
@@ -53,17 +53,19 @@ export default function PostGrid({ refetch, posts, isError }: PostGridProps) {
     );
   }
 
+  const handleScrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    refetch();
+  }, [refetch]);
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_MY_PAGE_TO_TOP",
-      () => {
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-        refetch();
-      },
+      () => handleScrollToTop,
     );
 
     return () => subscription.remove();
-  }, [refetch]);
+  }, [handleScrollToTop]);
 
   return (
     <View className="mt-[32px] h-full bg-gray-5">

@@ -93,17 +93,19 @@ export default function Home() {
     handleLoadId();
   }, []);
 
+  const handleScrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    refetch();
+  }, [refetch]);
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_HOME_TO_TOP",
-      () => {
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-        refetch();
-      },
+      () => handleScrollToTop,
     );
 
     return () => subscription.remove();
-  }, [refetch]);
+  }, [handleScrollToTop]);
 
   return (
     <SafeAreaView edges={[]} className="flex-1 items-center justify-center">

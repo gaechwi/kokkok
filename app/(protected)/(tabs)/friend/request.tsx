@@ -69,17 +69,19 @@ export default function Request() {
     };
   }, [queryClient.invalidateQueries]);
 
+  const handleScrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    refetch();
+  }, [refetch]);
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "SCROLL_REQUEST_TO_TOP",
-      () => {
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-        refetch();
-      },
+      () => handleScrollToTop,
     );
 
     return () => subscription.remove();
-  }, [refetch]);
+  }, [handleScrollToTop]);
 
   // 에러 스크린
   if (error) {
